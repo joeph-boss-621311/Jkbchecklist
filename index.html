@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JKB — Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --surface:#151517;
+    --card:#1b1b1e;
+    --card-2:#232326;
+    --gold:#d9ad33;
+    --gold-2:#f0c968;
+    --gold-soft:rgba(217,173,51,0.12);
+    --text:#f4f3f1;
+    --text-dim:#8d8b88;
+    --line:#2a2a2d;
+    --done:#565659;
+    --danger:#d1573f;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+    --radius: 18px;
+  }
+  body.light{
+    --bg:#f6f2e9;
+    --surface:#fbf8f1;
+    --card:#ffffff;
+    --card-2:#f1ebdc;
+    --gold:#b8860f;
+    --gold-2:#8a6608;
+    --gold-soft:rgba(184,134,15,0.10);
+    --text:#1c1a15;
+    --text-dim:#7a7568;
+    --line:#e8e0cd;
+    --done:#c2b9a3;
+    --danger:#b3462c;
+    --shadow: 0 8px 24px rgba(90,70,20,0.10);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    transition: background 0.25s ease, color 0.25s ease;
+    overscroll-behavior-y: none;
+  }
+  h1,h2,h3,.display{ font-family:'Sora',system-ui,sans-serif; }
+
+  /* ---- Top bar ---- */
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    background: var(--bg);
+    padding: 18px 18px 10px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{ font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:0.3px; }
+  .brand .dot{ color: var(--gold); }
+  .top-actions{ display:flex; gap:8px; }
+  .icon-btn{
+    width:36px; height:36px; border-radius:50%;
+    border:1.5px solid var(--gold); background:transparent; color:var(--gold);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.95rem;
+  }
+  .icon-btn.plain{ border-color:var(--line); color:var(--text); }
+
+  /* ---- Views ---- */
+  .view{ display:none; padding: 6px 18px 110px; max-width:720px; margin:0 auto; animation: fadein 0.2s ease; }
+  .view.active{ display:block; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---- Dashboard ---- */
+  .greet{ color:var(--text-dim); font-size:0.85rem; margin: 6px 0 2px; }
+  .greet b{ color:var(--gold); font-weight:600; }
+  .h-title{ font-size:1.5rem; font-weight:800; margin: 2px 0 16px; line-height:1.2; }
+  .h-title .accent{ color: var(--gold); }
+
+  .hero-ring-card{
+    background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 22px; display:flex; align-items:center; gap:20px; box-shadow: var(--shadow); margin-bottom:18px;
+  }
+  .hero-ring-text{ flex:1; }
+  .hero-ring-text .big{ font-size:1.8rem; font-weight:800; font-family:'Sora',sans-serif; }
+  .hero-ring-text .small{ color:var(--text-dim); font-size:0.82rem; margin-top:2px; }
+
+  .section-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .sec-card{
+    background: var(--card); border:1px solid var(--line); border-radius: 16px;
+    padding: 16px; cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .sec-card:active{ transform: scale(0.97); }
+  .sec-card:hover{ border-color: var(--gold); }
+  .sec-card .row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .sec-card .emoji{ font-size:1.3rem; }
+  .sec-card .title{ font-weight:700; font-size:0.9rem; margin-top:8px; }
+  .sec-card .count{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
+
+  /* ---- Section list view ---- */
+  .sub-card{
+    background: var(--card); border:1px solid var(--line); border-radius: 16px;
+    margin-bottom:14px; overflow:hidden; box-shadow: var(--shadow);
+  }
+  .sub-head{
+    padding: 14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+  }
+  .sub-head .name{ font-weight:700; font-size:0.92rem; }
+  .sub-head .meta{ display:flex; align-items:center; gap:10px; }
+  .sub-head .frac{ color:var(--gold); font-size:0.75rem; font-weight:600; }
+  .sub-progress{ height:4px; background:var(--line); }
+  .sub-progress-fill{ height:100%; background:var(--gold); width:0%; transition:width 0.3s ease; }
+  .sub-body{ display:none; padding: 4px 10px 12px; }
+  .sub-card.open .sub-body{ display:block; }
+  .sub-card.open .chev{ transform: rotate(90deg); }
+  .chev{ color:var(--text-dim); transition: transform 0.2s ease; font-size:0.8rem; }
+
+  .task{
+    display:flex; align-items:center; gap:12px; padding:9px 8px; border-radius:12px;
+  }
+  .task:hover{ background: var(--gold-soft); }
+  .check{
+    width:22px; height:22px; border-radius:50%; border:2px solid var(--text-dim); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.15s ease;
+  }
+  .check.done{ background: var(--gold); border-color: var(--gold); }
+  .check svg{ width:12px; height:12px; opacity:0; transition:opacity 0.1s ease; }
+  .check.done svg{ opacity:1; }
+  .task-label{ flex:1; font-size:0.9rem; cursor:pointer; word-break:break-word; }
+  .task.done .task-label{ color: var(--done); text-decoration: line-through; }
+  .task-edit{
+    flex:1; background: var(--card-2); border:1px solid var(--gold); color:var(--text);
+    padding:5px 8px; border-radius:8px; font-size:0.88rem; font-family:inherit;
+  }
+  .kebab{
+    color: var(--text-dim); cursor:pointer; font-size:1.1rem; padding: 2px 6px; flex-shrink:0; line-height:1;
+  }
+  .task-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .mini-btn{
+    font-size:0.75rem; color:var(--text-dim); cursor:pointer; padding:4px 7px; border-radius:6px;
+  }
+  .mini-btn:hover{ background: var(--gold-soft); color: var(--gold); }
+  .mini-btn.danger:hover{ color: var(--danger); background: rgba(209,87,63,0.12); }
+
+  .add-task-row{ display:flex; gap:8px; padding: 8px 8px 4px; }
+  .add-task-row input{
+    flex:1; background: var(--card-2); border:1px solid var(--line); color:var(--text);
+    padding:9px 12px; border-radius:10px; font-size:0.85rem; font-family:inherit;
+  }
+  .add-task-row input:focus{ outline:none; border-color: var(--gold); }
+  .add-task-row button{
+    background: var(--gold); color:#1a1305; border:none; padding:0 16px; border-radius:10px;
+    font-weight:700; cursor:pointer; font-size:1rem;
+  }
+  .sub-del-row{ text-align:right; padding: 2px 8px 8px; }
+  .sub-del{ font-size:0.72rem; color:var(--text-dim); cursor:pointer; }
+  .sub-del:hover{ color: var(--danger); }
+
+  .empty-note{ color:var(--text-dim); font-size:0.82rem; font-style:italic; padding: 6px 8px; }
+  .add-sub-btn{
+    width:100%; padding:13px; border-radius:16px; border:1.5px dashed var(--line);
+    background:transparent; color:var(--text-dim); cursor:pointer; font-size:0.85rem; margin-top:4px;
+  }
+  .add-sub-btn:hover{ border-color: var(--gold); color: var(--gold); }
+
+  /* ---- Bottom tab nav ---- */
+  .tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:40;
+    background: var(--surface); border-top:1px solid var(--line);
+    display:flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  .tab-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:8px 2px; color:var(--text-dim); cursor:pointer; border-radius:12px; font-size:0.63rem;
+    font-weight:600; background:none; border:none; font-family:'Inter',sans-serif;
+  }
+  .tab-btn .ic{ font-size:1.15rem; }
+  .tab-btn.active{ color: var(--gold); }
+
+  /* ---- FAB ---- */
+  .fab{
+    position:fixed; right:18px; bottom:76px; z-index:35;
+    width:56px; height:56px; border-radius:50%; background: var(--gold); color:#1a1305;
+    border:none; font-size:1.6rem; box-shadow: 0 6px 18px rgba(217,173,51,0.4); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---- Bottom sheet ---- */
+  .sheet-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:50;
+    opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+  }
+  .sheet-overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    background: var(--surface); border-radius: 22px 22px 0 0; padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(100%); transition: transform 0.25s ease; max-height:80vh; overflow-y:auto;
+  }
+  .sheet.show{ transform: translateY(0); }
+  .sheet-handle{ width:38px; height:4px; background:var(--line); border-radius:4px; margin: 8px auto 14px; }
+  .sheet h3{ font-size:1.05rem; margin: 0 0 14px; }
+  .field-label{ font-size:0.75rem; color:var(--text-dim); margin: 12px 0 6px; text-transform:uppercase; letter-spacing:0.4px; }
+  .sheet select, .sheet input{
+    width:100%; background: var(--card); border:1px solid var(--line); color:var(--text);
+    padding:11px 12px; border-radius:12px; font-size:0.9rem; font-family:inherit;
+  }
+  .sheet select:focus, .sheet input:focus{ outline:none; border-color:var(--gold); }
+  .sheet-submit{
+    width:100%; background:var(--gold); color:#1a1305; border:none; padding:13px; border-radius:12px;
+    font-weight:700; font-size:0.92rem; cursor:pointer; margin-top:18px;
+  }
+
+  /* ---- Menu drawer ---- */
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:280px; max-width:82vw;
+    background:var(--surface); border-left:1px solid var(--line); z-index:70;
+    transform: translateX(100%); transition: transform 0.25s ease; padding:18px; overflow-y:auto;
+  }
+  .drawer.show{ transform:translateX(0); }
+  .drawer h3{ font-size:0.8rem; margin:20px 0 6px; color:var(--gold); text-transform:uppercase; letter-spacing:0.5px; }
+  .drawer h3:first-of-type{ margin-top:8px; }
+  .drawer-close{ background:none; border:none; color:var(--text-dim); font-size:1.3rem; cursor:pointer; float:right; }
+  .drawer-item{
+    display:flex; align-items:center; justify-content:space-between; padding:11px 2px;
+    font-size:0.87rem; cursor:pointer; border-bottom:1px solid var(--line);
+  }
+  .drawer-item:hover{ color:var(--gold); }
+  #importFile{ display:none; }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">JKB<span class="dot">.</span></div>
+  <div class="top-actions">
+    <button class="icon-btn" id="themeToggle">☀</button>
+    <button class="icon-btn plain" id="menuBtn">☰</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-home">
+  <div class="greet">👋 Hello, <b>Joseph</b></div>
+  <div class="h-title">Your <span class="accent">Ops</span> Dashboard</div>
+
+  <div class="hero-ring-card">
+    <svg width="76" height="76" viewBox="0 0 76 76">
+      <circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="8"/>
+      <circle id="heroRing" cx="38" cy="38" r="32" fill="none" stroke="var(--gold)" stroke-width="8"
+        stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 38 38)"/>
+      <text id="heroPct" x="38" y="43" text-anchor="middle" font-family="Sora" font-weight="700" font-size="16" fill="var(--text)">0%</text>
+    </svg>
+    <div class="hero-ring-text">
+      <div class="big" id="heroCount">0 / 0</div>
+      <div class="small">tasks complete across everything</div>
+    </div>
+  </div>
+
+  <div class="section-grid" id="sectionGrid"></div>
+</div>
+
+<!-- SECTION VIEW (shared template, filled dynamically) -->
+<div class="view" id="view-section">
+  <div class="greet" id="secBreadcrumb">Section</div>
+  <div class="h-title"><span id="secEmoji"></span> <span id="secTitle" class="accent"></span></div>
+  <div id="secBody"></div>
+  <button class="add-sub-btn" id="addSubBtn">+ Add section group</button>
+</div>
+
+<button class="fab" id="fabBtn">+</button>
+
+<div class="tabbar" id="tabbar"></div>
+
+<!-- Add task sheet -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="addSheet">
+  <div class="sheet-handle"></div>
+  <h3>Add a task</h3>
+  <div class="field-label">Project</div>
+  <select id="sheetGroup"></select>
+  <div class="field-label">Section</div>
+  <select id="sheetSub"></select>
+  <div class="field-label">Task</div>
+  <input id="sheetTaskInput" placeholder="What needs doing?">
+  <button class="sheet-submit" id="sheetSubmit">Add task</button>
+</div>
+
+<!-- Menu drawer -->
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose">✕</button>
+  <h3>Data</h3>
+  <div class="drawer-item" id="menuReset">Reset all checkmarks <span>↺</span></div>
+  <div class="drawer-item" id="menuExport">Export backup (.json) <span>⬇</span></div>
+  <div class="drawer-item" id="menuImport">Import backup (.json) <span>⬆</span></div>
+  <input type="file" id="importFile" accept="application/json">
+  <h3>Projects</h3>
+  <div class="drawer-item" id="menuAddGroup">Add new project <span>+</span></div>
+</div>
+
+<script>
+const DEFAULT_DATA = [
+  { id:"jkb", emoji:"🚀", title:"JKB Global", subs:[
+    { name:"Brand & Website", items:["Review every page","Fix bugs","Improve loading speed","Improve mobile responsiveness","Update portfolio","Add recent projects","Improve service descriptions","Strengthen CTAs","Add client inquiry form","Connect analytics"]},
+    { name:"Content System", items:["Redesign poster templates","Create 10 reusable templates","Design carousel templates","Create video templates","Add branded music","Create intro/outro animations"]},
+    { name:"AI Automation", items:["Build Anything + Cloud Code workflow","Auto-generate posters","Auto-generate captions","Auto-generate hashtags","Auto-generate videos","Auto-post to social media","Auto-save generated content","Test automation","Remove workflow errors"]},
+    { name:"Posting Strategy", items:["Hourly posts","Hourly videos","Weekly content calendar","Monthly campaign calendar"]},
+    { name:"Content Pillars", items:["AI","Websites","Branding","Automation","Business tips","Client projects","Tutorials","Behind the scenes","Success stories","Development updates"]},
+    { name:"Marketing", items:["AI content generator","AI trend finder","AI caption generator","AI comment assistant","AI reply assistant"]},
+    { name:"Advertising", items:["Research Meta Ads","Research Instagram Ads","Research Google Ads","Research TikTok Ads","Create audiences","Design creatives","Write 10 ad copies","Create landing pages","Install Meta Pixel","Install Google Analytics","Install Microsoft Clarity","Launch first test campaign","Optimize weekly"]},
+    { name:"Lead Generation", items:["Improve contact page","Add WhatsApp CTA","Build email list","Add newsletter","Offer free consultation","Build downloadable resources"]},
+    { name:"Social Proof", items:["Post completed projects","Post testimonials","Share client wins","Show before/after work","Build in public"]},
+    { name:"Analytics", items:["Track followers","Track reach","Track website visitors","Track inquiries","Track conversions","Weekly review"]},
+  ]},
+  { id:"safegate", emoji:"🛡", title:"SafeGate", subs:[
+    { name:"Website", items:["Test every page","Fix every bug","Test buyer flow","Test seller flow","Test escrow flow","Test registration","Test login","Test email notifications","Test mobile responsiveness","Improve speed","Improve UI/UX"]},
+    { name:"Trust Building", items:["Improve FAQ","Explain escrow process clearly","Add trust badges","Add security information","Add privacy policy","Improve Terms of Service","Add testimonials (when available)","Add case studies"]},
+    { name:"SEO", items:["Check indexed pages","Add sitemap","Improve metadata","Improve internal linking","Research Nigerian escrow keywords","Publish SEO blog posts"]},
+    { name:"AI Automation", items:["Automated poster creation","Automated captions","Automated hashtags","Automated videos","Automated posting","Automated content calendar"]},
+    { name:"Content — Educational", items:["WhatsApp scams","Instagram scams","Facebook Marketplace scams","Telegram scams","Online buying tips","Escrow education"]},
+    { name:"Content — Product", items:["Feature videos","Walkthrough videos","Product updates","Behind the scenes","User tutorials"]},
+    { name:"Advertising Research", items:["Research Meta Ads","Research Google Search Ads","Research TikTok Ads","Research YouTube Ads","Study competitors","Research best-performing escrow ads","Build customer personas"]},
+    { name:"Advertising Assets", items:["Landing pages","Video ads","Image ads","Carousel ads","10 ad copies","Install Meta Pixel","Install Google Analytics","Install Microsoft Clarity","Set conversion tracking"]},
+    { name:"Growth", items:["Referral program","Email marketing","Affiliate program","Partnership strategy","Influencer outreach","Campus ambassador program"]},
+    { name:"Analytics", items:["Track users","Track transactions","Track conversions","Track abandoned signups","Weekly growth report"]},
+  ]},
+  { id:"cvg", emoji:"💻", title:"CVG", subs:[
+    { name:"Core", items:["Make CVG fully usable","Fix bugs","Improve UI","Test on mobile","Connect to JKB Global","Start posting about CVG"]},
+  ]},
+  { id:"ceo", emoji:"📈", title:"Weekly CEO Routine", subs:[
+    { name:"Routine", items:["Review analytics","Review AI workflows","Review content performance","Improve one workflow","Improve one landing page","Launch one new feature","Publish at least one case study","Plan next week's content","Follow up with leads","Reach out to potential clients"]},
+  ]},
+];
+
+const STORAGE_KEY = "jkb_checklist_state_v3";
+const THEME_KEY = "jkb_checklist_theme";
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { data: JSON.parse(JSON.stringify(DEFAULT_DATA)), checked: {}, open: {} };
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let state = loadState();
+if(!state.data || !state.data.length) state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+let currentGroupId = null; // null = dashboard
+
+function groupStats(group){
+  let done=0, total=0;
+  group.subs.forEach((sub, si) => sub.items.forEach((_, ii) => {
+    total++;
+    if(state.checked[group.id+"::"+si+"::"+ii]) done++;
+  }));
+  return { done, total };
+}
+function overallStats(){
+  let done=0, total=0;
+  state.data.forEach(g => { const s = groupStats(g); done += s.done; total += s.total; });
+  return { done, total };
+}
+
+const CIRC = 2 * Math.PI * 32;
+
+function renderTabbar(){
+  const bar = document.getElementById("tabbar");
+  bar.innerHTML = "";
+  const homeBtn = document.createElement("button");
+  homeBtn.className = "tab-btn" + (currentGroupId===null ? " active" : "");
+  homeBtn.innerHTML = `<div class="ic">⌂</div><div>Home</div>`;
+  homeBtn.addEventListener("click", () => showView(null));
+  bar.appendChild(homeBtn);
+
+  state.data.forEach(g => {
+    const b = document.createElement("button");
+    b.className = "tab-btn" + (currentGroupId===g.id ? " active" : "");
+    b.innerHTML = `<div class="ic">${g.emoji}</div><div>${g.title.split(" ")[0]}</div>`;
+    b.addEventListener("click", () => showView(g.id));
+    bar.appendChild(b);
+  });
+}
+
+function showView(groupId){
+  currentGroupId = groupId;
+  document.getElementById("view-home").classList.toggle("active", groupId===null);
+  document.getElementById("view-section").classList.toggle("active", groupId!==null);
+  renderTabbar();
+  if(groupId===null){ renderDashboard(); }
+  else{ renderSection(groupId); }
+  window.scrollTo(0,0);
+}
+
+function renderDashboard(){
+  const o = overallStats();
+  const pct = o.total ? Math.round(o.done/o.total*100) : 0;
+  document.getElementById("heroCount").textContent = o.done + " / " + o.total;
+  document.getElementById("heroPct").textContent = pct + "%";
+  document.getElementById("heroRing").setAttribute("stroke-dasharray", CIRC);
+  document.getElementById("heroRing").setAttribute("stroke-dashoffset", CIRC - (pct/100)*CIRC);
+
+  const grid = document.getElementById("sectionGrid");
+  grid.innerHTML = "";
+  state.data.forEach(g => {
+    const s = groupStats(g);
+    const gp = s.total ? Math.round(s.done/s.total*100) : 0;
+    const card = document.createElement("div");
+    card.className = "sec-card";
+    card.innerHTML = `
+      <div class="row">
+        <div class="emoji">${g.emoji}</div>
+        <svg width="34" height="34" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="9"/>
+          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--gold)" stroke-width="9"
+            stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC - (gp/100)*CIRC}" transform="rotate(-90 38 38)"/>
+        </svg>
+      </div>
+      <div class="title">${g.title}</div>
+      <div class="count">${s.done}/${s.total} · ${gp}%</div>
+    `;
+    card.addEventListener("click", () => showView(g.id));
+    grid.appendChild(card);
+  });
+}
+
+function renderSection(groupId){
+  const group = state.data.find(g => g.id === groupId);
+  if(!group) return;
+  document.getElementById("secEmoji").textContent = group.emoji;
+  document.getElementById("secTitle").textContent = group.title;
+  const s = groupStats(group);
+  document.getElementById("secBreadcrumb").textContent = s.done + " of " + s.total + " tasks complete";
+
+  const body = document.getElementById("secBody");
+  body.innerHTML = "";
+
+  group.subs.forEach((sub, subIdx) => {
+    let done=0;
+    sub.items.forEach((_, ii) => { if(state.checked[group.id+"::"+subIdx+"::"+ii]) done++; });
+    const total = sub.items.length;
+    const pct = total ? (done/total*100) : 0;
+
+    const card = document.createElement("div");
+    card.className = "sub-card" + (state.open[group.id+"::"+subIdx] ? " open" : "");
+
+    const head = document.createElement("div");
+    head.className = "sub-head";
+    head.innerHTML = `<div class="name">${sub.name}</div><div class="meta"><div class="frac">${done}/${total}</div><div class="chev">▸</div></div>`;
+    head.addEventListener("click", () => {
+      const key = group.id+"::"+subIdx;
+      state.open[key] = !state.open[key];
+      saveState(); renderSection(groupId);
+    });
+
+    const progress = document.createElement("div");
+    progress.className = "sub-progress";
+    progress.innerHTML = `<div class="sub-progress-fill" style="width:${pct}%"></div>`;
+
+    const sbody = document.createElement("div");
+    sbody.className = "sub-body";
+
+    if(total === 0){
+      const e = document.createElement("div");
+      e.className = "empty-note";
+      e.textContent = "No tasks yet — add one below.";
+      sbody.appendChild(e);
+    }
+
+    sub.items.forEach((itemName, itemIdx) => {
+      const key = group.id+"::"+subIdx+"::"+itemIdx;
+      const isDone = !!state.checked[key];
+      const taskEl = document.createElement("div");
+      taskEl.className = "task" + (isDone ? " done" : "");
+
+      const check = document.createElement("div");
+      check.className = "check" + (isDone ? " done" : "");
+      check.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#1a1305" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      check.addEventListener("click", () => {
+        state.checked[key] = !isDone;
+        saveState(); renderSection(groupId);
+      });
+
+      const label = document.createElement("div");
+      label.className = "task-label";
+      label.textContent = itemName;
+      label.addEventListener("click", () => check.click());
+
+      const actions = document.createElement("div");
+      actions.className = "task-actions";
+      const editBtn = document.createElement("span");
+      editBtn.className = "mini-btn";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const input = document.createElement("input");
+        input.className = "task-edit";
+        input.value = itemName;
+        taskEl.replaceChild(input, label);
+        actions.style.display = "none";
+        input.focus(); input.select();
+        const commit = () => {
+          const val = input.value.trim();
+          if(val) sub.items[itemIdx] = val;
+          saveState(); renderSection(groupId);
+        };
+        input.addEventListener("keydown", ev => { if(ev.key==="Enter") commit(); if(ev.key==="Escape") renderSection(groupId); });
+        input.addEventListener("blur", commit);
+      });
+      const delBtn = document.createElement("span");
+      delBtn.className = "mini-btn danger";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        sub.items.splice(itemIdx,1);
+        delete state.checked[key];
+        saveState(); renderSection(groupId);
+      });
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      taskEl.appendChild(check);
+      taskEl.appendChild(label);
+      taskEl.appendChild(actions);
+      sbody.appendChild(taskEl);
+    });
+
+    const addRow = document.createElement("div");
+    addRow.className = "add-task-row";
+    const input = document.createElement("input");
+    input.placeholder = "Add task…";
+    const btn = document.createElement("button");
+    btn.textContent = "+";
+    const addFn = () => {
+      const val = input.value.trim();
+      if(!val) return;
+      sub.items.push(val);
+      input.value = "";
+      saveState(); renderSection(groupId);
+    };
+    btn.addEventListener("click", addFn);
+    input.addEventListener("keydown", e => { if(e.key==="Enter") addFn(); });
+    addRow.appendChild(input); addRow.appendChild(btn);
+    sbody.appendChild(addRow);
+
+    const delRow = document.createElement("div");
+    delRow.className = "sub-del-row";
+    const delSub = document.createElement("span");
+    delSub.className = "sub-del";
+    delSub.textContent = "remove this section ✕";
+    delSub.addEventListener("click", () => {
+      if(confirm('Remove "'+sub.name+'" and its tasks?')){
+        group.subs.splice(subIdx,1);
+        saveState(); renderSection(groupId);
+      }
+    });
+    delRow.appendChild(delSub);
+    sbody.appendChild(delRow);
+
+    card.appendChild(head);
+    card.appendChild(progress);
+    card.appendChild(sbody);
+    body.appendChild(card);
+  });
+}
+
+document.getElementById("addSubBtn").addEventListener("click", () => {
+  const group = state.data.find(g => g.id === currentGroupId);
+  if(!group) return;
+  const name = prompt("New section name:");
+  if(!name) return;
+  group.subs.push({ name, items: [] });
+  state.open[group.id+"::"+(group.subs.length-1)] = true;
+  saveState(); renderSection(currentGroupId);
+});
+
+// ---------- theme ----------
+function applyTheme(mode){
+  document.body.classList.toggle("light", mode==="light");
+  document.getElementById("themeToggle").textContent = mode==="light" ? "☾" : "☀";
+  localStorage.setItem(THEME_KEY, mode);
+}
+let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
+applyTheme(currentTheme);
+document.getElementById("themeToggle").addEventListener("click", () => {
+  currentTheme = currentTheme==="dark" ? "light" : "dark";
+  applyTheme(currentTheme);
+});
+
+// ---------- FAB / add sheet ----------
+const sheetOverlay = document.getElementById("sheetOverlay");
+const addSheet = document.getElementById("addSheet");
+function openSheet(){
+  const groupSel = document.getElementById("sheetGroup");
+  groupSel.innerHTML = "";
+  state.data.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g.id; o.textContent = g.emoji + " " + g.title;
+    groupSel.appendChild(o);
+  });
+  if(currentGroupId) groupSel.value = currentGroupId;
+  populateSubSelect();
+  groupSel.onchange = populateSubSelect;
+  document.getElementById("sheetTaskInput").value = "";
+  sheetOverlay.classList.add("show");
+  addSheet.classList.add("show");
+}
+function populateSubSelect(){
+  const groupSel = document.getElementById("sheetGroup");
+  const subSel = document.getElementById("sheetSub");
+  const group = state.data.find(g => g.id === groupSel.value);
+  subSel.innerHTML = "";
+  if(group){
+    group.subs.forEach((s, i) => {
+      const o = document.createElement("option");
+      o.value = i; o.textContent = s.name;
+      subSel.appendChild(o);
+    });
+  }
+}
+function closeSheet(){
+  sheetOverlay.classList.remove("show");
+  addSheet.classList.remove("show");
+}
+document.getElementById("fabBtn").addEventListener("click", openSheet);
+sheetOverlay.addEventListener("click", closeSheet);
+document.getElementById("sheetSubmit").addEventListener("click", () => {
+  const groupId = document.getElementById("sheetGroup").value;
+  const subIdx = parseInt(document.getElementById("sheetSub").value, 10);
+  const text = document.getElementById("sheetTaskInput").value.trim();
+  if(!text) return;
+  const group = state.data.find(g => g.id === groupId);
+  if(group && group.subs[subIdx]){
+    group.subs[subIdx].items.push(text);
+    saveState();
+    closeSheet();
+    if(currentGroupId === groupId) renderSection(groupId);
+    else showView(groupId);
+  }
+});
+
+// ---------- drawer menu ----------
+const drawer = document.getElementById("drawer");
+document.getElementById("menuBtn").addEventListener("click", () => drawer.classList.add("show"));
+document.getElementById("drawerClose").addEventListener("click", () => drawer.classList.remove("show"));
+document.getElementById("menuReset").addEventListener("click", () => {
+  if(confirm("Uncheck everything? Tasks themselves stay.")){
+    state.checked = {};
+    saveState();
+    if(currentGroupId===null) renderDashboard(); else renderSection(currentGroupId);
+  }
+  drawer.classList.remove("show");
+});
+document.getElementById("menuAddGroup").addEventListener("click", () => {
+  const name = prompt("New project name:");
+  if(!name){ drawer.classList.remove("show"); return; }
+  const id = "custom_"+Date.now();
+  state.data.push({ id, emoji:"📌", title:name, subs:[{name:"General", items:[]}] });
+  saveState();
+  renderTabbar();
+  showView(id);
+  drawer.classList.remove("show");
+});
+document.getElementById("menuExport").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "jkb-checklist-backup.json"; a.click();
+  URL.revokeObjectURL(url);
+  drawer.classList.remove("show");
+});
+document.getElementById("menuImport").addEventListener("click", () => document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      if(parsed && parsed.data){
+        state = parsed;
+        saveState();
+        showView(null);
+        alert("Backup imported.");
+      } else alert("Not a valid backup file.");
+    }catch(err){ alert("Couldn't read that file."); }
+    drawer.classList.remove("show");
+  };
+  reader.readAsText(file);
+});
+
+renderTabbar();
+renderDashboard();
+</script>
+</body>
+</html>
