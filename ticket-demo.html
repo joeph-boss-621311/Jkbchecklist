@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>BugCon — Grab a Ticket, Fix an Issue</title>
+<title>LOL Nights — Comedy Show Tickets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -22,9 +22,6 @@
     --cyan:#3ee8d8;
     --gold:#f0c968;
     --crit:#ff4d5e;
-    --high:#ff9f43;
-    --mid:#f0c968;
-    --low:#3ee8d8;
     --shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -61,6 +58,14 @@
   .stars{ position:absolute; inset:0; }
   .star{ position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; opacity:0.5; animation: twinkle 3s ease-in-out infinite; }
   @keyframes twinkle{ 0%,100%{opacity:0.15;} 50%{opacity:0.9;} }
+
+  /* spotlight sweep behind hero */
+  .spotlights{ position:absolute; inset:0; overflow:hidden; }
+  .spot{ position:absolute; top:-20%; width:220px; height:160%; background:linear-gradient(180deg, rgba(255,255,255,0.10), transparent 70%); transform-origin:top center; animation: sweep 7s ease-in-out infinite; filter:blur(6px); }
+  .spot.s1{ left:8%; animation-delay:0s; }
+  .spot.s2{ left:45%; animation-delay:-2.3s; background:linear-gradient(180deg, rgba(240,201,104,0.10), transparent 70%); }
+  .spot.s3{ left:78%; animation-delay:-4.6s; background:linear-gradient(180deg, rgba(62,232,216,0.10), transparent 70%); }
+  @keyframes sweep{ 0%,100%{ transform:rotate(-16deg);} 50%{ transform:rotate(16deg);} }
 
   /* ---------- layout wrappers ---------- */
   .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 24px; }
@@ -128,7 +133,7 @@
   /* ---------- ticket grid ---------- */
   .tickets{ display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:24px; }
   .ticket{
-    position:relative; perspective:1400px; height:300px;
+    position:relative; perspective:1400px; height:340px;
   }
   .ticket-inner{
     position:relative; width:100%; height:100%; transition: transform 0.7s cubic-bezier(.2,.8,.2,1); transform-style:preserve-3d;
@@ -142,37 +147,35 @@
   .ticket:hover .ticket-face.front{ transform: translateY(-4px); border-color: var(--violet); }
   .ticket-face.back{ transform: rotateY(180deg); align-items:center; justify-content:center; text-align:center; padding:26px; background:linear-gradient(160deg, var(--card), var(--card-2)); }
 
-  .t-top{ padding:18px 20px 14px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
-  .t-id{ font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text-dim); }
-  .t-sev{ font-size:0.66rem; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
-  .sev-critical{ background:rgba(255,77,94,0.15); color:var(--crit); border:1px solid rgba(255,77,94,0.35); }
-  .sev-high{ background:rgba(255,159,67,0.15); color:var(--high); border:1px solid rgba(255,159,67,0.35); }
-  .sev-medium{ background:rgba(240,201,104,0.15); color:var(--mid); border:1px solid rgba(240,201,104,0.35); }
-  .sev-low{ background:rgba(62,232,216,0.15); color:var(--low); border:1px solid rgba(62,232,216,0.35); }
+  .t-top{ padding:18px 20px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .t-emoji{ font-size:1.6rem; }
+  .t-hot{ font-size:0.66rem; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; background:rgba(255,77,94,0.15); color:var(--crit); border:1px solid rgba(255,77,94,0.35); }
 
-  .t-title{ padding:0 20px; font-weight:700; font-size:1.02rem; line-height:1.35; flex:1; }
-  .t-tag{ display:inline-block; margin:10px 20px 0; font-size:0.68rem; color:var(--text-dim); background:var(--card-2); padding:3px 9px; border-radius:6px; }
+  .t-title{ padding:10px 20px 0; font-weight:700; font-size:1.08rem; line-height:1.3; }
+  .t-comic{ padding:4px 20px 0; font-size:0.8rem; color:var(--violet-2); font-weight:600; }
+  .t-meta{ padding:8px 20px 0; font-size:0.78rem; color:var(--text-dim); flex:1; }
+  .t-meta div{ margin-bottom:3px; }
 
-  .t-perf{ position:relative; margin:16px 0 0; height:0; border-top:1.5px dashed var(--line); }
+  .t-perf{ position:relative; margin:14px 0 0; height:0; border-top:1.5px dashed var(--line); }
   .t-perf::before, .t-perf::after{
     content:""; position:absolute; top:-9px; width:18px; height:18px; background:var(--bg); border-radius:50%;
   }
   .t-perf::before{ left:-9px; }
   .t-perf::after{ right:-9px; }
 
-  .t-bottom{ padding:14px 20px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .t-bottom{ padding:14px 20px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .t-price{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.15rem; }
   .t-price small{ font-size:0.65rem; color:var(--text-dim); font-weight:500; display:block; font-family:'Inter',sans-serif; }
   .t-cd{ font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--gold); text-align:right; }
   .t-cd small{ display:block; font-size:0.62rem; color:var(--text-dim); font-family:'Inter',sans-serif; font-weight:500; }
 
-  .t-progress{ padding:0 20px 12px; }
+  .t-progress{ padding:10px 20px 0; }
   .t-bar{ height:5px; border-radius:4px; background:var(--card-2); overflow:hidden; }
   .t-bar-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,var(--violet),var(--pink)); transition:width 0.4s ease; }
   .t-claimed{ font-size:0.65rem; color:var(--text-dim); margin-top:5px; }
 
   .t-buy{
-    margin:0 20px 20px; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.85rem;
+    margin:14px 20px 20px; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.85rem;
     background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; transition: transform 0.15s ease, opacity 0.15s ease;
   }
   .t-buy:hover{ transform:translateY(-2px); }
@@ -231,20 +234,25 @@
   <div class="blob b1"></div>
   <div class="blob b2"></div>
   <div class="blob b3"></div>
+  <div class="spotlights">
+    <div class="spot s1"></div>
+    <div class="spot s2"></div>
+    <div class="spot s3"></div>
+  </div>
   <div class="stars" id="stars"></div>
 </div>
 
 <nav>
   <div class="nav-inner">
-    <div class="logo"><span class="spark"></span>Bug<span class="tag">Con</span></div>
-    <div class="nav-cd"><span class="live"></span>Next drop in <b id="navCountdown">--:--:--</b></div>
+    <div class="logo"><span class="spark"></span>LOL<span class="tag"> Nights</span></div>
+    <div class="nav-cd"><span class="live"></span>Next show in <b id="navCountdown">--:--:--</b></div>
   </div>
 </nav>
 
 <div class="wrap hero">
-  <div class="kicker">🎟 Ticketed issue-fixing marketplace</div>
-  <h1>Buy a ticket.<br>Fix a real <span class="grad">issue</span>.<br>Beat the clock.</h1>
-  <p>Every open issue is a ticket. Grab one before it sells out, race the countdown, ship the fix, get paid. This batch closes in:</p>
+  <div class="kicker">🎤 Live comedy, real laughs, real seats</div>
+  <h1>Grab a seat.<br>Laugh till it <span class="grad">hurts</span>.<br>Doors close soon.</h1>
+  <p>Our next headline night is almost sold out. Every seat is a ticket, every ticket has a clock — snag yours before the countdown hits zero.</p>
 
   <div class="countdown" id="heroCountdown">
     <div class="cd-box"><div class="cd-num" id="cdDays">15</div><div class="cd-label">Days</div></div>
@@ -254,17 +262,17 @@
   </div>
 
   <div class="hero-cta">
-    <a href="#tickets" class="btn btn-primary">Browse tickets</a>
+    <a href="#tickets" class="btn btn-primary">Browse shows</a>
     <a href="#how" class="btn btn-ghost">How it works</a>
   </div>
 </div>
 
 <div class="wrap">
   <div class="stats">
-    <div class="stat"><div class="n" id="statIssues">0</div><div class="l">Issues live</div></div>
-    <div class="stat"><div class="n" id="statFixers">0</div><div class="l">Fixers online</div></div>
-    <div class="stat"><div class="n" id="statPayout">$0</div><div class="l">Paid this week</div></div>
-    <div class="stat"><div class="n" id="statTime">0m</div><div class="l">Avg time to claim</div></div>
+    <div class="stat"><div class="n" id="statShows">0</div><div class="l">Shows this month</div></div>
+    <div class="stat"><div class="n" id="statSeats">0</div><div class="l">Seats left tonight</div></div>
+    <div class="stat"><div class="n" id="statSold">$0</div><div class="l">Tickets sold this week</div></div>
+    <div class="stat"><div class="n" id="statRating">0.0</div><div class="l">Avg crowd rating</div></div>
   </div>
 </div>
 
@@ -275,8 +283,8 @@
 <section class="section" id="tickets">
   <div class="wrap">
     <div class="sec-head">
-      <h2>Grab an open ticket</h2>
-      <p>Each card is a real-shaped issue. Claim it, and the countdown becomes yours — miss it, and it goes back on sale.</p>
+      <h2>This week's lineup</h2>
+      <p>Every card is a real seat count. Grab one, and the countdown on it becomes your own personal reminder — let it hit zero and it's back up for grabs.</p>
     </div>
     <div class="filters" id="filters"></div>
     <div class="tickets" id="ticketGrid"></div>
@@ -286,20 +294,20 @@
 <section class="section" id="how">
   <div class="wrap">
     <div class="sec-head">
-      <h2>How BugCon works</h2>
-      <p>Three steps between you and a merged fix.</p>
+      <h2>How LOL Nights works</h2>
+      <p>Three steps between you and a night of laughing way too hard.</p>
     </div>
     <div class="steps">
-      <div class="step"><div class="num">01</div><h3>🎫 Buy the ticket</h3><p>One click claims the issue for you. Your name goes on it, and its personal countdown starts ticking.</p></div>
-      <div class="step"><div class="num">02</div><h3>🛠 Fix before time's up</h3><p>Branch, commit, push. Beat the clock and the bounty's yours — let it expire and the ticket resells.</p></div>
-      <div class="step"><div class="num">03</div><h3>💸 Get paid on merge</h3><p>PR merges, payout drops automatically. No invoices, no chasing anyone down.</p></div>
+      <div class="step"><div class="num">01</div><h3>🎟 Buy your ticket</h3><p>One click locks in your seat. Your name goes on it, and the venue's countdown starts ticking for you.</p></div>
+      <div class="step"><div class="num">02</div><h3>📅 Beat the clock</h3><p>Doors open at showtime, not a minute later. Miss the window and the seat resells to the next fan in line.</p></div>
+      <div class="step"><div class="num">03</div><h3>😂 Show up and laugh</h3><p>Flash your ticket at the door, grab a seat, and let the headliner do the rest.</p></div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="logo"><span class="spark"></span>Bug<span class="tag">Con</span></div>
-  <div>Demo concept — not a real marketplace. Countdown is client-side and resets on reload.</div>
+  <div class="logo"><span class="spark"></span>LOL<span class="tag"> Nights</span></div>
+  <div>Demo concept — not a real box office. Countdown is client-side and resets on reload.</div>
 </footer>
 
 <div id="toastWrap"></div>
@@ -321,10 +329,10 @@
 })();
 
 /* ---------- hero + nav countdown (fixed target, ~15 days) ---------- */
-const DROP_TARGET = Date.now() + (15*24*60*60*1000) + (3*60*60*1000) + (22*60*1000);
+const SHOW_TARGET = Date.now() + (15*24*60*60*1000) + (3*60*60*1000) + (22*60*1000);
 function pad(n){ return String(n).padStart(2,'0'); }
 function tickHero(){
-  const diff = Math.max(0, DROP_TARGET - Date.now());
+  const diff = Math.max(0, SHOW_TARGET - Date.now());
   const d = Math.floor(diff/86400000);
   const h = Math.floor(diff%86400000/3600000);
   const m = Math.floor(diff%3600000/60000);
@@ -345,45 +353,45 @@ function animateNum(el, target, opts){
   function frame(now){
     const p = Math.min(1,(now-start)/dur);
     const eased = 1 - Math.pow(1-p, 3);
-    const val = Math.round(from + (target-from)*eased);
-    el.textContent = prefix + val.toLocaleString() + suffix;
+    const val = from + (target-from)*eased;
+    const shown = opts.decimals ? val.toFixed(opts.decimals) : Math.round(val).toLocaleString();
+    el.textContent = prefix + shown + suffix;
     if(p<1) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 }
-animateNum(document.getElementById('statIssues'), 24);
-animateNum(document.getElementById('statFixers'), 318);
-animateNum(document.getElementById('statPayout'), 12480, {prefix:'$'});
-animateNum(document.getElementById('statTime'), 9, {suffix:'m'});
+animateNum(document.getElementById('statShows'), 18);
+animateNum(document.getElementById('statSeats'), 42);
+animateNum(document.getElementById('statSold'), 9640, {prefix:'$'});
+animateNum(document.getElementById('statRating'), 4.8, {decimals:1});
 
 /* ---------- ticker ---------- */
 const tickerMsgs = [
-  '#4521 CLAIMED by <b>@rowan</b>', '#4498 SOLD OUT', '#4560 new ticket just dropped',
-  '#4402 fix merged — payout sent', '#4515 <b>4m</b> left on the clock', '#4488 CLAIMED by <b>@nadia</b>',
-  '#4530 new ticket just dropped', '#4470 fix merged — payout sent'
+  'Front row CLAIMED by <b>@marcus</b>', 'Sat night show SOLD OUT', 'New show just dropped: Friday 9pm',
+  '"Best set I\'ve seen all year" — crowd review', '<b>3 seats</b> left for tonight\'s show', 'VIP table CLAIMED by <b>@priya</b>',
+  'New show just dropped: Late Show Saturday', 'Open mic night — seats refilled'
 ];
 const tickerEl = document.getElementById('ticker');
 const tickerHtml = tickerMsgs.map(t => `<span>◆ ${t}</span>`).join('');
 tickerEl.innerHTML = tickerHtml + tickerHtml;
 
 /* ---------- ticket data ---------- */
-const SEVERITIES = ['critical','high','medium','low'];
-const TICKETS = [
-  { id:'#4521', sev:'critical', tag:'auth', title:'Login silently fails on Safari after 2FA redirect', price:180, mins:38, total:6, claimed:5 },
-  { id:'#4522', sev:'high', tag:'checkout', title:'Cart total rounds down a cent on multi-currency orders', price:120, mins:95, total:8, claimed:3 },
-  { id:'#4523', sev:'medium', tag:'ui', title:'Dropdown menu overlaps footer on 13" screens', price:60, mins:210, total:10, claimed:2 },
-  { id:'#4524', sev:'critical', tag:'infra', title:'Webhook retries duplicate orders under load', price:220, mins:20, total:4, claimed:4 },
-  { id:'#4525', sev:'low', tag:'copy', title:'Typo in onboarding email subject line', price:20, mins:480, total:12, claimed:1 },
-  { id:'#4526', sev:'high', tag:'perf', title:'Image gallery jank-scrolls on mid-tier Android', price:140, mins:150, total:7, claimed:5 },
-  { id:'#4527', sev:'medium', tag:'api', title:'Rate limit header missing on 429 response', price:75, mins:300, total:9, claimed:0 },
-  { id:'#4528', sev:'critical', tag:'security', title:'Password reset token doesn\'t expire after use', price:260, mins:12, total:5, claimed:5 },
-  { id:'#4529', sev:'low', tag:'a11y', title:'Focus ring missing on custom checkbox component', price:35, mins:600, total:15, claimed:6 },
+const CATEGORIES = ['headliner','open-mic','improv','late-show'];
+const CAT_LABEL = { 'headliner':'Headliner', 'open-mic':'Open Mic', 'improv':'Improv', 'late-show':'Late Show' };
+const SHOWS = [
+  { id:'#101', cat:'headliner', emoji:'🎤', hot:true, title:'Dana Reyes: Live & Unfiltered', comic:'Dana Reyes', venue:'The Velvet Room', when:'Fri · 8:00 PM', price:45, mins:38, total:80, claimed:74 },
+  { id:'#102', cat:'late-show', emoji:'🌙', hot:false, title:'Midnight Madness — Late Show', comic:'Jordan Blake + guests', venue:'Chuckle Hall', when:'Fri · 11:00 PM', price:30, mins:95, total:60, claimed:22 },
+  { id:'#103', cat:'open-mic', emoji:'🎙', hot:false, title:'Open Mic: New Voices Night', comic:'12 rotating comics', venue:'The Basement Bar', when:'Wed · 7:30 PM', price:10, mins:210, total:50, claimed:14 },
+  { id:'#104', cat:'improv', emoji:'🎭', hot:true, title:'Whose Bit Is It Anyway?', comic:'The Sidekicks', venue:'The Loft Theater', when:'Sat · 6:00 PM', price:25, mins:20, total:40, claimed:39 },
+  { id:'#105', cat:'headliner', emoji:'⭐', hot:false, title:'Marcus Chen: Grown Man Problems', comic:'Marcus Chen', venue:'The Velvet Room', when:'Sat · 9:00 PM', price:50, mins:480, total:90, claimed:31 },
+  { id:'#106', cat:'improv', emoji:'🎭', hot:false, title:'Yes, And... Live Improv Jam', comic:'City Sketch Co.', venue:'The Loft Theater', when:'Sun · 5:00 PM', price:20, mins:150, total:45, claimed:26 },
+  { id:'#107', cat:'late-show', emoji:'🌙', hot:false, title:'After Dark Comedy Hour', comic:'Riley Fox', venue:'Chuckle Hall', when:'Sat · 11:30 PM', price:28, mins:300, total:55, claimed:9 },
+  { id:'#108', cat:'headliner', emoji:'🔥', hot:true, title:'Priya Nair: Sold Out Tour Stop', comic:'Priya Nair', venue:'The Velvet Room', when:'Sun · 7:00 PM', price:55, mins:12, total:100, claimed:97 },
+  { id:'#109', cat:'open-mic', emoji:'🎙', hot:false, title:'Open Mic: Amateur Hour', comic:'15 rotating comics', venue:'The Basement Bar', when:'Mon · 7:30 PM', price:8, mins:600, total:50, claimed:11 },
 ];
 
 const grid = document.getElementById('ticketGrid');
 const filtersEl = document.getElementById('filters');
-
-function sevLabel(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
 function makeFilterBtn(label, val, active){
   const b = document.createElement('button');
@@ -397,16 +405,16 @@ function makeFilterBtn(label, val, active){
   });
   return b;
 }
-filtersEl.appendChild(makeFilterBtn('All', 'all', true));
-SEVERITIES.forEach(s => filtersEl.appendChild(makeFilterBtn(sevLabel(s), s, false)));
+filtersEl.appendChild(makeFilterBtn('All shows', 'all', true));
+CATEGORIES.forEach(c => filtersEl.appendChild(makeFilterBtn(CAT_LABEL[c], c, false)));
 
 const ticketState = {};
-TICKETS.forEach(t => { ticketState[t.id] = { claimed: t.claimed, expiresAt: Date.now() + t.mins*60000, bought:false }; });
+SHOWS.forEach(t => { ticketState[t.id] = { claimed: t.claimed, expiresAt: Date.now() + t.mins*60000, bought:false }; });
 
 function renderTickets(filter){
   filter = filter || 'all';
   grid.innerHTML = '';
-  TICKETS.filter(t => filter==='all' || t.sev===filter).forEach(t => {
+  SHOWS.filter(t => filter==='all' || t.cat===filter).forEach(t => {
     const st = ticketState[t.id];
     const soldOut = st.claimed >= t.total && !st.bought;
     const pct = Math.min(100, Math.round(st.claimed/t.total*100));
@@ -418,28 +426,32 @@ function renderTickets(filter){
       <div class="ticket-inner">
         <div class="ticket-face front">
           <div class="t-top">
-            <div class="t-id">${t.id}</div>
-            <div class="t-sev sev-${t.sev}">${sevLabel(t.sev)}</div>
+            <div class="t-emoji">${t.emoji}</div>
+            ${t.hot ? '<div class="t-hot">Selling fast</div>' : ''}
           </div>
           <div class="t-title">${t.title}</div>
-          <div class="t-tag">#${t.tag}</div>
+          <div class="t-comic">${t.comic}</div>
+          <div class="t-meta">
+            <div>📍 ${t.venue}</div>
+            <div>🗓 ${t.when}</div>
+          </div>
           <div class="t-progress">
             <div class="t-bar"><div class="t-bar-fill" style="width:${pct}%"></div></div>
-            <div class="t-claimed">${st.claimed}/${t.total} claimed</div>
+            <div class="t-claimed">${st.claimed}/${t.total} seats claimed</div>
           </div>
           <div class="t-perf"></div>
           <div class="t-bottom">
-            <div class="t-price">$${t.price}<small>bounty</small></div>
-            <div class="t-cd mono" data-expires="${st.expiresAt}"><small>closes in</small>--:--</div>
+            <div class="t-price">$${t.price}<small>per seat</small></div>
+            <div class="t-cd mono" data-expires="${st.expiresAt}"><small>hold expires</small>--:--</div>
           </div>
           <button class="t-buy ${soldOut?'sold':''}" ${soldOut?'disabled':''}>${soldOut?'Sold out':'Buy ticket →'}</button>
         </div>
         <div class="ticket-face back">
           <div class="back-check"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#0a0a0f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <div class="back-title">Ticket claimed!</div>
+          <div class="back-title">You're in!</div>
           <div class="back-code">${t.id}-${Math.random().toString(36).slice(2,7).toUpperCase()}</div>
-          <div class="back-sub">Clock's yours now. Ship the fix before it runs out.</div>
-          <button class="back-undo">release ticket</button>
+          <div class="back-sub">Seat's yours. Show up before doors close — flash this code at the venue.</div>
+          <button class="back-undo">release seat</button>
         </div>
       </div>
     `;
@@ -465,7 +477,7 @@ function buyTicket(t, card){
   st.claimed = Math.min(t.total, st.claimed+1);
   st.bought = true;
   card.classList.add('flipped');
-  showToast(`🎟 Ticket ${t.id} claimed — clock is running`);
+  showToast(`🎟 Seat locked for ${t.title}`);
   burstConfetti();
 }
 
