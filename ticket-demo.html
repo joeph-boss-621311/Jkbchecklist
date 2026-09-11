@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LOL Nights — Comedy Show Tickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070a;
+    --bg-2:#0c0c12;
+    --card:#121218;
+    --card-2:#181820;
+    --line:rgba(255,255,255,0.08);
+    --text:#f5f4f2;
+    --text-dim:#8d8b9a;
+    --violet:#8b5cf6;
+    --violet-2:#a78bfa;
+    --pink:#f0498f;
+    --cyan:#3ee8d8;
+    --gold:#f0c968;
+    --crit:#ff4d5e;
+    --shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{ font-family:'Sora',system-ui,sans-serif; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  a{ color:inherit; }
+  ::selection{ background:var(--violet); color:#fff; }
+
+  /* ---------- background fx ---------- */
+  .bg-fx{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .blob{ position:absolute; border-radius:50%; filter:blur(90px); opacity:0.45; animation: drift 22s ease-in-out infinite; }
+  .blob.b1{ width:520px; height:520px; background:var(--violet); top:-160px; left:-120px; }
+  .blob.b2{ width:460px; height:460px; background:var(--pink); bottom:-140px; right:-100px; animation-delay:-7s; }
+  .blob.b3{ width:380px; height:380px; background:var(--cyan); top:38%; left:55%; animation-delay:-14s; opacity:0.28; }
+  @keyframes drift{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    33%{ transform:translate(40px,-30px) scale(1.08); }
+    66%{ transform:translate(-30px,25px) scale(0.95); }
+  }
+  .grid-overlay{
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 40%, transparent 100%);
+  }
+  .stars{ position:absolute; inset:0; }
+  .star{ position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; opacity:0.5; animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle{ 0%,100%{opacity:0.15;} 50%{opacity:0.9;} }
+
+  /* spotlight sweep behind hero */
+  .spotlights{ position:absolute; inset:0; overflow:hidden; }
+  .spot{ position:absolute; top:-20%; width:220px; height:160%; background:linear-gradient(180deg, rgba(255,255,255,0.10), transparent 70%); transform-origin:top center; animation: sweep 7s ease-in-out infinite; filter:blur(6px); }
+  .spot.s1{ left:8%; animation-delay:0s; }
+  .spot.s2{ left:45%; animation-delay:-2.3s; background:linear-gradient(180deg, rgba(240,201,104,0.10), transparent 70%); }
+  .spot.s3{ left:78%; animation-delay:-4.6s; background:linear-gradient(180deg, rgba(62,232,216,0.10), transparent 70%); }
+  @keyframes sweep{ 0%,100%{ transform:rotate(-16deg);} 50%{ transform:rotate(16deg);} }
+
+  /* ---------- layout wrappers ---------- */
+  .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 24px; }
+
+  /* ---------- nav ---------- */
+  nav{ position:sticky; top:0; z-index:50; backdrop-filter:blur(14px); background:rgba(7,7,10,0.65); border-bottom:1px solid var(--line); }
+  .nav-inner{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px; margin:0 auto; }
+  .logo{ font-weight:900; font-size:1.15rem; letter-spacing:0.3px; display:flex; align-items:center; gap:8px; }
+  .logo .tag{ background:linear-gradient(135deg,var(--violet),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .logo .spark{ width:9px; height:9px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px var(--cyan); animation:pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ transform:scale(1); opacity:1;} 50%{ transform:scale(1.6); opacity:0.5;} }
+  .nav-cd{ display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--text-dim); border:1px solid var(--line); padding:7px 14px; border-radius:999px; }
+  .nav-cd b{ color:var(--gold); font-weight:700; }
+  .nav-cd .live{ width:6px; height:6px; border-radius:50%; background:var(--crit); animation:pulse 1s ease-in-out infinite; }
+
+  /* ---------- hero ---------- */
+  .hero{ padding:88px 0 60px; text-align:center; }
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:999px;
+    border:1px solid var(--line); background:var(--card); font-size:0.76rem; color:var(--violet-2);
+    font-weight:600; letter-spacing:0.4px; margin-bottom:26px; text-transform:uppercase;
+  }
+  .hero h1{ font-size:clamp(2.3rem, 6vw, 4.4rem); font-weight:900; line-height:1.05; margin:0 0 18px; letter-spacing:-1px; }
+  .hero h1 .grad{ background:linear-gradient(135deg,var(--violet-2),var(--pink) 55%, var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p{ color:var(--text-dim); font-size:1.05rem; max-width:560px; margin:0 auto 40px; line-height:1.6; }
+
+  .countdown{ display:flex; justify-content:center; gap:14px; margin-bottom:44px; flex-wrap:wrap; }
+  .cd-box{
+    background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px 22px; min-width:88px;
+    box-shadow: var(--shadow); position:relative; overflow:hidden;
+  }
+  .cd-box::before{ content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(139,92,246,0.15), transparent 60%); }
+  .cd-num{ font-family:'JetBrains Mono',monospace; font-size:2.1rem; font-weight:700; position:relative; z-index:1; font-variant-numeric:tabular-nums; }
+  .cd-label{ font-size:0.66rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.2px; margin-top:4px; position:relative; z-index:1; }
+
+  .hero-cta{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .btn{
+    padding:14px 28px; border-radius:12px; font-weight:700; font-size:0.92rem; cursor:pointer; border:none;
+    font-family:inherit; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:active{ transform:scale(0.96); }
+  .btn-primary{ background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; box-shadow:0 10px 30px rgba(139,92,246,0.35); }
+  .btn-primary:hover{ box-shadow:0 14px 38px rgba(139,92,246,0.5); transform:translateY(-2px); }
+  .btn-ghost{ background:transparent; color:var(--text); border:1px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--violet-2); color:var(--violet-2); }
+
+  /* ---------- stats ---------- */
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; padding:40px 0 20px; }
+  .stat{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 18px; text-align:center; }
+  .stat .n{ font-family:'JetBrains Mono',monospace; font-size:1.9rem; font-weight:700; background:linear-gradient(135deg,var(--violet-2),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .stat .l{ font-size:0.72rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-top:6px; }
+
+  /* ---------- section heads ---------- */
+  .section{ padding:70px 0; }
+  .sec-head{ text-align:center; margin-bottom:42px; }
+  .sec-head h2{ font-size:clamp(1.6rem,4vw,2.4rem); font-weight:800; margin:0 0 10px; }
+  .sec-head p{ color:var(--text-dim); font-size:0.95rem; max-width:520px; margin:0 auto; }
+  .filters{ display:flex; gap:10px; justify-content:center; margin:26px 0 40px; flex-wrap:wrap; }
+  .filter-btn{
+    padding:9px 18px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--text-dim);
+    font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s ease; font-family:inherit;
+  }
+  .filter-btn.active, .filter-btn:hover{ border-color:var(--violet); color:#fff; background:rgba(139,92,246,0.15); }
+
+  /* ---------- ticket grid ---------- */
+  .tickets{ display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:24px; }
+  .ticket{
+    position:relative; perspective:1400px; height:340px;
+  }
+  .ticket-inner{
+    position:relative; width:100%; height:100%; transition: transform 0.7s cubic-bezier(.2,.8,.2,1); transform-style:preserve-3d;
+  }
+  .ticket.flipped .ticket-inner{ transform: rotateY(180deg); }
+  .ticket-face{
+    position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; overflow:hidden;
+    border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow);
+    display:flex; flex-direction:column; transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .ticket:hover .ticket-face.front{ transform: translateY(-4px); border-color: var(--violet); }
+  .ticket-face.back{ transform: rotateY(180deg); align-items:center; justify-content:center; text-align:center; padding:26px; background:linear-gradient(160deg, var(--card), var(--card-2)); }
+
+  .t-top{ padding:18px 20px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .t-emoji{ font-size:1.6rem; }
+  .t-hot{ font-size:0.66rem; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; background:rgba(255,77,94,0.15); color:var(--crit); border:1px solid rgba(255,77,94,0.35); }
+
+  .t-title{ padding:10px 20px 0; font-weight:700; font-size:1.08rem; line-height:1.3; }
+  .t-comic{ padding:4px 20px 0; font-size:0.8rem; color:var(--violet-2); font-weight:600; }
+  .t-meta{ padding:8px 20px 0; font-size:0.78rem; color:var(--text-dim); flex:1; }
+  .t-meta div{ margin-bottom:3px; }
+
+  .t-perf{ position:relative; margin:14px 0 0; height:0; border-top:1.5px dashed var(--line); }
+  .t-perf::before, .t-perf::after{
+    content:""; position:absolute; top:-9px; width:18px; height:18px; background:var(--bg); border-radius:50%;
+  }
+  .t-perf::before{ left:-9px; }
+  .t-perf::after{ right:-9px; }
+
+  .t-bottom{ padding:14px 20px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .t-price{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.15rem; }
+  .t-price small{ font-size:0.65rem; color:var(--text-dim); font-weight:500; display:block; font-family:'Inter',sans-serif; }
+  .t-cd{ font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--gold); text-align:right; }
+  .t-cd small{ display:block; font-size:0.62rem; color:var(--text-dim); font-family:'Inter',sans-serif; font-weight:500; }
+
+  .t-progress{ padding:10px 20px 0; }
+  .t-bar{ height:5px; border-radius:4px; background:var(--card-2); overflow:hidden; }
+  .t-bar-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,var(--violet),var(--pink)); transition:width 0.4s ease; }
+  .t-claimed{ font-size:0.65rem; color:var(--text-dim); margin-top:5px; }
+
+  .t-buy{
+    margin:14px 20px 20px; padding:11px; border-radius:11px; border:none; cursor:pointer; font-weight:700; font-size:0.85rem;
+    background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .t-buy:hover{ transform:translateY(-2px); }
+  .t-buy:active{ transform:scale(0.97); }
+  .t-buy.sold{ background:var(--card-2); color:var(--text-dim); cursor:not-allowed; }
+  .t-buy.sold:hover{ transform:none; }
+
+  .back-check{ width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--violet)); display:flex; align-items:center; justify-content:center; margin-bottom:14px; animation: pop 0.5s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes pop{ 0%{ transform:scale(0); } 70%{ transform:scale(1.15);} 100%{ transform:scale(1);} }
+  .back-check svg{ width:26px; height:26px; }
+  .back-title{ font-weight:800; font-size:1.05rem; margin-bottom:6px; }
+  .back-code{ font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--cyan); background:var(--bg); padding:6px 12px; border-radius:8px; margin-bottom:12px; letter-spacing:1px; }
+  .back-sub{ font-size:0.78rem; color:var(--text-dim); }
+  .back-undo{ margin-top:14px; font-size:0.72rem; color:var(--text-dim); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:inherit; }
+
+  /* ---------- how it works ---------- */
+  .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .step{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px 22px; position:relative; overflow:hidden; }
+  .step .num{ font-family:'JetBrains Mono',monospace; font-size:2.4rem; font-weight:700; opacity:0.15; position:absolute; top:10px; right:16px; }
+  .step h3{ font-size:1.02rem; margin:6px 0 8px; }
+  .step p{ color:var(--text-dim); font-size:0.85rem; line-height:1.55; margin:0; }
+
+  /* ---------- ticker ---------- */
+  .ticker-wrap{ border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--card); overflow:hidden; padding:14px 0; }
+  .ticker{ display:flex; gap:40px; white-space:nowrap; animation: scroll-left 26s linear infinite; width:max-content; }
+  .ticker span{ font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text-dim); }
+  .ticker span b{ color:var(--cyan); }
+  @keyframes scroll-left{ from{ transform:translateX(0);} to{ transform:translateX(-50%);} }
+
+  footer{ padding:50px 0 40px; text-align:center; color:var(--text-dim); font-size:0.82rem; border-top:1px solid var(--line); margin-top:30px; }
+  footer .logo{ justify-content:center; margin-bottom:10px; }
+
+  /* ---------- toast ---------- */
+  #toastWrap{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:100; display:flex; flex-direction:column; gap:10px; align-items:center; }
+  .toast{
+    background:var(--card); border:1px solid var(--violet); color:var(--text); padding:12px 20px; border-radius:12px;
+    font-size:0.85rem; box-shadow:var(--shadow); display:flex; align-items:center; gap:10px; animation: toast-in 0.3s ease, toast-out 0.3s ease 2.4s forwards;
+  }
+  @keyframes toast-in{ from{ opacity:0; transform:translateY(16px);} to{ opacity:1; transform:translateY(0);} }
+  @keyframes toast-out{ to{ opacity:0; transform:translateY(-10px); } }
+
+  /* confetti */
+  #confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:99; }
+
+  @media (max-width:760px){
+    .stats{ grid-template-columns:repeat(2,1fr); }
+    .steps{ grid-template-columns:1fr; }
+    .nav-cd{ display:none; }
+  }
+  @media (max-width:520px){
+    .countdown{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .cd-box{ padding:12px 6px; min-width:0; }
+    .cd-num{ font-size:1.5rem; }
+    .cd-label{ font-size:0.58rem; letter-spacing:0.6px; }
+    .hero{ padding:64px 0 44px; }
+    .comic-photo{ height:150px; font-size:2.6rem; }
+  }
+
+  /* ---------- cursor glow ---------- */
+  #cursorGlow{
+    position:fixed; top:0; left:0; width:480px; height:480px; margin:-240px 0 0 -240px;
+    background:radial-gradient(circle, rgba(139,92,246,0.16), rgba(240,73,143,0.06) 45%, transparent 70%);
+    border-radius:50%; pointer-events:none; z-index:2; will-change:transform; opacity:0;
+    transition: opacity 0.4s ease;
+  }
+  @media (hover:none){ #cursorGlow{ display:none; } }
+
+  /* ---------- scroll reveal ---------- */
+  .reveal{ opacity:0; transform:translateY(28px); transition: opacity 0.7s cubic-bezier(.2,.7,.2,1), transform 0.7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .reveal-group .reveal:nth-child(1){ transition-delay:0s; }
+  .reveal-group .reveal:nth-child(2){ transition-delay:0.08s; }
+  .reveal-group .reveal:nth-child(3){ transition-delay:0.16s; }
+  .reveal-group .reveal:nth-child(4){ transition-delay:0.24s; }
+  .reveal-group .reveal:nth-child(5){ transition-delay:0.32s; }
+  .reveal-group .reveal:nth-child(6){ transition-delay:0.4s; }
+
+  /* ---------- magnetic buttons ---------- */
+  .magnetic{ transition: transform 0.25s cubic-bezier(.2,.9,.3,1.3), box-shadow 0.15s ease; }
+
+  /* ---------- comedian spotlight ---------- */
+  .comics{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:20px; }
+  .comic-card{
+    background:var(--card); border:1px solid var(--line); border-radius:20px; overflow:hidden; position:relative;
+    box-shadow:var(--shadow); transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .comic-card:hover{ transform:translateY(-6px); border-color:var(--violet); }
+  .comic-photo{
+    height:180px; position:relative; display:flex; align-items:center; justify-content:center; font-size:3.4rem;
+    background: linear-gradient(150deg, var(--photo-a,#8b5cf6), var(--photo-b,#3ee8d8));
+  }
+  .comic-photo::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, var(--card) 0%, transparent 55%); }
+  .comic-badge{ position:absolute; top:14px; left:14px; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:999px; background:rgba(7,7,10,0.55); backdrop-filter:blur(6px); z-index:1; }
+  .comic-body{ padding:18px 20px 22px; }
+  .comic-name{ font-weight:800; font-size:1.15rem; margin-bottom:2px; }
+  .comic-role{ font-size:0.76rem; color:var(--violet-2); font-weight:600; margin-bottom:12px; }
+  .comic-quote{ font-size:0.86rem; color:var(--text-dim); line-height:1.55; font-style:italic; margin-bottom:14px; }
+  .comic-quote::before{ content:"“"; color:var(--violet-2); font-style:normal; }
+  .comic-quote::after{ content:"”"; color:var(--violet-2); font-style:normal; }
+  .comic-link{ font-size:0.78rem; font-weight:700; color:var(--cyan); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+  .comic-link:hover{ text-decoration:underline; }
+
+  /* ---------- testimonials ---------- */
+  .testimonials{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:18px; }
+  .testi{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
+  .testi .stars{ position:static; color:var(--gold); font-size:0.85rem; letter-spacing:2px; margin-bottom:10px; }
+  .testi p{ font-size:0.87rem; color:var(--text); line-height:1.6; margin:0 0 14px; }
+  .testi .who{ display:flex; align-items:center; gap:10px; }
+  .testi .avatar{ width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--violet),var(--cyan)); flex-shrink:0; }
+  .testi .name{ font-size:0.8rem; font-weight:700; }
+  .testi .sub{ font-size:0.7rem; color:var(--text-dim); }
+
+  /* ---------- FAQ ---------- */
+  .faq{ max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+  .faq-item{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .faq-q{ padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-weight:700; font-size:0.92rem; gap:14px; }
+  .faq-q .plus{ font-size:1.1rem; color:var(--violet-2); transition:transform 0.25s ease; flex-shrink:0; }
+  .faq-item.open .faq-q .plus{ transform:rotate(45deg); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+  .faq-item.open .faq-a{ max-height:200px; }
+  .faq-a p{ padding:0 20px 16px; margin:0; color:var(--text-dim); font-size:0.85rem; line-height:1.6; }
+
+  /* ---------- sticky buy bar ---------- */
+  #stickyBar{
+    position:fixed; left:50%; bottom:20px; transform:translate(-50%, 140%); z-index:60;
+    background:rgba(18,18,24,0.85); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:16px;
+    padding:12px 14px 12px 20px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow);
+    transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
+  }
+  #stickyBar.show{ transform:translate(-50%, 0); }
+  #stickyBar .sb-text{ font-size:0.82rem; }
+  #stickyBar .sb-text b{ color:var(--gold); font-family:'JetBrains Mono',monospace; }
+  @media (max-width:640px){ #stickyBar .sb-text{ display:none; } }
+</style>
+</head>
+<body>
+
+<div class="bg-fx">
+  <div class="grid-overlay"></div>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="spotlights">
+    <div class="spot s1"></div>
+    <div class="spot s2"></div>
+    <div class="spot s3"></div>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><span class="spark"></span>LOL<span class="tag"> Nights</span></div>
+    <div class="nav-cd"><span class="live"></span>Next show in <b id="navCountdown">--:--:--</b></div>
+  </div>
+</nav>
+
+<div class="wrap hero">
+  <div class="kicker">🎤 Live comedy, real laughs, real seats</div>
+  <h1>Grab a seat.<br>Laugh till it <span class="grad">hurts</span>.<br>Doors close soon.</h1>
+  <p>Our next headline night is almost sold out. Every seat is a ticket, every ticket has a clock — snag yours before the countdown hits zero.</p>
+
+  <div class="countdown" id="heroCountdown">
+    <div class="cd-box"><div class="cd-num" id="cdDays">15</div><div class="cd-label">Days</div></div>
+    <div class="cd-box"><div class="cd-num" id="cdHours">00</div><div class="cd-label">Hours</div></div>
+    <div class="cd-box"><div class="cd-num" id="cdMins">00</div><div class="cd-label">Minutes</div></div>
+    <div class="cd-box"><div class="cd-num" id="cdSecs">00</div><div class="cd-label">Seconds</div></div>
+  </div>
+
+  <div class="hero-cta">
+    <a href="#tickets" class="btn btn-primary">Browse shows</a>
+    <a href="#how" class="btn btn-ghost">How it works</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="n" id="statShows">0</div><div class="l">Shows this month</div></div>
+    <div class="stat"><div class="n" id="statSeats">0</div><div class="l">Seats left tonight</div></div>
+    <div class="stat"><div class="n" id="statSold">$0</div><div class="l">Tickets sold this week</div></div>
+    <div class="stat"><div class="n" id="statRating">0.0</div><div class="l">Avg crowd rating</div></div>
+  </div>
+</div>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<section class="section" id="comics">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>Meet the headliners</h2>
+      <p>The names people show up early for. New faces get added to the lineup every month.</p>
+    </div>
+    <div class="comics reveal-group">
+      <div class="comic-card reveal">
+        <div class="comic-photo" style="--photo-a:#8b5cf6;--photo-b:#3ee8d8;">🎤<span class="comic-badge">Headliner</span></div>
+        <div class="comic-body">
+          <div class="comic-name">Dana Reyes</div>
+          <div class="comic-role">Live & Unfiltered · The Velvet Room</div>
+          <div class="comic-quote">Best set I've seen all year — worth every second in that queue.</div>
+          <a href="#tickets" class="comic-link">See her show →</a>
+        </div>
+      </div>
+      <div class="comic-card reveal">
+        <div class="comic-photo" style="--photo-a:#f0498f;--photo-b:#f0c968;">⭐<span class="comic-badge">Headliner</span></div>
+        <div class="comic-body">
+          <div class="comic-name">Marcus Chen</div>
+          <div class="comic-role">Grown Man Problems · The Velvet Room</div>
+          <div class="comic-quote">Had the whole room crying-laughing by the second bit.</div>
+          <a href="#tickets" class="comic-link">See his show →</a>
+        </div>
+      </div>
+      <div class="comic-card reveal">
+        <div class="comic-photo" style="--photo-a:#3ee8d8;--photo-b:#8b5cf6;">🔥<span class="comic-badge">Selling fast</span></div>
+        <div class="comic-body">
+          <div class="comic-name">Priya Nair</div>
+          <div class="comic-role">Sold Out Tour Stop · The Velvet Room</div>
+          <div class="comic-quote">Sharp, fast, and somehow already sold out three cities in a row.</div>
+          <a href="#tickets" class="comic-link">See her show →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="tickets">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>This week's lineup</h2>
+      <p>Every card is a real seat count. Grab one, and the countdown on it becomes your own personal reminder — let it hit zero and it's back up for grabs.</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="tickets" id="ticketGrid"></div>
+  </div>
+</section>
+
+<section class="section" id="testimonials">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>What the crowd says</h2>
+      <p>Real seats, real nights out.</p>
+    </div>
+    <div class="testimonials reveal-group">
+      <div class="testi reveal">
+        <div class="stars">★★★★★</div>
+        <p>Bought a ticket on a whim, ended up laughing so hard I couldn't hear the next joke. Doing this every month now.</p>
+        <div class="who"><div class="avatar"></div><div><div class="name">Aisha O.</div><div class="sub">Open Mic regular</div></div></div>
+      </div>
+      <div class="testi reveal">
+        <div class="stars">★★★★★</div>
+        <p>The countdown thing actually got me to stop procrastinating and just buy the ticket before it sold out. Worked.</p>
+        <div class="who"><div class="avatar"></div><div><div class="name">Femi A.</div><div class="sub">First-timer</div></div></div>
+      </div>
+      <div class="testi reveal">
+        <div class="stars">★★★★☆</div>
+        <p>Venue was packed but the seat was exactly where the app said it'd be. Smooth night, great lineup.</p>
+        <div class="who"><div class="avatar"></div><div><div class="name">Grace T.</div><div class="sub">Velvet Room regular</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>How LOL Nights works</h2>
+      <p>Three steps between you and a night of laughing way too hard.</p>
+    </div>
+    <div class="steps reveal-group">
+      <div class="step reveal"><div class="num">01</div><h3>🎟 Buy your ticket</h3><p>One click locks in your seat. Your name goes on it, and the venue's countdown starts ticking for you.</p></div>
+      <div class="step reveal"><div class="num">02</div><h3>📅 Beat the clock</h3><p>Doors open at showtime, not a minute later. Miss the window and the seat resells to the next fan in line.</p></div>
+      <div class="step reveal"><div class="num">03</div><h3>😂 Show up and laugh</h3><p>Flash your ticket at the door, grab a seat, and let the headliner do the rest.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <h2>Questions people actually ask</h2>
+      <p>Still curious? Here's the rundown.</p>
+    </div>
+    <div class="faq" id="faqList">
+      <div class="faq-item">
+        <div class="faq-q">Can I get a refund if I can't make it? <span class="plus">+</span></div>
+        <div class="faq-a"><p>Seats are refundable up to 24 hours before doors open. After that, your hold can still be transferred to a friend — just show them the code.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is there an age restriction? <span class="plus">+</span></div>
+        <div class="faq-a"><p>Most shows are 18+. Sunday matinee slots and select Open Mic nights are all-ages — check the tag on the ticket card.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What time should I actually show up? <span class="plus">+</span></div>
+        <div class="faq-a"><p>Doors open 30 minutes before showtime. Seating is first-come within your ticket tier, so earlier gets you closer to the stage.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What happens if my hold expires? <span class="plus">+</span></div>
+        <div class="faq-a"><p>The seat drops back into the pool for other fans. You can just claim a fresh ticket if one's still available.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo"><span class="spark"></span>LOL<span class="tag"> Nights</span></div>
+  <div>Demo concept — not a real box office. Countdown is client-side and resets on reload.</div>
+</footer>
+
+<div id="cursorGlow"></div>
+<div id="stickyBar">
+  <div class="sb-text">Next show in <b id="sbCountdown">--:--:--</b></div>
+  <a href="#tickets" class="btn btn-primary magnetic" style="padding:10px 20px;font-size:0.82rem;">Get tickets</a>
+</div>
+<div id="toastWrap"></div>
+<canvas id="confettiCanvas"></canvas>
+
+<script>
+/* ---------- starfield ---------- */
+(function(){
+  const box = document.getElementById('stars');
+  for(let i=0;i<60;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*3)+'s';
+    s.style.animationDuration = (2+Math.random()*3)+'s';
+    box.appendChild(s);
+  }
+})();
+
+/* ---------- hero + nav countdown (fixed target, ~15 days) ---------- */
+const SHOW_TARGET = Date.now() + (15*24*60*60*1000) + (3*60*60*1000) + (22*60*1000);
+function pad(n){ return String(n).padStart(2,'0'); }
+function tickHero(){
+  const diff = Math.max(0, SHOW_TARGET - Date.now());
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor(diff%86400000/3600000);
+  const m = Math.floor(diff%3600000/60000);
+  const s = Math.floor(diff%60000/1000);
+  document.getElementById('cdDays').textContent = d;
+  document.getElementById('cdHours').textContent = pad(h);
+  document.getElementById('cdMins').textContent = pad(m);
+  document.getElementById('cdSecs').textContent = pad(s);
+  document.getElementById('navCountdown').textContent = d+'d '+pad(h)+':'+pad(m)+':'+pad(s);
+}
+tickHero(); setInterval(tickHero, 1000);
+
+function tickSticky(){
+  const diff = Math.max(0, SHOW_TARGET - Date.now());
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor(diff%86400000/3600000);
+  const m = Math.floor(diff%3600000/60000);
+  const sbEl = document.getElementById('sbCountdown');
+  if(sbEl) sbEl.textContent = d+'d '+pad(h)+':'+pad(m);
+}
+tickSticky(); setInterval(tickSticky, 1000);
+
+/* ---------- animated stat counters ---------- */
+function animateNum(el, target, opts){
+  opts = opts||{};
+  const prefix = opts.prefix||'', suffix = opts.suffix||'';
+  const dur = 1400, start = performance.now(), from = 0;
+  function frame(now){
+    const p = Math.min(1,(now-start)/dur);
+    const eased = 1 - Math.pow(1-p, 3);
+    const val = from + (target-from)*eased;
+    const shown = opts.decimals ? val.toFixed(opts.decimals) : Math.round(val).toLocaleString();
+    el.textContent = prefix + shown + suffix;
+    if(p<1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+animateNum(document.getElementById('statShows'), 18);
+animateNum(document.getElementById('statSeats'), 42);
+animateNum(document.getElementById('statSold'), 9640, {prefix:'$'});
+animateNum(document.getElementById('statRating'), 4.8, {decimals:1});
+
+/* ---------- ticker ---------- */
+const tickerMsgs = [
+  'Front row CLAIMED by <b>@marcus</b>', 'Sat night show SOLD OUT', 'New show just dropped: Friday 9pm',
+  '"Best set I\'ve seen all year" — crowd review', '<b>3 seats</b> left for tonight\'s show', 'VIP table CLAIMED by <b>@priya</b>',
+  'New show just dropped: Late Show Saturday', 'Open mic night — seats refilled'
+];
+const tickerEl = document.getElementById('ticker');
+const tickerHtml = tickerMsgs.map(t => `<span>◆ ${t}</span>`).join('');
+tickerEl.innerHTML = tickerHtml + tickerHtml;
+
+/* ---------- ticket data ---------- */
+const CATEGORIES = ['headliner','open-mic','improv','late-show'];
+const CAT_LABEL = { 'headliner':'Headliner', 'open-mic':'Open Mic', 'improv':'Improv', 'late-show':'Late Show' };
+const SHOWS = [
+  { id:'#101', cat:'headliner', emoji:'🎤', hot:true, title:'Dana Reyes: Live & Unfiltered', comic:'Dana Reyes', venue:'The Velvet Room', when:'Fri · 8:00 PM', price:45, mins:38, total:80, claimed:74 },
+  { id:'#102', cat:'late-show', emoji:'🌙', hot:false, title:'Midnight Madness — Late Show', comic:'Jordan Blake + guests', venue:'Chuckle Hall', when:'Fri · 11:00 PM', price:30, mins:95, total:60, claimed:22 },
+  { id:'#103', cat:'open-mic', emoji:'🎙', hot:false, title:'Open Mic: New Voices Night', comic:'12 rotating comics', venue:'The Basement Bar', when:'Wed · 7:30 PM', price:10, mins:210, total:50, claimed:14 },
+  { id:'#104', cat:'improv', emoji:'🎭', hot:true, title:'Whose Bit Is It Anyway?', comic:'The Sidekicks', venue:'The Loft Theater', when:'Sat · 6:00 PM', price:25, mins:20, total:40, claimed:39 },
+  { id:'#105', cat:'headliner', emoji:'⭐', hot:false, title:'Marcus Chen: Grown Man Problems', comic:'Marcus Chen', venue:'The Velvet Room', when:'Sat · 9:00 PM', price:50, mins:480, total:90, claimed:31 },
+  { id:'#106', cat:'improv', emoji:'🎭', hot:false, title:'Yes, And... Live Improv Jam', comic:'City Sketch Co.', venue:'The Loft Theater', when:'Sun · 5:00 PM', price:20, mins:150, total:45, claimed:26 },
+  { id:'#107', cat:'late-show', emoji:'🌙', hot:false, title:'After Dark Comedy Hour', comic:'Riley Fox', venue:'Chuckle Hall', when:'Sat · 11:30 PM', price:28, mins:300, total:55, claimed:9 },
+  { id:'#108', cat:'headliner', emoji:'🔥', hot:true, title:'Priya Nair: Sold Out Tour Stop', comic:'Priya Nair', venue:'The Velvet Room', when:'Sun · 7:00 PM', price:55, mins:12, total:100, claimed:97 },
+  { id:'#109', cat:'open-mic', emoji:'🎙', hot:false, title:'Open Mic: Amateur Hour', comic:'15 rotating comics', venue:'The Basement Bar', when:'Mon · 7:30 PM', price:8, mins:600, total:50, claimed:11 },
+];
+
+const grid = document.getElementById('ticketGrid');
+const filtersEl = document.getElementById('filters');
+
+function makeFilterBtn(label, val, active){
+  const b = document.createElement('button');
+  b.className = 'filter-btn'+(active?' active':'');
+  b.textContent = label;
+  b.dataset.val = val;
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderTickets(val);
+  });
+  return b;
+}
+filtersEl.appendChild(makeFilterBtn('All shows', 'all', true));
+CATEGORIES.forEach(c => filtersEl.appendChild(makeFilterBtn(CAT_LABEL[c], c, false)));
+
+const ticketState = {};
+SHOWS.forEach(t => { ticketState[t.id] = { claimed: t.claimed, expiresAt: Date.now() + t.mins*60000, bought:false }; });
+
+function renderTickets(filter){
+  filter = filter || 'all';
+  grid.innerHTML = '';
+  SHOWS.filter(t => filter==='all' || t.cat===filter).forEach(t => {
+    const st = ticketState[t.id];
+    const soldOut = st.claimed >= t.total && !st.bought;
+    const pct = Math.min(100, Math.round(st.claimed/t.total*100));
+
+    const card = document.createElement('div');
+    card.className = 'ticket reveal in';
+    card.dataset.id = t.id;
+    card.innerHTML = `
+      <div class="ticket-inner">
+        <div class="ticket-face front">
+          <div class="t-top">
+            <div class="t-emoji">${t.emoji}</div>
+            ${t.hot ? '<div class="t-hot">Selling fast</div>' : ''}
+          </div>
+          <div class="t-title">${t.title}</div>
+          <div class="t-comic">${t.comic}</div>
+          <div class="t-meta">
+            <div>📍 ${t.venue}</div>
+            <div>🗓 ${t.when}</div>
+          </div>
+          <div class="t-progress">
+            <div class="t-bar"><div class="t-bar-fill" style="width:${pct}%"></div></div>
+            <div class="t-claimed">${st.claimed}/${t.total} seats claimed</div>
+          </div>
+          <div class="t-perf"></div>
+          <div class="t-bottom">
+            <div class="t-price">$${t.price}<small>per seat</small></div>
+            <div class="t-cd mono" data-expires="${st.expiresAt}"><small>hold expires</small>--:--</div>
+          </div>
+          <button class="t-buy ${soldOut?'sold':''}" ${soldOut?'disabled':''}>${soldOut?'Sold out':'Buy ticket →'}</button>
+        </div>
+        <div class="ticket-face back">
+          <div class="back-check"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#0a0a0f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="back-title">You're in!</div>
+          <div class="back-code">${t.id}-${Math.random().toString(36).slice(2,7).toUpperCase()}</div>
+          <div class="back-sub">Seat's yours. Show up before doors close — flash this code at the venue.</div>
+          <button class="back-undo">release seat</button>
+        </div>
+      </div>
+    `;
+    const buyBtn = card.querySelector('.t-buy');
+    if(!soldOut){
+      buyBtn.addEventListener('click', () => buyTicket(t, card));
+    }
+    const undoBtn = card.querySelector('.back-undo');
+    undoBtn.addEventListener('click', () => {
+      card.classList.remove('flipped');
+      st.bought = false;
+      st.claimed = Math.max(0, st.claimed-1);
+      setTimeout(()=>renderTickets(filter), 400);
+    });
+    if(st.bought) card.classList.add('flipped');
+    grid.appendChild(card);
+  });
+}
+renderTickets('all');
+
+function buyTicket(t, card){
+  const st = ticketState[t.id];
+  st.claimed = Math.min(t.total, st.claimed+1);
+  st.bought = true;
+  card.classList.add('flipped');
+  showToast(`🎟 Seat locked for ${t.title}`);
+  burstConfetti();
+}
+
+/* ---------- per-ticket countdowns ---------- */
+setInterval(() => {
+  document.querySelectorAll('.t-cd').forEach(el => {
+    const exp = Number(el.dataset.expires);
+    const diff = Math.max(0, exp - Date.now());
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor(diff%3600000/60000);
+    const s = Math.floor(diff%60000/1000);
+    const label = el.querySelector('small');
+    el.textContent = (h>0 ? h+':'+pad(m) : pad(m)+':'+pad(s));
+    el.prepend(label);
+  });
+}, 1000);
+
+/* ---------- toast ---------- */
+function showToast(msg){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${msg}</span>`;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
+}
+
+/* ---------- confetti burst ---------- */
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+const colors = ['#8b5cf6','#f0498f','#3ee8d8','#f0c968'];
+function burstConfetti(){
+  const particles = [];
+  const cx = window.innerWidth/2, cy = window.innerHeight*0.35;
+  for(let i=0;i<70;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 3+Math.random()*7;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 3,
+      size: 4+Math.random()*4, color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI, vr: (Math.random()-0.5)*0.3, life: 60+Math.random()*30
+    });
+  }
+  let frame = 0;
+  function loop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if(p.life<=0) return;
+      alive = true;
+      p.vy += 0.15; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.min(1, p.life/30);
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
+      ctx.restore();
+    });
+    frame++;
+    if(alive && frame<140) requestAnimationFrame(loop);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  loop();
+}
+
+/* ---------- cursor glow (desktop/pointer only) ---------- */
+(function(){
+  const glow = document.getElementById('cursorGlow');
+  if(!glow || !window.matchMedia('(hover:hover)').matches) return;
+  let tx=0, ty=0, cx=0, cy=0, shown=false;
+  window.addEventListener('mousemove', e => {
+    tx = e.clientX; ty = e.clientY;
+    if(!shown){ shown = true; glow.style.opacity = '1'; cx = tx; cy = ty; }
+  });
+  function raf(){
+    cx += (tx-cx)*0.12; cy += (ty-cy)*0.12;
+    glow.style.transform = `translate(${cx}px, ${cy}px)`;
+    requestAnimationFrame(raf);
+  }
+  raf();
+})();
+
+/* ---------- scroll reveal ---------- */
+(function(){
+  const els = document.querySelectorAll('.reveal:not(.in)');
+  if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('in')); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => io.observe(el));
+})();
+
+/* ---------- magnetic buttons ---------- */
+(function(){
+  document.querySelectorAll('.btn-primary, .magnetic').forEach(btn => {
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width/2, y = e.clientY - r.top - r.height/2;
+      btn.style.transform = `translate(${x*0.25}px, ${y*0.35}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+  });
+})();
+
+/* ---------- sticky buy bar ---------- */
+(function(){
+  const bar = document.getElementById('stickyBar');
+  const hero = document.querySelector('.hero');
+  if(!bar || !hero) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => bar.classList.toggle('show', !entry.isIntersecting));
+  }, { threshold: 0 });
+  io.observe(hero);
+})();
+
+/* ---------- FAQ accordion ---------- */
+(function(){
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o => o.classList.remove('open'));
+      if(!wasOpen) item.classList.add('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>
