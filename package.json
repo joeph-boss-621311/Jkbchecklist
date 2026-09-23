@@ -1,0 +1,21 @@
+{
+  "name": "jkb-checklist",
+  "version": "2.0.0",
+  "description": "JKB Ops — CLI and MCP connector for the live claude.ai checklist app",
+  "private": true,
+  "license": "UNLICENSED",
+  "bin": {
+    "jkb": "cli.js"
+  },
+  "scripts": {
+    "mcp": "node mcp.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  }
+}
