@@ -1378,11 +1378,15 @@ Action shapes:
 {"type":"complete","id":"t12"}
 {"type":"reopen","id":"t12"}
 {"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"subtasks":["step", "..."],"focus":false}
-{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."]}   (include only fields that change; "tags" REPLACES the task's tags, so include its existing ones too if you're only adding one)
+{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"project":"<project id>","section":"<section name>"}   (include only fields that change; "tags" REPLACES the task's tags, so include its existing ones too if you're only adding one; "project"/"section" move the task, creating the section if it's new)
 {"type":"subtasks","id":"t12","items":["step one","step two"]}   (appends steps to a task)
 {"type":"delete","id":"t12"}
 {"type":"add_project","title":"...","emoji":"one emoji or short initials"}
+{"type":"update_project","id":"<project id>","title":"...","emoji":"..."}   (either field optional)
+{"type":"delete_project","id":"<project id>"}   (deletes it and every task inside — confirm first unless he clearly already asked)
 {"type":"add_section","project":"<project id>","name":"..."}
+{"type":"update_section","project":"<project id>","id":"<section name>","name":"new name"}
+{"type":"delete_section","project":"<project id>","id":"<section name>"}   (its tasks move to that project's Inbox, not lost — confirm first unless he clearly already asked)
 {"type":"focus","ids":["t12","t40"],"note":"one or two sentences for today"}
 {"type":"checkin","at":"YYYY-MM-DDTHH:MM","about":"what to check on"}   (his local time)
 {"type":"cancel_checkin","id":"c5"}
@@ -1456,6 +1460,15 @@ function applyActions(actions){
         if("due" in a){ const d = normDue(a.due); if(d !== x.t.due){ x.t.due = d; bits.push(d ? "due " + fmtDue(d) : "no due date"); } }
         if("repeat" in a){ const r = normRepeat(a.repeat); if(r !== (x.t.repeat || null)){ x.t.repeat = r; if(r && !x.t.due) x.t.due = dayStr(); bits.push(r ? "repeats " + r : "no repeat"); } }
         if("tags" in a){ const v = normTags(a.tags); if(JSON.stringify(v) !== JSON.stringify(x.t.tags || [])){ x.t.tags = v; bits.push(v.length ? "tags " + v.map(z => "#" + z).join(" ") : "tags cleared"); } }
+        if(a.project || a.section){
+          const p2 = state.projects.find(q => q.id === a.project) || x.p;
+          const s2 = getOrCreateSection(p2, a.section || x.s.name);
+          if(s2 !== x.s){
+            x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1);
+            s2.tasks.push(x.t);
+            bits.push("moved to " + p2.title + " / " + s2.name);
+          }
+        }
         if(bits.length) changes.push("Updated: " + x.t.text + " — " + bits.join(", "));
         break;
       }
@@ -1468,6 +1481,24 @@ function applyActions(actions){
         changes.push("New project: " + p.emoji + " " + p.title);
         break;
       }
+      case "update_project": {
+        const p = state.projects.find(q => q.id === a.id);
+        if(!p) break;
+        const bits = [];
+        if(typeof a.title === "string" && a.title.trim() && a.title.trim() !== p.title){ p.title = a.title.trim(); bits.push("renamed"); }
+        if(typeof a.emoji === "string" && a.emoji.trim() && a.emoji.trim() !== p.emoji){ p.emoji = a.emoji.trim().slice(0, 4); bits.push("icon changed"); }
+        if(bits.length) changes.push("Updated project: " + p.title + " — " + bits.join(", "));
+        break;
+      }
+      case "delete_project": {
+        const i = state.projects.findIndex(q => q.id === a.id);
+        if(i < 0) break;
+        const p = state.projects[i];
+        p.sections.forEach(s => s.tasks.forEach(t => removeFocus(t.id)));
+        state.projects.splice(i, 1);
+        changes.push("Deleted project: " + p.title + " (" + p.sections.reduce((n, s) => n + s.tasks.length, 0) + " tasks)");
+        break;
+      }
       case "add_section": {
         const p = state.projects.find(q => q.id === a.project);
         const name = String(a.name || "").trim();
@@ -1476,6 +1507,28 @@ function applyActions(actions){
           p.sections.push({ id:newId("s"), name:name.slice(0, 40), tasks:[] });
           changes.push("New section: " + name + " in " + p.title);
         }
+        break;
+      }
+      case "update_section": {
+        const p = state.projects.find(q => q.id === a.project);
+        const s = p && p.sections.find(q => q.id === a.id || q.name.toLowerCase() === String(a.id || "").toLowerCase());
+        if(!s) break;
+        const name = String(a.name || "").trim();
+        if(name && name !== s.name){ s.name = name.slice(0, 40); changes.push("Renamed section to: " + s.name + " in " + p.title); }
+        break;
+      }
+      case "delete_section": {
+        const p = state.projects.find(q => q.id === a.project);
+        const i = p && p.sections.findIndex(q => q.id === a.id || q.name.toLowerCase() === String(a.id || "").toLowerCase());
+        if(!p || i == null || i < 0) break;
+        const s = p.sections[i];
+        if(p.sections.length < 2){ changes.push("Kept " + s.name + " — a project needs at least one section"); break; }
+        if(s.tasks.length){
+          const inbox = getOrCreateSection(p, "Inbox");
+          if(inbox !== s) s.tasks.forEach(t => inbox.tasks.push(t));
+        }
+        p.sections.splice(i, 1);
+        changes.push("Deleted section: " + s.name + " in " + p.title + (s.tasks.length ? " (" + s.tasks.length + " tasks moved to Inbox)" : ""));
         break;
       }
       case "subtasks": {
