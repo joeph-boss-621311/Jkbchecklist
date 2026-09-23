@@ -229,6 +229,36 @@
   .drawer-item:hover{ color:var(--gold); }
   #importFile{ display:none; }
 
+  /* ---- Voice capture ---- */
+  .fab.mic{ bottom:142px; width:50px; height:50px; right:21px; font-size:1.25rem;
+    background: var(--card); color: var(--gold); border:1.5px solid var(--gold); box-shadow: var(--shadow); }
+  .rec-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .rec-btn{
+    width:54px; height:54px; border-radius:50%; border:none; background:var(--gold); color:#1a1305;
+    font-size:1.4rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .rec-btn.live{ background: var(--danger); color:#fff; animation: pulse 1.2s ease infinite; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(209,87,63,0.5);} 100%{ box-shadow:0 0 0 16px rgba(209,87,63,0);} }
+  .rec-status{ font-size:0.82rem; color:var(--text-dim); }
+  .sheet textarea{
+    width:100%; min-height:110px; background: var(--card); border:1px solid var(--line); color:var(--text);
+    padding:11px 12px; border-radius:12px; font-size:0.9rem; font-family:inherit; resize:vertical;
+  }
+  .sheet textarea:focus{ outline:none; border-color:var(--gold); }
+  .interim{ color:var(--text-dim); font-style:italic; font-size:0.82rem; min-height:1.1em; margin-top:6px; }
+  .ai-toggle{ display:flex; align-items:center; gap:8px; font-size:0.8rem; color:var(--text-dim); margin-top:12px; }
+  .ai-toggle input{ width:auto; }
+  .ai-badge{ font-size:0.68rem; padding:2px 7px; border-radius:20px; background:var(--gold-soft); color:var(--gold); font-weight:600; }
+  .sheet-submit.secondary{ background:transparent; color:var(--gold); border:1.5px solid var(--gold); }
+  .sheet-submit:disabled{ opacity:0.5; cursor:default; }
+  .draft{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px; margin-top:8px; }
+  .draft-top{ display:flex; align-items:center; gap:10px; }
+  .draft-top input[type=checkbox]{ width:18px; height:18px; accent-color: var(--gold); flex-shrink:0; }
+  .draft-top input[type=text]{ padding:7px 9px; font-size:0.86rem; }
+  .draft-where{ display:flex; gap:6px; margin-top:8px; }
+  .draft-where select{ padding:6px 8px; font-size:0.76rem; border-radius:8px; }
+  .draft.off{ opacity:0.45; }
+
   ::-webkit-scrollbar{ width:0; height:0; }
 </style>
 </head>
@@ -271,6 +301,7 @@
   <button class="add-sub-btn" id="addSubBtn">+ Add section group</button>
 </div>
 
+<button class="fab mic" id="micFab" title="Speak your tasks">🎙</button>
 <button class="fab" id="fabBtn">+</button>
 
 <div class="tabbar" id="tabbar"></div>
@@ -287,6 +318,22 @@
   <div class="field-label">Task</div>
   <input id="sheetTaskInput" placeholder="What needs doing?">
   <button class="sheet-submit" id="sheetSubmit">Add task</button>
+</div>
+
+<!-- Voice sheet -->
+<div class="sheet" id="voiceSheet">
+  <div class="sheet-handle"></div>
+  <h3>Speak your tasks</h3>
+  <div class="rec-row">
+    <button class="rec-btn" id="recBtn">🎙</button>
+    <div class="rec-status" id="recStatus">Tap the mic and just talk. Ramble is fine — the filter cleans it up.</div>
+  </div>
+  <textarea id="voiceText" placeholder="Your words show up here. You can also type or paste."></textarea>
+  <div class="interim" id="voiceInterim"></div>
+  <label class="ai-toggle"><input type="checkbox" id="useAi" checked> Use Claude to filter <span class="ai-badge" id="aiBadge">checking…</span></label>
+  <button class="sheet-submit" id="extractBtn">Extract tasks</button>
+  <div id="draftList"></div>
+  <button class="sheet-submit" id="draftAddBtn" style="display:none">Add tasks</button>
 </div>
 
 <!-- Menu drawer -->
@@ -624,6 +671,8 @@ function populateSubSelect(){
 function closeSheet(){
   sheetOverlay.classList.remove("show");
   addSheet.classList.remove("show");
+  voiceSheet.classList.remove("show");
+  stopRec();
 }
 document.getElementById("fabBtn").addEventListener("click", openSheet);
 sheetOverlay.addEventListener("click", closeSheet);
@@ -690,6 +739,264 @@ document.getElementById("importFile").addEventListener("change", (e) => {
     drawer.classList.remove("show");
   };
   reader.readAsText(file);
+});
+
+// ---------- voice capture ----------
+const voiceSheet = document.getElementById("voiceSheet");
+const voiceText = document.getElementById("voiceText");
+const voiceInterim = document.getElementById("voiceInterim");
+const recBtn = document.getElementById("recBtn");
+const recStatus = document.getElementById("recStatus");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+
+function setRecUi(on){
+  recBtn.classList.toggle("live", on);
+  recBtn.textContent = on ? "■" : "🎙";
+  recStatus.textContent = on ? "Listening… tap ■ when you're done." : "Tap the mic to keep talking, or hit Extract.";
+}
+function startRec(){
+  if(!SR){
+    recStatus.textContent = "This browser has no speech-to-text. Use Chrome/Edge/Safari, or your keyboard's mic button.";
+    return;
+  }
+  rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = navigator.language || "en-US";
+  rec.onresult = (e) => {
+    let interim = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){
+        // each final chunk is roughly one pause — end it with a period so the filter can split on it
+        const chunk = r[0].transcript.trim();
+        if(chunk) voiceText.value = (voiceText.value.trim() ? voiceText.value.trim() + " " : "") + chunk + ".";
+      } else interim += r[0].transcript;
+    }
+    voiceInterim.textContent = interim;
+  };
+  rec.onerror = (e) => {
+    if(e.error === "not-allowed" || e.error === "service-not-allowed"){
+      listening = false;
+      recStatus.textContent = "Mic blocked. Allow microphone access for this page (needs https or localhost).";
+    }
+  };
+  // Chrome ends the session after a silence; restart until the user taps stop
+  rec.onend = () => {
+    if(listening){ try{ rec.start(); }catch(err){ listening = false; setRecUi(false); } }
+    else{ setRecUi(false); voiceInterim.textContent = ""; }
+  };
+  listening = true;
+  rec.start();
+  setRecUi(true);
+}
+function stopRec(){
+  listening = false;
+  if(rec){ try{ rec.stop(); }catch(e){} }
+}
+recBtn.addEventListener("click", () => listening ? stopRec() : startRec());
+
+// ---------- task filter: built-in (no AI) ----------
+// connectors get stripped but don't prove anything; intent phrases mark the rest as a task
+const CONNECTORS = /^(?:and|also|then|so|next|plus|oh|okay|ok|alright|first|second|third|finally|lastly|after that|and then|i think|i guess|maybe|please|um+|uh+|erm)\b[,\s]*/i;
+const INTENT = /^(?:(?:i|we)\s+(?:really\s+|also\s+|still\s+)?(?:need to|have to|got to|gotta|should|must|want to|wanna|would like to|'d like to|am going to|are going to|'m going to|'re going to|'m gonna|'re gonna|gonna|will|'ll|can)\s+|i'm\s+(?:going to|gonna)\s+|(?:need to|have to|got to|gotta|gonna|going to|should|must)\s+|(?:remember|don't forget|do not forget|make sure|try)\s+(?:to\s+|that\s+(?:i\s+)?|i\s+)?|let(?:'s| me| us)\s+|(?:there's|there is)\s+|(?:my|the)\s+(?:next\s+)?(?:task|todo|to-do)\s+(?:is\s+)?(?:to\s+)?)/i;
+const ACTION_VERBS = new Set(("add apply ask back book build buy call cancel change check clean collect connect contact create cut deploy delete design do draft edit email film finalize finish fix follow get go hire improve install launch learn make meet message move order organize pay pick plan post practice prepare print publish reach read record redesign register remove renew reply research respond review run schedule send set setup share ship shoot sign start study submit talk test text track train update upload visit watch work write").split(" "));
+const CHATTER = /^(that's it|that is all|that's all|thanks|thank you|yeah|yes|no|hmm|okay|ok|so|done|nothing else)$/i;
+const STOP = new Set("the a an and or to of for on in at with my our your is it this that be do".split(" "));
+
+function words(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w => w && !STOP.has(w)); }
+
+function localExtract(text){
+  const parts = text
+    .replace(/\b(um+|uh+|erm|you know|i mean|basically)\b[,]?/gi, " ")
+    .split(/[.!?;\n]+|,\s*(?:and\s+)?then\s+|\b(?:and then|after that|and also)\b|\band\s+(?=(?:i|we|also|then|remember|don't|make sure|need|have to)\b)/i);
+  const out = [];
+  parts.forEach(raw => {
+    let s = raw.trim().replace(/^[,\s]+|[,\s]+$/g, "");
+    let hadLeadIn = false, prev;
+    do{
+      prev = s;
+      s = s.replace(CONNECTORS, "").trim();
+      const t = s.replace(INTENT, "").trim();
+      if(t !== s){ hadLeadIn = true; s = t; }
+    }while(s !== prev);
+    if(!s || CHATTER.test(s)) return;
+    const first = s.split(/\s+/)[0].toLowerCase();
+    // only keep things that sound like actions — drops rambling like "today was long"
+    if(!hadLeadIn && !ACTION_VERBS.has(first)) return;
+    if(s.split(/\s+/).length < 2 && !ACTION_VERBS.has(first)) return;
+    s = s.charAt(0).toUpperCase() + s.slice(1);
+    if(!out.some(t => t.text.toLowerCase() === s.toLowerCase())) out.push({ text: s, ...routeTask(s) });
+  });
+  return out;
+}
+
+// pick the project/section whose names overlap the task's words most
+function routeTask(text){
+  const tw = new Set(words(text));
+  let best = null, bestScore = 0;
+  state.data.forEach(g => {
+    const gScore = words(g.title + " " + g.id).filter(w => tw.has(w)).length * 2;
+    g.subs.forEach((sub, si) => {
+      const sScore = words(sub.name).filter(w => tw.has(w)).length;
+      if(gScore + sScore > bestScore){ bestScore = gScore + sScore; best = { groupId: g.id, subIdx: sScore ? si : -1 }; }
+    });
+    if(gScore > bestScore){ bestScore = gScore; best = { groupId: g.id, subIdx: -1 }; }
+  });
+  if(best) return best;
+  return { groupId: currentGroupId || state.data[0].id, subIdx: -1 };
+}
+
+// ---------- task filter: Claude via local server (server.js → claude CLI) ----------
+let aiAvailable = false;
+async function checkAi(){
+  const badge = document.getElementById("aiBadge");
+  try{
+    const r = await fetch("api/health", { cache:"no-store" });
+    const j = await r.json();
+    aiAvailable = !!j.claude;
+  }catch(e){ aiAvailable = false; }
+  badge.textContent = aiAvailable ? "connected" : "offline — built-in filter";
+  document.getElementById("useAi").checked = aiAvailable;
+  document.getElementById("useAi").disabled = !aiAvailable;
+}
+
+async function aiExtract(text){
+  const r = await fetch("api/extract", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      transcript: text,
+      currentProject: currentGroupId,
+      projects: state.data.map(g => ({ id: g.id, title: g.title, sections: g.subs.map(s => s.name) })),
+    }),
+  });
+  const j = await r.json();
+  if(!r.ok || !Array.isArray(j.tasks)) throw new Error(j.error || "Bad response");
+  return j.tasks.filter(t => t && t.text).map(t => {
+    const g = state.data.find(x => x.id === t.project) || state.data.find(x => x.id === (currentGroupId || state.data[0].id));
+    const si = g.subs.findIndex(s => s.name.toLowerCase() === String(t.section || "").toLowerCase());
+    return { text: String(t.text).trim(), groupId: g.id, subIdx: si };
+  });
+}
+
+// ---------- draft review ----------
+let drafts = [];
+function renderDrafts(){
+  const list = document.getElementById("draftList");
+  const addBtn = document.getElementById("draftAddBtn");
+  list.innerHTML = "";
+  if(!drafts.length){ addBtn.style.display = "none"; return; }
+  const label = document.createElement("div");
+  label.className = "field-label";
+  label.textContent = "Found " + drafts.length + " task" + (drafts.length === 1 ? "" : "s") + " — tweak before adding";
+  list.appendChild(label);
+  drafts.forEach(d => {
+    const box = document.createElement("div");
+    box.className = "draft" + (d.keep ? "" : " off");
+    const top = document.createElement("div");
+    top.className = "draft-top";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = d.keep;
+    cb.onchange = () => { d.keep = cb.checked; box.classList.toggle("off", !d.keep); updateAddBtn(); };
+    const txt = document.createElement("input");
+    txt.type = "text"; txt.value = d.text;
+    txt.oninput = () => { d.text = txt.value; };
+    top.appendChild(cb); top.appendChild(txt);
+
+    const where = document.createElement("div");
+    where.className = "draft-where";
+    const gSel = document.createElement("select");
+    state.data.forEach(g => {
+      const o = document.createElement("option");
+      o.value = g.id; o.textContent = g.emoji + " " + g.title;
+      gSel.appendChild(o);
+    });
+    gSel.value = d.groupId;
+    const sSel = document.createElement("select");
+    const fillSubs = () => {
+      const g = state.data.find(x => x.id === d.groupId);
+      sSel.innerHTML = "";
+      const inbox = document.createElement("option");
+      inbox.value = -1; inbox.textContent = "📥 Inbox";
+      sSel.appendChild(inbox);
+      g.subs.forEach((s, i) => {
+        if(s.name === "Inbox") return;
+        const o = document.createElement("option");
+        o.value = i; o.textContent = s.name;
+        sSel.appendChild(o);
+      });
+      sSel.value = d.subIdx;
+      if(sSel.selectedIndex < 0){ sSel.value = -1; d.subIdx = -1; }
+    };
+    gSel.onchange = () => { d.groupId = gSel.value; d.subIdx = -1; fillSubs(); };
+    sSel.onchange = () => { d.subIdx = parseInt(sSel.value, 10); };
+    fillSubs();
+    where.appendChild(gSel); where.appendChild(sSel);
+
+    box.appendChild(top); box.appendChild(where);
+    list.appendChild(box);
+  });
+  updateAddBtn();
+}
+function updateAddBtn(){
+  const addBtn = document.getElementById("draftAddBtn");
+  const n = drafts.filter(d => d.keep && d.text.trim()).length;
+  addBtn.style.display = "block";
+  addBtn.disabled = n === 0;
+  addBtn.textContent = "Add " + n + " task" + (n === 1 ? "" : "s");
+}
+
+document.getElementById("extractBtn").addEventListener("click", async () => {
+  stopRec();
+  const text = voiceText.value.trim();
+  if(!text){ recStatus.textContent = "Say or type something first."; return; }
+  const btn = document.getElementById("extractBtn");
+  btn.disabled = true;
+  const useAi = aiAvailable && document.getElementById("useAi").checked;
+  btn.textContent = useAi ? "Claude is thinking…" : "Filtering…";
+  let found;
+  try{
+    found = useAi ? await aiExtract(text) : localExtract(text);
+  }catch(err){
+    recStatus.textContent = "Claude didn't answer (" + err.message + ") — used the built-in filter instead.";
+    found = localExtract(text);
+  }
+  drafts = found.map(t => ({ ...t, keep: true }));
+  if(!drafts.length) recStatus.textContent = "No tasks spotted. Try phrases like \"I need to…\" or start with a verb.";
+  btn.disabled = false;
+  btn.textContent = "Extract again";
+  renderDrafts();
+});
+
+document.getElementById("draftAddBtn").addEventListener("click", () => {
+  let lastGroup = null;
+  drafts.filter(d => d.keep && d.text.trim()).forEach(d => {
+    const g = state.data.find(x => x.id === d.groupId);
+    if(!g) return;
+    let si = d.subIdx;
+    if(si < 0 || !g.subs[si]){
+      si = g.subs.findIndex(s => s.name === "Inbox");
+      if(si < 0){ g.subs.push({ name:"Inbox", items:[] }); si = g.subs.length - 1; }
+    }
+    g.subs[si].items.push(d.text.trim());
+    state.open[g.id + "::" + si] = true;
+    lastGroup = g.id;
+  });
+  saveState();
+  drafts = [];
+  voiceText.value = "";
+  renderDrafts();
+  document.getElementById("extractBtn").textContent = "Extract tasks";
+  closeSheet();
+  showView(lastGroup);
+});
+
+document.getElementById("micFab").addEventListener("click", () => {
+  sheetOverlay.classList.add("show");
+  voiceSheet.classList.add("show");
+  checkAi();
 });
 
 renderTabbar();

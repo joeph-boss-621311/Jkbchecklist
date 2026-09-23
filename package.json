@@ -1,0 +1,7 @@
+{
+  "name": "jkb-checklist",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  }
+}
