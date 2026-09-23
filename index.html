@@ -790,9 +790,9 @@ function startRec(){
     voiceInterim.textContent = interim;
   };
   rec.onerror = (e) => {
-    if(e.error === "not-allowed" || e.error === "service-not-allowed"){
+    if(e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture"){
       listening = false;
-      recStatus.textContent = "Mic blocked here. Tap the text box and use your keyboard's 🎤 dictation instead — works the same.";
+      useKeyboardDictation();
     }
   };
   // Chrome ends the session after a silence; restart until the user taps stop
@@ -1061,9 +1061,23 @@ document.getElementById("draftAddBtn").addEventListener("click", () => {
   showView(lastGroup);
 });
 
+// Some hosts (e.g. the claude.ai viewer) don't let embedded pages use the mic — detect it up front
+function micAllowed(){
+  if(!SR) return false;
+  const policy = document.permissionsPolicy || document.featurePolicy;
+  if(policy && typeof policy.allowsFeature === "function" && !policy.allowsFeature("microphone")) return false;
+  return true;
+}
+function useKeyboardDictation(){
+  recBtn.style.display = "none";
+  recStatus.innerHTML = "Tap the box below, then press the <b>🎤 on your keyboard</b> and talk. Hit Extract when done.";
+  voiceText.focus();
+}
+
 document.getElementById("micFab").addEventListener("click", () => {
   sheetOverlay.classList.add("show");
   voiceSheet.classList.add("show");
+  if(!micAllowed()) useKeyboardDictation();
   checkAi();
 });
 
