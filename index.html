@@ -808,7 +808,7 @@ function stopRec(){
   listening = false;
   if(rec){ try{ rec.stop(); }catch(e){} }
 }
-recBtn.addEventListener("click", () => listening ? stopRec() : startRec());
+recBtn.addEventListener("click", () => micBlocked ? useKeyboardDictation() : (listening ? stopRec() : startRec()));
 
 // ---------- task filter: built-in (no AI) ----------
 // connectors get stripped but don't prove anything; intent phrases mark the rest as a task
@@ -1068,9 +1068,12 @@ function micAllowed(){
   if(policy && typeof policy.allowsFeature === "function" && !policy.allowsFeature("microphone")) return false;
   return true;
 }
+let micBlocked = false;
 function useKeyboardDictation(){
-  recBtn.style.display = "none";
-  recStatus.innerHTML = "Tap the box below, then press the <b>🎤 on your keyboard</b> and talk. Hit Extract when done.";
+  micBlocked = true;
+  recBtn.classList.remove("live");
+  recBtn.textContent = "🎙";
+  recStatus.innerHTML = "This page can't use the mic directly — your keyboard is open now: press its <b>🎤</b> and talk. Hit Extract when done.";
   voiceText.focus();
 }
 
