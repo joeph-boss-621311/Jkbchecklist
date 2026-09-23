@@ -184,6 +184,8 @@
   .chip.due{ background:var(--gold-soft); color:var(--gold); }
   .chip.over{ background:var(--danger-soft); color:var(--danger); }
   .chip.ok{ background:var(--ok-soft); color:var(--ok); }
+  .chip.tag{ border:1px solid var(--line); background:transparent; cursor:pointer; }
+  .chip.tag:hover{ border-color:var(--gold); color:var(--gold); }
   .play{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card-2); cursor:pointer; flex-shrink:0; font-size:0.72rem; color:var(--gold); }
   .empty{ color:var(--text-dim); font-size:0.86rem; padding:18px 6px; text-align:center; line-height:1.5; }
   .empty b{ color:var(--text); display:block; font-size:0.95rem; margin-bottom:2px; }
@@ -521,7 +523,7 @@ function md(s){ return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^[
 // Task: { id, text, done, doneAt, priority, due, createdAt, repeat, subtasks:[{id,text,done}], minutes }
 let state = null;
 let coach = { messages: [], savedAt: 0 };
-let ui = { tab:"today", project:null, open:{}, filter:"all", q:"", projFilter:"" };
+let ui = { tab:"today", project:null, open:{}, filter:"all", q:"", projFilter:"", tagFilter:"" };
 try{ const u = JSON.parse(lsGet(LS_UI) || "{}"); ui.open = u.open || {}; }catch(e){}
 const saveUi = () => lsSet(LS_UI, JSON.stringify({ open: ui.open }));
 
@@ -566,6 +568,22 @@ function normPri(p){ return p === "high" || p === "low" ? p : "normal"; }
 function normDue(d){ return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null; }
 const REPEATS = ["daily", "weekdays", "weekly", "monthly"];
 function normRepeat(r){ return REPEATS.includes(r) ? r : null; }
+function normTags(tags){
+  const arr = Array.isArray(tags) ? tags : String(tags || "").split(/[,\n]/);
+  const seen = new Set();
+  arr.map(t => String(t || "").trim().toLowerCase().replace(/^#/, "")).filter(Boolean).forEach(t => seen.add(t.slice(0, 24)));
+  return [...seen].slice(0, 8);
+}
+const PRIORITY_RANK = { high:0, normal:1, low:2 };
+// High priority first, done tasks last — the order every section/list view renders tasks in,
+// so priority actually surfaces instead of sitting wherever a task happened to be added.
+function sortForDisplay(tasks){
+  return tasks.map((t, i) => ({ t, i })).sort((a, b) =>
+    (a.t.done ? 1 : 0) - (b.t.done ? 1 : 0) ||
+    (PRIORITY_RANK[a.t.priority] ?? 1) - (PRIORITY_RANK[b.t.priority] ?? 1) ||
+    a.i - b.i
+  ).map(x => x.t);
+}
 function repeatLabel(r){ return { daily:"Daily", weekdays:"Weekdays", weekly:"Weekly", monthly:"Monthly" }[r] || ""; }
 function nextDue(from, r){
   let d = from;
@@ -583,6 +601,14 @@ function getSection(p, name){
   if(!s){ s = { id:newId("s"), name:"Inbox", tasks:[] }; p.sections.push(s); }
   return s;
 }
+// Atlas variant: an unrecognised section name creates that section instead of dumping into Inbox.
+function getOrCreateSection(p, name){
+  const n = String(name || "").trim();
+  if(!n) return getSection(p, name);
+  let s = p.sections.find(x => x.name.toLowerCase() === n.toLowerCase());
+  if(!s){ s = { id:newId("s"), name:n.slice(0, 40), tasks:[] }; p.sections.push(s); }
+  return s;
+}
 
 // completing a recurring task spawns its next occurrence
 function setDone(x, done){
@@ -592,7 +618,7 @@ function setDone(x, done){
   t.doneAt = done ? Date.now() : null;
   if(done && t.repeat){
     const next = { id:newId("t"), text:t.text, done:false, doneAt:null, priority:t.priority, due:nextDue(t.due || dayStr(), t.repeat), createdAt:Date.now(), repeat:t.repeat,
-      subtasks:(t.subtasks || []).map(st => ({ id:newId("u"), text:st.text, done:false })), minutes:0 };
+      subtasks:(t.subtasks || []).map(st => ({ id:newId("u"), text:st.text, done:false })), tags:[...(t.tags || [])], minutes:0 };
     t.repeat = null;
     s.tasks.splice(s.tasks.indexOf(t) + 1, 0, next);
     return next;
@@ -896,7 +922,8 @@ function taskRow(x, opts = {}){
   if(t.due && !t.done){ const over = daysBetween(dayStr(), t.due) < 0; chips.push(`<span class="chip ${over ? "over" : "due"}">${esc(fmtDue(t.due))}</span>`); }
   if(t.repeat) chips.push(`<span class="chip">↻ ${repeatLabel(t.repeat)}</span>`);
   if(t.subtasks && t.subtasks.length){ const d = t.subtasks.filter(z => z.done).length; chips.push(`<span class="chip${d === t.subtasks.length ? " ok" : ""}">☰ ${d}/${t.subtasks.length}</span>`); }
-  if(t.minutes) chips.push(`<span class="chip">⏱ ${fmtMin(t.minutes)}</span>`);
+  if(t.minutes) chips.push(`<span class="chip">${STOPWATCH_ICO} ${fmtMin(t.minutes)}</span>`);
+  (t.tags || []).forEach(tag => chips.push(`<span class="chip tag" data-act="filterTag" data-tag="${esc(tag)}">#${esc(tag)}</span>`));
   const where = opts.showWhere ? `<span>${esc(p.title)} · ${esc(s.name)}</span>` : "";
   const meta = where || chips.length ? `<div class="t-meta">${where}${chips.join("")}</div>` : "";
   const play = opts.play && !t.done ? `<button class="play" data-act="quickTimer" data-id="${t.id}" aria-label="Start focus timer">▶</button>` : "";
@@ -998,15 +1025,17 @@ function renderTasks(){
     ui.project = null;
   }
   const q = ui.q.trim().toLowerCase();
-  const searching = q || ui.filter !== "all" || ui.projFilter;
+  const searching = q || ui.filter !== "all" || ui.projFilter || ui.tagFilter;
+  const allTags = [...new Set(allTasks().flatMap(x => x.t.tags || []))].sort();
   const head = `<div class="eyebrow">Everything on your plate</div><div class="h1">Your <span class="accent">Tasks</span></div>
     <div class="search"><span class="si">⌕</span><input id="searchBox" type="search" placeholder="Search tasks…" value="${esc(ui.q)}" autocomplete="off"></div>
     <div class="filters">${FILTERS.map(([id, label]) => `<button class="fchip${ui.filter === id ? " on" : ""}" data-act="filter" data-id="${id}">${label}</button>`).join("")}
       <select class="fchip" id="projFilter" style="appearance:auto">${[`<option value="">All projects</option>`, ...state.projects.map(p => `<option value="${esc(p.id)}"${ui.projFilter === p.id ? " selected" : ""}>${esc(p.title)}</option>`)].join("")}</select>
-    </div>`;
+    </div>
+    ${allTags.length ? `<div class="filters">${allTags.map(tag => `<button class="fchip${ui.tagFilter === tag ? " on" : ""}" data-act="tagFilter" data-tag="${esc(tag)}">#${esc(tag)}</button>`).join("")}</div>` : ""}`;
   if(searching){
-    let list = allTasks().filter(matchFilter).filter(x => !ui.projFilter || x.p.id === ui.projFilter);
-    if(q) list = list.filter(x => (x.t.text + " " + x.s.name + " " + x.p.title + " " + (x.t.subtasks || []).map(z => z.text).join(" ")).toLowerCase().includes(q));
+    let list = allTasks().filter(matchFilter).filter(x => !ui.projFilter || x.p.id === ui.projFilter).filter(x => !ui.tagFilter || (x.t.tags || []).includes(ui.tagFilter));
+    if(q) list = list.filter(x => (x.t.text + " " + x.s.name + " " + x.p.title + " " + (x.t.subtasks || []).map(z => z.text).join(" ") + " " + (x.t.tags || []).join(" ")).toLowerCase().includes(q));
     if(ui.filter !== "done" && !q) list = list.filter(x => !x.t.done || ui.filter === "all");
     const rank = x => (x.t.done ? 1e9 : 0) + (x.t.due ? daysBetween(dayStr(), x.t.due) * 10 : 5000) + (x.t.priority === "high" ? -3 : x.t.priority === "low" ? 3 : 0);
     list.sort((a, b) => rank(a) - rank(b));
@@ -1036,7 +1065,7 @@ function renderProject(p){
   const secs = p.sections.map(s => {
     const d = s.tasks.filter(t => t.done).length;
     const key = p.id + "/" + s.id;
-    const tasks = s.tasks.map(t => taskRow({ t, p, s }, { play:true })).join("") || `<div class="empty">No tasks yet.</div>`;
+    const tasks = sortForDisplay(s.tasks).map(t => taskRow({ t, p, s }, { play:true })).join("") || `<div class="empty">No tasks yet.</div>`;
     return `<div class="sec${ui.open[key] ? " open" : ""}">
       <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${d}/${s.tasks.length}<span class="chev">▸</span></span></button>
       <div class="sec-body">
@@ -1148,6 +1177,7 @@ const ICO_STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="
 const ICO_MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const SPARK = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/></svg>';
 const HEADPHONES = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg>';
+const STOPWATCH_ICO = '<svg class="ico" viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;flex-shrink:0"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg>';
 const CLOCK = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
 const WARN = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M12 3.5L2.5 20h19z"/><path d="M12 9.5v4.5M12 17h.01"/></svg>';
 let speakingTs = null;
@@ -1337,17 +1367,19 @@ const COACH_RULES = `Your name is Atlas. You are Joseph's accountability coach a
 
 How to talk: casual and direct, like a smart friend. No fluff. Keep replies under 80 words unless he asks for more. Use **bold** sparingly and "- " bullets for lists. Celebrate real wins in one line. If he's dodging high-priority or overdue work, call it out and push him. If he's vague, ask one sharp question. Never show task ids to him — refer to tasks by their text.
 
-How to manage: you change the checklist ONLY through "actions". Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (section "Inbox" if nothing fits). Delete only when he explicitly asks. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise. He can attach a photo (a screenshot, a handwritten note, a whiteboard, a receipt) — read it and act on it like anything else he tells you, and say what you saw in your reply.
+How to manage: you have standing permission to keep the checklist itself in shape, not just react line-by-line — create projects and sections, tag tasks, reprioritize, and reorganize whenever it helps the list actually match what he's working toward, even without him spelling out every change. Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (create a new section if nothing fits well — don't default everything to Inbox). Delete only when he explicitly asks. Use tags freely (lowercase, short, e.g. "client", "safegate", "urgent") to group related work across projects — reuse tags already in the task list before inventing new ones. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise. He can attach a photo (a screenshot, a handwritten note, a whiteboard, a receipt) — read it and act on it like anything else he tells you, and say what you saw in your reply.
 
 Reply with ONLY JSON:
 {"reply":"what you say to him","actions":[ ... ]}
 Action shapes:
 {"type":"complete","id":"t12"}
 {"type":"reopen","id":"t12"}
-{"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","subtasks":["step", "..."],"focus":false}
-{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null"}   (include only fields that change)
+{"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"subtasks":["step", "..."],"focus":false}
+{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."]}   (include only fields that change; "tags" REPLACES the task's tags, so include its existing ones too if you're only adding one)
 {"type":"subtasks","id":"t12","items":["step one","step two"]}   (appends steps to a task)
 {"type":"delete","id":"t12"}
+{"type":"add_project","title":"...","emoji":"one emoji or short initials"}
+{"type":"add_section","project":"<project id>","name":"..."}
 {"type":"focus","ids":["t12","t40"],"note":"one or two sentences for today"}
 {"type":"checkin","at":"YYYY-MM-DDTHH:MM","about":"what to check on"}   (his local time)
 {"type":"cancel_checkin","id":"c5"}
@@ -1357,6 +1389,7 @@ Check-ins: you already ping his phone every day at 8am (plan) and 8pm (review). 
 
 function taskLine({ t, p, s }){
   const bits = [t.id, p.id + "/" + s.name, t.text, t.priority === "normal" ? "" : t.priority, t.due || "", t.repeat ? "repeats " + t.repeat : "",
+    t.tags && t.tags.length ? t.tags.map(x => "#" + x).join(" ") : "",
     t.subtasks && t.subtasks.length ? "steps " + t.subtasks.filter(z => z.done).length + "/" + t.subtasks.length : "", t.minutes ? t.minutes + "min focused" : "",
     t.done ? "DONE " + (t.doneAt ? dayStr(new Date(t.doneAt)) : "") : ""];
   return bits.join(" | ").replace(/( \| )+$/, "");
@@ -1402,13 +1435,14 @@ function applyActions(actions){
         const text = String(a.text || "").trim();
         if(!text) break;
         const p = state.projects.find(q => q.id === a.project) || state.projects[0];
-        const s = getSection(p, a.section);
+        const s = getOrCreateSection(p, a.section);
         const t = { id:newId("t"), text, done:false, doneAt:null, priority:normPri(a.priority), due:normDue(a.due), createdAt:Date.now(), repeat:normRepeat(a.repeat),
+          tags:normTags(a.tags),
           subtasks:(Array.isArray(a.subtasks) ? a.subtasks : []).map(z => String(z).trim()).filter(Boolean).slice(0, 12).map(z => ({ id:newId("u"), text:z, done:false })), minutes:0 };
         if(t.repeat && !t.due) t.due = dayStr();
         s.tasks.push(t);
         if(a.focus === true) addFocus(t.id);
-        changes.push("Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? ", repeats " + repeatLabel(t.repeat) : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
+        changes.push("Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? ", repeats " + repeatLabel(t.repeat) : "") + (t.tags.length ? " · " + t.tags.map(z => "#" + z).join(" ") : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
         break;
       }
       case "update": {
@@ -1418,7 +1452,27 @@ function applyActions(actions){
         if(a.priority && normPri(a.priority) !== x.t.priority){ x.t.priority = normPri(a.priority); bits.push(x.t.priority + " priority"); }
         if("due" in a){ const d = normDue(a.due); if(d !== x.t.due){ x.t.due = d; bits.push(d ? "due " + fmtDue(d) : "no due date"); } }
         if("repeat" in a){ const r = normRepeat(a.repeat); if(r !== (x.t.repeat || null)){ x.t.repeat = r; if(r && !x.t.due) x.t.due = dayStr(); bits.push(r ? "repeats " + r : "no repeat"); } }
+        if("tags" in a){ const v = normTags(a.tags); if(JSON.stringify(v) !== JSON.stringify(x.t.tags || [])){ x.t.tags = v; bits.push(v.length ? "tags " + v.map(z => "#" + z).join(" ") : "tags cleared"); } }
         if(bits.length) changes.push("Updated: " + x.t.text + " — " + bits.join(", "));
+        break;
+      }
+      case "add_project": {
+        const title = String(a.title || "").trim();
+        if(!title) break;
+        const id = "p" + Date.now().toString(36) + Math.floor(Math.random() * 36).toString(36);
+        const p = { id, emoji:String(a.emoji || "").trim().slice(0, 4) || monogram(title), title, sections:[{ id:newId("s"), name:"General", tasks:[] }] };
+        state.projects.push(p);
+        changes.push("New project: " + p.emoji + " " + p.title);
+        break;
+      }
+      case "add_section": {
+        const p = state.projects.find(q => q.id === a.project);
+        const name = String(a.name || "").trim();
+        if(!p || !name) break;
+        if(!p.sections.some(s => s.name.toLowerCase() === name.toLowerCase())){
+          p.sections.push({ id:newId("s"), name:name.slice(0, 40), tasks:[] });
+          changes.push("New section: " + name + " in " + p.title);
+        }
         break;
       }
       case "subtasks": {
@@ -1639,9 +1693,9 @@ let draft = null;
 function taskSheet(id, preset = {}){
   const x = id ? findTask(id) : null;
   if(!draft || draft.id !== (x ? x.t.id : null)){
-    const t = x ? x.t : { text:"", priority:"normal", due:null, repeat:null, subtasks:[] };
+    const t = x ? x.t : { text:"", priority:"normal", due:null, repeat:null, subtasks:[], tags:[] };
     draft = { id: x ? x.t.id : null, text:t.text, priority:t.priority || "normal", due:t.due || "", repeat:t.repeat || null,
-      subtasks: clone(t.subtasks || []), pid: x ? x.p.id : (preset.pid || ui.project || state.projects[0].id), sid: x ? x.s.id : preset.sid,
+      subtasks: clone(t.subtasks || []), tags: clone(t.tags || []), pid: x ? x.p.id : (preset.pid || ui.project || state.projects[0].id), sid: x ? x.s.id : preset.sid,
       focus: x ? todayFocus().some(f => f.t.id === x.t.id) : false };
   }
   const d = draft;
@@ -1663,6 +1717,9 @@ function taskSheet(id, preset = {}){
     <div>${subs}</div>
     <div class="add-row"><input id="fSub" placeholder="Add a step…"><button data-act="subAdd" aria-label="Add step">+</button></div>
     ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">${SPARK} Break it down with Claude</button>` : ""}
+    <div class="f-label">Tags</div>
+    <div class="filters" style="padding:0 0 4px">${d.tags.map((tag, i) => `<span class="fchip on" data-act="tagDel" data-i="${i}">#${esc(tag)} ✕</span>`).join("") || `<span class="empty" style="padding:2px 2px 4px">No tags yet.</span>`}</div>
+    <div class="add-row"><input id="fTag" placeholder="Add a tag…"><button data-act="tagAdd" aria-label="Add tag">+</button></div>
     <label class="toggle-row"><input type="checkbox" id="fFocus"${d.focus ? " checked" : ""}> In today's focus</label>
     ${x && !x.t.done ? `<div class="f-label">Focus timer</div><div class="seg">${[15, 25, 50].map(m => `<button type="button" data-act="startTimer" data-id="${esc(x.t.id)}" data-min="${m}">▶ ${m} min</button>`).join("")}</div>` : ""}
     <div class="btn-row" style="margin-top:20px">
@@ -1673,6 +1730,7 @@ function taskSheet(id, preset = {}){
   ["#fText", "#fDue", "#fRepeat", "#fSec", "#fFocus"].forEach(s => $(s).addEventListener("input", sync));
   $("#fProj").onchange = () => { $("#fSec").innerHTML = sectionOptions($("#fProj").value); sync(); };
   $("#fSub").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); sheetAct("subAdd"); } });
+  $("#fTag").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); sheetAct("tagAdd"); } });
   if(!x && !preset.keepFocus) setTimeout(() => $("#fText") && $("#fText").focus(), 280);
 }
 async function sheetAct(act, el){
@@ -1684,6 +1742,14 @@ async function sheetAct(act, el){
   else if(act === "subAdd"){ const v = $("#fSub").value.trim(); if(!v) return; d.subtasks.push({ id:"new" + Date.now(), text:v, done:false }); taskSheet(d.id, { keepFocus:true }); setTimeout(() => $("#fSub") && $("#fSub").focus(), 50); }
   else if(act === "subToggle"){ const st = d.subtasks[+el.dataset.i]; st.done = !st.done; taskSheet(d.id, { keepFocus:true }); }
   else if(act === "subDel"){ d.subtasks.splice(+el.dataset.i, 1); taskSheet(d.id, { keepFocus:true }); }
+  else if(act === "tagAdd"){
+    const v = normTags($("#fTag").value)[0];
+    if(!v) return;
+    if(!d.tags.includes(v)) d.tags.push(v);
+    taskSheet(d.id, { keepFocus:true });
+    setTimeout(() => $("#fTag") && $("#fTag").focus(), 50);
+  }
+  else if(act === "tagDel"){ d.tags.splice(+el.dataset.i, 1); taskSheet(d.id, { keepFocus:true }); }
   else if(act === "saveTask"){
     const text = d.text.trim();
     if(!text){ $("#fText").focus(); return; }
@@ -1699,6 +1765,7 @@ async function sheetAct(act, el){
     task.repeat = normRepeat(d.repeat);
     if(task.repeat && !task.due) task.due = dayStr();
     task.subtasks = d.subtasks.map(st => ({ id: String(st.id).startsWith("new") ? newId("u") : st.id, text:st.text, done:!!st.done }));
+    task.tags = normTags(d.tags);
     if(d.focus) addFocus(task.id); else removeFocus(task.id);
     draft = null;
     save(); closeSheet(); render();
@@ -1774,6 +1841,8 @@ document.addEventListener("click", async (e) => {
     cancelCheckin(c); save(); render(); toast("Check-in cancelled");
   }
   else if(act === "filter"){ ui.filter = el.dataset.id; ui.project = null; render(); }
+  else if(act === "tagFilter"){ ui.tagFilter = ui.tagFilter === el.dataset.tag ? "" : el.dataset.tag; ui.project = null; render(); }
+  else if(act === "filterTag"){ ui.tab = "tasks"; ui.project = null; ui.filter = "all"; ui.q = ""; ui.tagFilter = el.dataset.tag; render(); window.scrollTo(0, 0); }
   else if(act === "toggleTable"){ showTables[el.dataset.id] = !showTables[el.dataset.id]; render(); }
   else if(act === "openProject"){ ui.project = el.dataset.id; render(); window.scrollTo(0, 0); }
   else if(act === "backProjects"){ ui.project = null; render(); }
@@ -1838,7 +1907,7 @@ function addFromRow(key){
   const p = state.projects.find(q => q.id === pid);
   const s = p && p.sections.find(q => q.id === sid);
   if(!s) return;
-  s.tasks.push({ id:newId("t"), text, done:false, doneAt:null, priority:"normal", due:null, createdAt:Date.now(), minutes:0 });
+  s.tasks.push({ id:newId("t"), text, done:false, doneAt:null, priority:"normal", due:null, createdAt:Date.now(), tags:[], minutes:0 });
   save(); render();
   const again = document.querySelector(`[data-add="${CSS.escape(key)}"]`);
   if(again) again.focus();
