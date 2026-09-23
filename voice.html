@@ -62,7 +62,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><div class="brand">JKB<span>.</span> Voice</div><button class="link" id="settingsBtn">Settings</button></div>
+  <div class="top"><a class="brand" href="./" style="text-decoration:none;color:inherit">JKB<span>.</span> Voice</a><button class="link" id="settingsBtn">Settings</button></div>
 
   <div class="tabs"><button class="on" data-mode="live">🎧 Live coach</button><button data-mode="dictate">🎙 Dictate</button></div>
 
@@ -120,12 +120,14 @@ const $ = (s) => document.querySelector(s);
 const get = (k) => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
 const set = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
 
-// ---------- mode tabs ----------
-document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("on", x === b));
-  $("#live").hidden = b.dataset.mode !== "live";
-  $("#dictate").hidden = b.dataset.mode !== "dictate";
-}));
+// ---------- mode tabs (voice.html#dictate opens straight into dictation) ----------
+function setMode(mode){
+  document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("on", x.dataset.mode === mode));
+  $("#live").hidden = mode !== "live";
+  $("#dictate").hidden = mode !== "dictate";
+}
+document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+if(location.hash === "#dictate") setMode("dictate");
 
 // ---------- briefing handed over from the app (in the URL hash, never sent to a server) ----------
 let briefing = get(K_BRIEF) || "";

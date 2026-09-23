@@ -52,6 +52,6 @@ Pull again if the copy is more than ~15 minutes old before changing things.
 ## Development
 
 - `npm test` — unit tests for `lib/tasks.js` plus an end-to-end MCP test.
-- All checklist rules live in `lib/tasks.js` and mirror `index.html` (id counter, recurring
+- All checklist rules live in `lib/tasks.js` and mirror `app.html` (id counter, recurring
   tasks, Inbox fallback, focus cleanup, `savedAt` bump). Change both together.
-- `index.html` (the app) and `voice.html` (JKB Voice on GitHub Pages) don't use Node.
+- `app.html` is the app (published to the claude.ai artifact), `index.html` is the checklist.ckv.site front door, `voice.html` is JKB Voice. None of them use Node.

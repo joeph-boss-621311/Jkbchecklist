@@ -115,4 +115,4 @@ Use single quotes around `${VAR}` in `claude mcp add` so the variable name is sa
 npm test     # lib/tasks.js unit tests + an end-to-end MCP test
 ```
 
-All checklist rules live in `lib/tasks.js` and mirror `index.html`. Change both together.
+All checklist rules live in `lib/tasks.js` and mirror `app.html`. Change both together.
