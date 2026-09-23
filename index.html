@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>JKB — Ops</title>
+<title>JKB Ops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -392,7 +392,10 @@ function loadState(){
   }catch(e){}
   return { data: JSON.parse(JSON.stringify(DEFAULT_DATA)), checked: {}, open: {} };
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  queueCloudSave();
+}
 let state = loadState();
 if(!state.data || !state.data.length) state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
 
@@ -628,9 +631,10 @@ document.getElementById("addSubBtn").addEventListener("click", () => {
 function applyTheme(mode){
   document.body.classList.toggle("light", mode==="light");
   document.getElementById("themeToggle").textContent = mode==="light" ? "☾" : "☀";
-  localStorage.setItem(THEME_KEY, mode);
+  try{ localStorage.setItem(THEME_KEY, mode); }catch(e){}
 }
-let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
+let currentTheme = "dark";
+try{ currentTheme = localStorage.getItem(THEME_KEY) || "dark"; }catch(e){}
 applyTheme(currentTheme);
 document.getElementById("themeToggle").addEventListener("click", () => {
   currentTheme = currentTheme==="dark" ? "light" : "dark";
@@ -713,7 +717,16 @@ document.getElementById("menuAddGroup").addEventListener("click", () => {
   showView(id);
   drawer.classList.remove("show");
 });
-document.getElementById("menuExport").addEventListener("click", () => {
+document.getElementById("menuExport").addEventListener("click", async () => {
+  if(claudeRuntime){
+    let downloads = null;
+    try{ downloads = await claudeRuntime.use("downloads"); }catch(e){}
+    if(downloads){
+      try{ await downloads.save({ filename:"jkb-checklist-backup.json", data: JSON.stringify(state,null,2) }); }catch(e){}
+      drawer.classList.remove("show");
+      return;
+    }
+  }
   const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -779,7 +792,7 @@ function startRec(){
   rec.onerror = (e) => {
     if(e.error === "not-allowed" || e.error === "service-not-allowed"){
       listening = false;
-      recStatus.textContent = "Mic blocked. Allow microphone access for this page (needs https or localhost).";
+      recStatus.textContent = "Mic blocked here. Tap the text box and use your keyboard's 🎤 dictation instead — works the same.";
     }
   };
   // Chrome ends the session after a silence; restart until the user taps stop
@@ -848,37 +861,92 @@ function routeTask(text){
   return { groupId: currentGroupId || state.data[0].id, subIdx: -1 };
 }
 
-// ---------- task filter: Claude via local server (server.js → claude CLI) ----------
+// ---------- task filter: Claude ----------
+// Hosted on claude.ai → the page asks Claude directly (sample). Run locally → server.js → claude CLI.
 let aiAvailable = false;
+let sampleFn = null;
+const claudeRuntime = window.claude && typeof window.claude.use === "function" ? window.claude : null;
 async function checkAi(){
   const badge = document.getElementById("aiBadge");
-  try{
-    const r = await fetch("api/health", { cache:"no-store" });
-    const j = await r.json();
-    aiAvailable = !!j.claude;
-  }catch(e){ aiAvailable = false; }
+  if(claudeRuntime){
+    try{ sampleFn = await claudeRuntime.use("sample"); }catch(e){ sampleFn = null; }
+    aiAvailable = !!sampleFn;
+  } else {
+    try{
+      const r = await fetch("api/health", { cache:"no-store" });
+      const j = await r.json();
+      aiAvailable = !!j.claude;
+    }catch(e){ aiAvailable = false; }
+  }
   badge.textContent = aiAvailable ? "connected" : "offline — built-in filter";
   document.getElementById("useAi").checked = aiAvailable;
   document.getElementById("useAi").disabled = !aiAvailable;
 }
 
+function buildExtractPrompt(transcript, projects, currentProject){
+  const fallback = currentProject || (projects[0] && projects[0].id) || "";
+  return `You turn a messy voice transcript into a clean to-do list.
+
+Rules:
+- Pull out only real, actionable tasks. Ignore filler, small talk, thinking out loud, and things already done.
+- Write each task as a short imperative starting with a verb ("Fix login bug", "Call Tunde about invoice"). Max ~10 words.
+- Keep useful specifics (names, dates, numbers, deadlines). Drop the project name from the text if it's only there to say where the task goes.
+- Split compound sentences into separate tasks. Merge duplicates.
+- Never drop a real task just because it doesn't fit a project (errands, personal stuff) — send it to the default project's "Inbox".
+- Assign each task to the best matching project id and section name from the list below.
+  If no section fits, use section "Inbox". The default project is "${fallback}"; use it when no project clearly fits.
+
+Projects (id — title — sections):
+${projects.map(p => `- ${p.id} — ${p.title} — ${p.sections.join(" | ")}`).join("\n")}
+
+Transcript:
+"""
+${transcript}
+"""
+
+Reply with only JSON: {"tasks":[{"text":"...","project":"<id>","section":"<section name>"}]}`;
+}
+
 async function aiExtract(text){
+  const projects = state.data.map(g => ({ id: g.id, title: g.title, sections: g.subs.map(s => s.name) }));
+  let tasks;
+  if(sampleFn){
+    let j;
+    try{ j = await sampleFn.json(buildExtractPrompt(text.slice(0, 20000), projects, currentGroupId), { modelTier:"quick" }); }
+    catch(e){
+      if(e && (e.code === "not_granted" || e.code === "sampling_disabled")){ aiAvailable = false; checkAiBadge(); }
+      throw new Error(e && e.code === "rate_limited" ? "busy, try again in a bit" : ((e && e.code) || "failed"));
+    }
+    tasks = j && Array.isArray(j.tasks) ? j.tasks : (Array.isArray(j) ? j : null);
+    if(!tasks) throw new Error("unexpected reply");
+  } else {
+    tasks = await serverExtract(text, projects);
+  }
+  return tasks.filter(t => t && t.text).map(t => {
+    const g = state.data.find(x => x.id === t.project) || state.data.find(x => x.id === (currentGroupId || state.data[0].id));
+    const si = g.subs.findIndex(s => s.name.toLowerCase() === String(t.section || "").toLowerCase());
+    return { text: String(t.text).trim(), groupId: g.id, subIdx: si };
+  });
+}
+function checkAiBadge(){
+  document.getElementById("aiBadge").textContent = aiAvailable ? "connected" : "offline — built-in filter";
+  document.getElementById("useAi").checked = aiAvailable;
+  document.getElementById("useAi").disabled = !aiAvailable;
+}
+
+async function serverExtract(text, projects){
   const r = await fetch("api/extract", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({
       transcript: text,
       currentProject: currentGroupId,
-      projects: state.data.map(g => ({ id: g.id, title: g.title, sections: g.subs.map(s => s.name) })),
+      projects,
     }),
   });
   const j = await r.json();
   if(!r.ok || !Array.isArray(j.tasks)) throw new Error(j.error || "Bad response");
-  return j.tasks.filter(t => t && t.text).map(t => {
-    const g = state.data.find(x => x.id === t.project) || state.data.find(x => x.id === (currentGroupId || state.data[0].id));
-    const si = g.subs.findIndex(s => s.name.toLowerCase() === String(t.section || "").toLowerCase());
-    return { text: String(t.text).trim(), groupId: g.id, subIdx: si };
-  });
+  return j.tasks;
 }
 
 // ---------- draft review ----------
@@ -998,6 +1066,46 @@ document.getElementById("micFab").addEventListener("click", () => {
   voiceSheet.classList.add("show");
   checkAi();
 });
+
+// ---------- cloud save (only when hosted on claude.ai) ----------
+// One document holds the whole checklist so it follows you across devices.
+let cloudDoc = null, cloudBusy = false, cloudDirty = false;
+function queueCloudSave(){
+  if(!cloudDoc) return;
+  cloudDirty = true;
+  if(cloudBusy) return;
+  cloudBusy = true;
+  setTimeout(async () => {
+    while(cloudDirty){
+      cloudDirty = false;
+      try{ await cloudDoc.set({ state: JSON.stringify(state), savedAt: Date.now() }); }catch(e){}
+    }
+    cloudBusy = false;
+  }, 600);
+}
+function rerender(){ if(currentGroupId === null) showView(null); else showView(currentGroupId); }
+(async () => {
+  if(!claudeRuntime) return;
+  let db = null;
+  try{ db = await claudeRuntime.use("db"); }catch(e){}
+  if(!db) return;
+  const ref = db.doc("checklist/main");
+  try{
+    const snap = await ref.get();
+    cloudDoc = ref;
+    if(snap.exists && typeof snap.data().state === "string"){
+      const parsed = JSON.parse(snap.data().state);
+      if(parsed && parsed.data && parsed.data.length){
+        state = parsed;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+        if(currentGroupId && !state.data.some(g => g.id === currentGroupId)) currentGroupId = null;
+        rerender();
+      }
+    } else {
+      queueCloudSave(); // first run: push what this device has
+    }
+  }catch(e){}
+})();
 
 renderTabbar();
 renderDashboard();
