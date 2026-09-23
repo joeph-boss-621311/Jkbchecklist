@@ -58,25 +58,34 @@
   .mic.live{ background:var(--danger); color:#fff; animation:breathe 1.2s infinite; }
   .link{ background:none; border:none; color:var(--text-dim); font-size:0.78rem; text-decoration:underline; cursor:pointer; padding:4px; }
   [hidden]{ display:none !important; }
+  .field-note{ font-size:0.78rem; color:var(--text-dim); line-height:1.5; margin:8px 0 0; }
+  .saytext{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; font-size:0.95rem; line-height:1.5; margin:0 0 18px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top"><a class="brand" href="./" style="text-decoration:none;color:inherit">JKB<span>.</span> Voice</a><button class="link" id="settingsBtn">Settings</button></div>
 
-  <div class="tabs"><button class="on" data-mode="live">🎧 Live coach</button><button data-mode="dictate">🎙 Dictate</button></div>
+  <div class="tabs"><button class="on" data-mode="live">🎧 Talk to Atlas</button><button data-mode="dictate">🎙 Dictate</button></div>
 
-  <!-- ============ LIVE COACH ============ -->
+  <!-- ============ LIVE ATLAS ============ -->
   <section id="live">
     <div class="card" id="setup" hidden>
-      <div class="label">One-time setup</div>
-      <div style="font-size:0.86rem;line-height:1.5;color:var(--text-2);margin-bottom:10px">Paste your ElevenLabs <b>Agent ID</b> (starts with <code>agent_</code>). It's saved on this phone only.</div>
+      <div class="label">Live voice call</div>
+      <div style="font-size:0.86rem;line-height:1.5;color:var(--text-2);margin-bottom:10px">Paste your ElevenLabs <b>Agent ID</b> (starts with <code>agent_</code>). Saved on this device only.</div>
       <input id="agentInput" placeholder="agent_..." autocomplete="off" spellcheck="false">
       <div class="row" style="margin-top:10px"><button class="btn" id="saveAgent">Save</button></div>
+
+      <div class="label" style="margin-top:20px">Atlas's voice</div>
+      <div style="font-size:0.86rem;line-height:1.5;color:var(--text-2);margin-bottom:10px">A separate ElevenLabs <b>API key</b> lets the 🎧 button on Atlas's messages read them out loud. Saved on this device only — never sent anywhere but ElevenLabs.</div>
+      <input id="ttsKeyInput" type="password" placeholder="ElevenLabs API key" autocomplete="off" spellcheck="false">
+      <input id="ttsVoiceInput" placeholder="Voice ID (optional)" autocomplete="off" spellcheck="false" style="margin-top:8px">
+      <div class="row" style="margin-top:10px"><button class="btn" id="saveTts">Save voice</button></div>
+      <div class="field-note" id="ttsMsg">Leave the voice ID blank to use a standard ElevenLabs voice, or pick one at <a href="https://elevenlabs.io/app/voice-library" target="_blank" rel="noopener" style="color:var(--gold)">elevenlabs.io/app/voice-library</a> and paste its ID here.</div>
     </div>
 
     <h1>Talk it through</h1>
-    <p class="sub">Tell your coach what you got done and what's next. When you hang up, send the conversation to Coach and Claude updates your checklist.</p>
+    <p class="sub">Tell Atlas what you got done and what's next. When you hang up, send the conversation to Atlas and it updates your checklist.</p>
 
     <div class="orb-wrap">
       <button class="orb" id="orb" aria-label="Start voice chat">🎧</button>
@@ -92,7 +101,7 @@
       <div class="label">Conversation <button class="link" id="clearTranscript">clear</button></div>
       <div class="transcript" id="transcript"><div class="empty">Nothing yet.</div></div>
     </div>
-    <div class="row"><button class="btn" id="sendLive" disabled>Copy for Coach &amp; open app</button></div>
+    <div class="row"><button class="btn" id="sendLive" disabled>Copy for Atlas &amp; open app</button></div>
 
     <div class="card" style="margin-top:14px">
       <details><summary id="briefSummary">Briefing from your app</summary><pre class="brief" id="brief"></pre></details>
@@ -109,13 +118,26 @@
     <div class="row"><button class="btn ghost" id="clear" style="flex:0 0 auto;padding:14px 18px">Clear</button><button class="btn" id="send">Copy &amp; open checklist</button></div>
   </section>
 
-  <div class="hint">In the app: open <b>Coach</b>, long-press the message box → Paste → Send.</div>
+  <!-- ============ READER (opened via a link from an Atlas message) ============ -->
+  <section id="reader" hidden>
+    <h1>Atlas says</h1>
+    <p class="saytext" id="readerText"></p>
+    <div class="orb-wrap">
+      <button class="mic" id="readerPlay" aria-label="Play">▶</button>
+      <div class="status" id="readerStatus">Tap to play</div>
+    </div>
+    <button class="link" id="readerBack">← Back to JKB Voice</button>
+  </section>
+
+  <div class="hint" id="mainHint">In the app: open <b>Atlas</b>, long-press the message box → Paste → Send.</div>
 </div>
 
 <script type="module">
 const CHECKLIST_URL = "https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8";
 const DEFAULT_AGENT_ID = "";   // fill in once the ElevenLabs agent exists, so every device works without setup
 const K_AGENT = "jkb_voice_agent", K_BRIEF = "jkb_voice_brief", K_DRAFT = "jkb_voice_draft", K_TRANSCRIPT = "jkb_voice_transcript";
+const K_TTS_KEY = "jkb_voice_tts_key", K_TTS_VOICE = "jkb_voice_tts_voice";
+const DEFAULT_VOICE_ID = "pNInz6obpgDQGcFmaJgB"; // ElevenLabs "Adam" — a standard premade voice, works with any key
 const $ = (s) => document.querySelector(s);
 const get = (k) => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
 const set = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
@@ -136,19 +158,88 @@ if(m){
   try{ briefing = decodeURIComponent(m[1]); set(K_BRIEF, briefing); }catch(e){}
   history.replaceState(null, "", location.pathname);
 }
-$("#brief").textContent = briefing || "No briefing yet — open this page from the app's “Talk live” button so your coach knows your tasks.";
+$("#brief").textContent = briefing || "No briefing yet — open this page from the app's “Talk live” button so Atlas knows your tasks.";
 $("#briefSummary").textContent = briefing ? "Briefing from your app ✓" : "No briefing from your app";
 
 // ---------- agent id ----------
 let agentId = get(K_AGENT) || DEFAULT_AGENT_ID;
 function showSetup(force){ $("#setup").hidden = !(force || !agentId); $("#agentInput").value = agentId; }
 showSetup(false);
-$("#settingsBtn").addEventListener("click", () => showSetup(true));
+$("#settingsBtn").addEventListener("click", () => { setMode("live"); showSetup(true); });
 $("#saveAgent").addEventListener("click", () => {
   const v = $("#agentInput").value.trim();
   if(!/^agent_[A-Za-z0-9]+$/.test(v)){ $("#liveStatus").textContent = "That doesn't look like an Agent ID (agent_…)."; return; }
   agentId = v; set(K_AGENT, v); showSetup(false); $("#liveStatus").textContent = "Saved. Tap to start";
 });
+
+// ---------- Atlas's voice (ElevenLabs text-to-speech) ----------
+let ttsKey = get(K_TTS_KEY) || "", ttsVoice = get(K_TTS_VOICE) || "";
+$("#ttsKeyInput").value = ttsKey;
+$("#ttsVoiceInput").value = ttsVoice;
+$("#saveTts").addEventListener("click", () => {
+  ttsKey = $("#ttsKeyInput").value.trim();
+  ttsVoice = $("#ttsVoiceInput").value.trim();
+  set(K_TTS_KEY, ttsKey); set(K_TTS_VOICE, ttsVoice);
+  $("#ttsMsg").textContent = ttsKey ? "Saved. Try the 🎧 button on one of Atlas's messages." : "Key cleared — the 🎧 button will ask for one again.";
+});
+
+let ttsAudio = null;
+async function playTts(text, btn, statusEl){
+  if(!ttsKey){ statusEl.textContent = "Add your ElevenLabs API key above, then tap play again."; showSetup(true); return; }
+  if(ttsAudio && ttsAudio._text === text){
+    if(ttsAudio.paused){ ttsAudio.play(); } else { ttsAudio.pause(); }
+    return;
+  }
+  if(ttsAudio) ttsAudio.pause();
+  btn.disabled = true; btn.textContent = "…"; statusEl.textContent = "Asking ElevenLabs…";
+  try{
+    const voiceId = ttsVoice || DEFAULT_VOICE_ID;
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`, {
+      method: "POST",
+      headers: { "xi-api-key": ttsKey, "Content-Type": "application/json", "Accept": "audio/mpeg" },
+      body: JSON.stringify({ text: text.slice(0, 2000), model_id: "eleven_flash_v2_5", voice_settings: { stability: 0.45, similarity_boost: 0.8 } }),
+    });
+    if(!res.ok){
+      throw new Error(
+        res.status === 401 ? "That API key was rejected — check it above."
+        : res.status === 429 ? "ElevenLabs usage limit reached. Try again later or check your plan."
+        : res.status === 400 ? "That voice ID isn't valid — check it above, or clear it to use the default."
+        : "ElevenLabs error (" + res.status + ")."
+      );
+    }
+    const url = URL.createObjectURL(await res.blob());
+    ttsAudio = new Audio(url);
+    ttsAudio._text = text;
+    ttsAudio.onplay = () => { btn.disabled = false; btn.textContent = "❚❚"; statusEl.textContent = "Playing…"; };
+    ttsAudio.onpause = () => { btn.textContent = "▶"; statusEl.textContent = "Paused"; };
+    ttsAudio.onended = () => { btn.textContent = "▶"; statusEl.textContent = "Done — tap to play again"; };
+    await ttsAudio.play();
+  }catch(e){
+    btn.disabled = false; btn.textContent = "▶";
+    statusEl.textContent = e.message || "Couldn't reach ElevenLabs.";
+  }
+}
+
+// ---------- reader: opened via #say=<text> from an Atlas message's 🎧 button ----------
+const sayMatch = location.hash.match(/#say=(.*)$/);
+if(sayMatch){
+  let sayText = "";
+  try{ sayText = decodeURIComponent(sayMatch[1]); }catch(e){ sayText = sayMatch[1]; }
+  history.replaceState(null, "", location.pathname);
+  if(sayText.trim()){
+    document.querySelector(".tabs").hidden = true;
+    $("#live").hidden = true; $("#dictate").hidden = true; $("#mainHint").hidden = true;
+    $("#reader").hidden = false;
+    $("#readerText").textContent = sayText;
+    $("#readerStatus").textContent = ttsKey ? "Tap play to hear it." : "Tap Settings above to add your ElevenLabs key first.";
+    $("#readerPlay").addEventListener("click", () => playTts(sayText, $("#readerPlay"), $("#readerStatus")));
+    $("#readerBack").addEventListener("click", () => {
+      if(ttsAudio) ttsAudio.pause();
+      $("#reader").hidden = true; document.querySelector(".tabs").hidden = false; $("#mainHint").hidden = false;
+      setMode("live");
+    });
+  }
+}
 
 // ---------- transcript ----------
 let transcript = [];
@@ -192,7 +283,7 @@ async function startCall(){
         transcript.push({ role:"system", text:"— call started " + new Date().toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) + " —" });
         renderTranscript();
       },
-      onDisconnect: () => { convo = null; $("#callControls").hidden = true; setOrb("", transcript.length ? "Call ended. Send it to Coach below." : "Tap to start"); },
+      onDisconnect: () => { convo = null; $("#callControls").hidden = true; setOrb("", transcript.length ? "Call ended. Send it to Atlas below." : "Tap to start"); },
       onMessage: (msg) => {
         const text = String(msg && msg.message || "").trim();
         if(!text) return;
@@ -200,7 +291,7 @@ async function startCall(){
         transcript.push({ role: role === "user" ? "user" : "agent", text });
         renderTranscript();
       },
-      onModeChange: ({ mode }) => { if(convo) setOrb(mode === "speaking" ? "speaking" : "listening", mode === "speaking" ? "Coach is talking…" : "Listening…"); },
+      onModeChange: ({ mode }) => { if(convo) setOrb(mode === "speaking" ? "speaking" : "listening", mode === "speaking" ? "Atlas is talking…" : "Listening…"); },
       onError: (message) => { setOrb("", "Something went wrong: " + String(message || "unknown error")); },
     });
   }catch(e){
@@ -227,8 +318,8 @@ async function copyAndOpen(text, statusEl){
 }
 $("#sendLive").addEventListener("click", async () => {
   await endCall();
-  const lines = transcript.filter(t => t.role !== "system").map(t => (t.role === "user" ? "Me: " : "Coach: ") + t.text);
-  const text = "Voice session with my coach (" + new Date().toLocaleString([], { weekday:"short", hour:"numeric", minute:"2-digit" }) + "). Apply everything I said I did or decided, then summarise:\n\n" + lines.join("\n");
+  const lines = transcript.filter(t => t.role !== "system").map(t => (t.role === "user" ? "Me: " : "Atlas: ") + t.text);
+  const text = "Voice session with Atlas (" + new Date().toLocaleString([], { weekday:"short", hour:"numeric", minute:"2-digit" }) + "). Apply everything I said I did or decided, then summarise:\n\n" + lines.join("\n");
   await copyAndOpen(text.slice(0, 15000), $("#liveStatus"));
 });
 

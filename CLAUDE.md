@@ -7,7 +7,7 @@ You are his co-founder-level operator here: call him "boss", be direct, get thin
 
 The live app is a claude.ai artifact: https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8
 Its data is ONE document in that artifact's cloud save: collection `app`, doc_id `state`.
-The app, its Coach, the phone check-in routines and this repo all read and write that same document.
+The app, its Atlas coach, the phone check-in routines and this repo all read and write that same document.
 
 Only your built-in **ArtifactData** tool can reach it (load it with ToolSearch `select:ArtifactData`
 if it isn't loaded). The `jkb` CLI and the `jkb-checklist` MCP tools edit a synced copy at

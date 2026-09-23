@@ -8,7 +8,7 @@ Your checklist, managed by Claude. It plans your day, updates tasks when you tel
 ## Screens
 
 - **Today**: Claude's note, focus ring, streak, focus time, overdue / due today / coming up, check-ins.
-- **Coach**: chat with Claude. It marks tasks done, adds tasks (with due dates, repeats and steps), plans your day, and schedules check-ins. Every change has **Undo**.
+- **Atlas** (the coach): chat with it. It marks tasks done, adds tasks (with due dates, repeats and steps), plans your day, and schedules check-ins. Every change has **Undo**. You can attach a photo (screenshot, handwritten note, whiteboard, receipt) and it reads it. Tap 🎙 to read one of its replies aloud with your device's own voice, or 🎧 to hear it in Atlas's ElevenLabs voice on JKB Voice.
 - **Tasks**: search, filters (Today, This week, Overdue, High, Recurring, No date, Done), project filter, and projects → sections.
 - **Progress**: tasks done per day (14 days), focus time per day, best/current streak, neglected projects, the tasks you've spent the most time on.
 - **Task sheet**: priority, due date, repeat (daily / weekdays / weekly / monthly), steps, "Break it down with Claude", and a 15/25/50-minute focus timer.
@@ -17,14 +17,19 @@ Your checklist, managed by Claude. It plans your day, updates tasks when you tel
 
 - 8:00 AM WAT: morning plan + phone notification
 - 8:00 PM WAT: evening review + phone notification
-- Every 2 hours from 9 AM to 7 PM: silently books any extra check-ins you asked for in Coach
+- Every 2 hours from 9 AM to 7 PM: silently books any extra check-ins you asked for in Atlas
 
 ## Live voice coach (ElevenLabs)
 
-claude.ai blocks the mic for pages it hosts, so live voice runs on JKB Voice:
+claude.ai's Artifact sandbox blocks the app from making network calls to any outside API (a security rule of the platform, not a bug — it also silently blocks a raw `fetch()`, so voice has to happen off-platform). Live voice and text-to-speech both run on JKB Voice instead:
 
 1. In the app, tap **🎧 Talk**. JKB Voice opens with a briefing of your tasks (passed in the link's `#` part, which never reaches a server).
-2. Talk. When you're done, tap **Copy for Coach & open app**, then paste into Coach. Claude applies what you said.
+2. Talk. When you're done, tap **Copy for Atlas & open app**, then paste into Atlas. It applies what you said.
+
+### Hearing Atlas's replies
+
+- **🎙 in the chat** — reads the message aloud instantly using your device's own voice. No setup, works everywhere, but sounds like your phone's voice, not an ElevenLabs one.
+- **🎧 in the chat** — opens JKB Voice with that message and plays it in a real ElevenLabs voice, if you've added a key there (Settings → Atlas's voice; a *separate* key from the live-call agent, saved on that device only). Defaults to ElevenLabs' "Adam" voice; paste a different Voice ID from [elevenlabs.io/app/voice-library](https://elevenlabs.io/app/voice-library) to change it.
 
 ### One-time ElevenLabs agent setup
 
@@ -34,7 +39,7 @@ In the ElevenLabs dashboard, create a new Agent (blank template) and set:
 - **First message:** `Hey Joseph. What did you get done, and what's next?`
 - **System prompt:**
 
-  > You are Joseph's accountability coach on a live voice call. He's an ambitious founder on a tight budget running JKB Global (creative/tech agency), SafeGate (escrow platform), CVG and a weekly CEO routine. At the start of the call you'll get his current checklist as context — use it. Talk like a smart friend: casual, direct, short turns of one to three sentences, never read out long lists. Find out what he finished, what's blocking him, and what he'll do next, with times or dates. Push back when he dodges high-priority or overdue work, and help him decide when he's stuck. Before the call ends, recap in two sentences what he finished and what he committed to — that recap is sent to his task app.
+  > Your name is Atlas. You are Joseph's accountability coach on a live voice call. He's an ambitious founder on a tight budget running JKB Global (creative/tech agency), SafeGate (escrow platform), CVG and a weekly CEO routine. At the start of the call you'll get his current checklist as context — use it. Talk like a smart friend: casual, direct, short turns of one to three sentences, never read out long lists. Find out what he finished, what's blocking him, and what he'll do next, with times or dates. Push back when he dodges high-priority or overdue work, and help him decide when he's stuck. Before the call ends, recap in two sentences what he finished and what he committed to — that recap is sent to his task app.
 
 - **Security:** leave authentication off, so the page can start calls with only the Agent ID. Anyone with the ID can use your minutes, so don't post it publicly, and set a usage limit if ElevenLabs offers one.
 
@@ -47,7 +52,7 @@ Claude Code on your computer can manage the same tasks as the live app: same dat
 ```
  claude.ai cloud save (app/state) <── ArtifactData pull / push (Claude Code, signed in as you) ──> .jkb/app/state.json
         ▲                                                                                              ▲
-  app · Coach · check-ins                                                  jkb CLI (cli.js) · MCP connector (mcp.js)
+  app · Atlas · check-ins                                                  jkb CLI (cli.js) · MCP connector (mcp.js)
 ```
 
 Only Claude Code's built-in ArtifactData tool can reach the cloud save, so Claude pulls the
