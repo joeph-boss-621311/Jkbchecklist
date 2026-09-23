@@ -251,7 +251,18 @@
   .msg{ max-width:88%; padding:11px 14px; border-radius:18px; font-size:0.9rem; line-height:1.5; word-break:break-word; }
   .msg.user{ align-self:flex-end; background:var(--grad); color:var(--on-gold); border-bottom-right-radius:6px; white-space:pre-wrap; }
   .msg.assistant{ align-self:flex-start; background:var(--card); border:1px solid var(--line); border-bottom-left-radius:6px; }
-  .msg .who{ font-size:0.66rem; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .msg .who-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+  .msg .who{ font-size:0.66rem; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; }
+  .msg-actions{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+  .icon-mini{ background:none; border:none; color:var(--text-dim); cursor:pointer; padding:3px 5px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:0.82rem; line-height:1; text-decoration:none; }
+  .icon-mini:hover{ color:var(--gold); background:var(--gold-soft); }
+  .icon-mini.on{ color:var(--gold); }
+  .icon-mini svg{ width:14px; height:14px; }
+  .msg-img{ display:block; max-width:200px; max-height:200px; border-radius:12px; margin-bottom:6px; object-fit:cover; }
+  .img-preview{ display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:6px 10px; margin-bottom:8px; }
+  .img-preview img{ width:36px; height:36px; border-radius:8px; object-fit:cover; }
+  .img-preview span{ flex:1; font-size:0.8rem; color:var(--text-2); }
+  .img-preview button{ background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.9rem; padding:4px; }
   .msg .changes{ margin-top:10px; padding-top:9px; border-top:1px solid var(--line); font-size:0.78rem; color:var(--text-2); }
   .msg .changes div{ margin:3px 0; }
   .msg .undo{ margin-top:8px; background:var(--card-2); border:1px solid var(--line); color:var(--text-2); border-radius:9px; font-size:0.74rem; padding:5px 10px; cursor:pointer; }
@@ -395,11 +406,14 @@
 <div class="composer" id="composer" hidden>
   <div class="composer-in">
     <div class="chips" id="chips"></div>
+    <div class="img-preview" id="imgPreview" hidden></div>
     <div class="compose-row">
+      <button class="round alt" id="attachBtn" aria-label="Attach a photo" hidden><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.5" fill="currentColor" stroke="none"/><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L4 19"/></svg></button>
       <button class="round alt" id="micBtn" aria-label="Dictate">🎙</button>
-      <textarea id="input" rows="1" placeholder="Tell Claude what you did or need to do…"></textarea>
+      <textarea id="input" rows="1" placeholder="Tell Atlas what you did or need to do…"></textarea>
       <button class="round" id="sendBtn" aria-label="Send">➤</button>
     </div>
+    <input type="file" id="imgInput" accept="image/*" hidden>
     <div class="compose-hint" id="hint"></div>
   </div>
 </div>
@@ -415,14 +429,14 @@
 <div class="drawer" id="drawer">
   <button class="d-close" id="drawerClose" aria-label="Close">✕</button>
   <h4>Voice</h4>
-  <button class="d-item" id="mTalk">Talk live with your coach <span>🎧</span></button>
+  <button class="d-item" id="mTalk">Talk live with Atlas <span>🎧</span></button>
   <a class="d-item" href="https://checklist.jkbglobal.site/voice.html" target="_blank" rel="noopener">Open JKB Voice <span>↗</span></a>
   <h4>Projects</h4>
   <button class="d-item" id="mAddProject">New project <span>+</span></button>
   <h4>Data</h4>
   <button class="d-item" id="mExport">Export backup (.json) <span>⬇</span></button>
   <button class="d-item" id="mImport">Import backup (.json) <span>⬆</span></button>
-  <button class="d-item" id="mClearChat">Clear coach chat <span>✕</span></button>
+  <button class="d-item" id="mClearChat">Clear chat with Atlas <span>✕</span></button>
   <input type="file" id="importFile" accept="application/json">
 </div>
 
@@ -905,7 +919,7 @@ function renderToday(){
     buttons = `<button class="btn" data-act="checkin">${hour >= 17 ? "Evening check-in" : "Check in"}</button><button class="btn ghost" data-act="talk">🎧 Talk</button>`;
   }
   const latest = lastCoach && lastCoach.content !== state.today.note && planned
-    ? `<div class="card pad" style="margin-top:14px" data-act="goCoach"><div class="coach-tag">✦ Latest from coach · ${esc(new Date(lastCoach.ts).toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" }))}</div><div class="coach-note" style="font-size:0.86rem;color:var(--text-2)">${md(lastCoach.content.length > 220 ? lastCoach.content.slice(0, 220) + "…" : lastCoach.content)}</div></div>` : "";
+    ? `<div class="card pad" style="margin-top:14px" data-act="goCoach"><div class="coach-tag">✦ Latest from Atlas · ${esc(new Date(lastCoach.ts).toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" }))}</div><div class="coach-note" style="font-size:0.86rem;color:var(--text-2)">${md(lastCoach.content.length > 220 ? lastCoach.content.slice(0, 220) + "…" : lastCoach.content)}</div></div>` : "";
   const nextUp = focus.find(x => !x.t.done);
 
   return `<div class="view-in">
@@ -914,7 +928,7 @@ function renderToday(){
     <div class="hero">
       <div class="ring">${ringSvg(focus.length ? fDone / focus.length : 0)}<div class="rv"><b>${fDone}/${focus.length}</b><span>focus</span></div></div>
       <div class="hero-body">
-        <div class="coach-tag">✦ Coach Claude</div>
+        <div class="coach-tag">✦ Atlas</div>
         <div class="coach-note">${md(note)}</div>
       </div>
     </div>
@@ -935,7 +949,7 @@ function renderToday(){
     <div class="label">Check-ins</div>
     <div class="card">
       ${upcomingCheckins().map(c => `<div class="task"><div class="t-main"><div class="t-text">⏰ ${esc(fmtWhen(c.at))}</div><div class="t-meta"><span>${esc(c.about)}</span>${c.status === "pending" ? `<span class="chip">queued</span>` : `<span class="chip ok">scheduled</span>`}</div></div><button class="x" data-act="cancelCheckin" data-id="${esc(c.id)}" aria-label="Cancel check-in">✕</button></div>`).join("")}
-      <div class="task"><div class="t-main"><div class="t-text">Daily · 8:00 AM plan &amp; 8:00 PM review</div><div class="t-meta"><span>Say “check on me at 3pm” in Coach for more</span></div></div></div>
+      <div class="task"><div class="t-main"><div class="t-text">Daily · 8:00 AM plan &amp; 8:00 PM review</div><div class="t-meta"><span>Say “check on me at 3pm” to Atlas for more</span></div></div></div>
     </div>
   </div>`;
 }
@@ -1104,6 +1118,77 @@ function renderStats(){
 
 // ---------- Coach ----------
 let thinking = false, currentCtl = null, lastUndo = null, sampleFn = null, sampleReady = false;
+const imageThumbs = new Map(); // ts -> object URL, this session only (never persisted or synced)
+let pendingImage = null, pendingImageUrl = null, imagesAvailable = false;
+
+// ---------- read a message aloud (the device's own voice — free, no key, no network) ----------
+const ICO_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z" fill="currentColor" stroke="none"/></svg>';
+const ICO_STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>';
+let speakingTs = null;
+function stripForSpeech(text){ return String(text).replace(/\*\*(.+?)\*\*/g, "$1").replace(/^[-•]\s+/gm, "").replace(/\n+/g, ". "); }
+function updateSpeakButtons(){
+  document.querySelectorAll('[data-act="speak"]').forEach(b => {
+    const on = Number(b.dataset.ts) === speakingTs;
+    b.classList.toggle("on", on);
+    b.innerHTML = on ? ICO_STOP : ICO_PLAY;
+    b.setAttribute("aria-label", on ? "Stop reading" : "Read this message aloud");
+  });
+}
+function speakMessage(ts, text){
+  if(!("speechSynthesis" in window)){ toast("This browser can't read text aloud — try “Listen in Atlas's voice” instead."); return; }
+  const was = speakingTs;
+  window.speechSynthesis.cancel(); // also fires onend for whatever was playing
+  if(was === ts) return; // tapping the same button again just stops it
+  const u = new SpeechSynthesisUtterance(stripForSpeech(text).slice(0, 3000));
+  u.rate = 1.02;
+  u.onstart = () => { speakingTs = ts; updateSpeakButtons(); };
+  u.onend = u.onerror = () => { if(speakingTs === ts) speakingTs = null; updateSpeakButtons(); };
+  window.speechSynthesis.speak(u);
+}
+
+// ---------- photo attachments: Atlas can look at a screenshot, note or whiteboard ----------
+// (routed through Claude's own `sample` capability, not a page fetch — the artifact sandbox
+// blocks the page from calling any outside API directly, which is also why the ElevenLabs
+// voice below runs on the separate JKB Voice page instead of in here.)
+async function checkImageCaps(){
+  const sample = await getSample();
+  if(!sample) return false;
+  try{ const caps = await sample.limits(); imagesAvailable = !!caps.images; }
+  catch(e){ imagesAvailable = false; }
+  $("#attachBtn").hidden = !imagesAvailable;
+  return imagesAvailable;
+}
+function clearPendingImage(){
+  if(pendingImageUrl) URL.revokeObjectURL(pendingImageUrl);
+  pendingImage = null; pendingImageUrl = null;
+  renderImagePreview();
+}
+function setPendingImage(file){
+  clearPendingImage();
+  if(!file) return;
+  pendingImage = file;
+  pendingImageUrl = URL.createObjectURL(file);
+  renderImagePreview();
+}
+function renderImagePreview(){
+  const box = $("#imgPreview");
+  if(!pendingImage){ box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = `<img src="${pendingImageUrl}" alt=""><span>${esc(pendingImage.name || "Photo")}</span><button type="button" id="imgRemove" aria-label="Remove photo">✕</button>`;
+  $("#imgRemove").onclick = clearPendingImage;
+}
+$("#attachBtn").addEventListener("click", async () => {
+  if(!(await checkImageCaps())){ toast("Photos aren't available in this view."); return; }
+  $("#imgInput").click();
+});
+$("#imgInput").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  if(!f.type.startsWith("image/")){ toast("That's not an image."); return; }
+  setPendingImage(f);
+});
+
 function renderCoach(){
   let lastDay = "";
   const msgs = coach.messages.map(m => {
@@ -1114,20 +1199,24 @@ function renderCoach(){
       ? `<div class="changes">${m.changes.map(c => `<div>${esc(c)}</div>`).join("")}${
           m.undone ? `<div><i>Undone</i></div>` : (lastUndo && lastUndo.ts === m.ts ? `<button class="undo" data-act="undo">↶ Undo these changes</button>` : "")
         }</div>` : "";
+    const thumb = imageThumbs.get(m.ts);
     return sep + (m.role === "user"
-      ? `<div class="msg user">${esc(m.content)}</div>`
-      : `<div class="msg assistant"><div class="who">✦ Claude</div>${md(m.content)}${changes}</div>`);
+      ? `<div class="msg user">${thumb ? `<img class="msg-img" src="${thumb}" alt="">` : ""}${esc(m.content)}</div>`
+      : `<div class="msg assistant"><div class="who-row"><div class="who">✦ Atlas</div><div class="msg-actions">
+          <button class="icon-mini${speakingTs === m.ts ? " on" : ""}" data-act="speak" data-ts="${m.ts}" aria-label="${speakingTs === m.ts ? "Stop reading" : "Read this message aloud"}">${speakingTs === m.ts ? ICO_STOP : ICO_PLAY}</button>
+          <a class="icon-mini" href="${VOICE_URL}#say=${encodeURIComponent(stripForSpeech(m.content).slice(0, 600))}" target="_blank" rel="noopener" aria-label="Listen in Atlas's voice (ElevenLabs)">🎧</a>
+        </div></div>${md(m.content)}${changes}</div>`);
   }).join("");
-  const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">✦ Claude</div>Hey Joseph. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
+  const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">✦ Atlas</div>Hey Joseph, I'm Atlas. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
   const think = thinking ? `<div class="msg assistant thinking"><span class="dots"><span></span><span></span><span></span></span>Thinking… <button class="undo" data-act="stop" style="margin:0">Stop</button></div>` : "";
-  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">✦ Claude</div>The coach runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
-  return `<div class="view-in"><div class="coach-top"><div><div class="eyebrow">Your accountability partner</div><div class="h1">Coach <span class="accent">Claude</span></div></div>
+  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">✦ Atlas</div>Atlas runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
+  return `<div class="view-in"><div class="coach-top"><div><div class="eyebrow">Your accountability partner</div><div class="h1"><span class="accent">Atlas</span></div></div>
     <button class="btn sm ghost" data-act="talk" style="margin-bottom:18px">🎧 Talk live</button></div>
     <div class="chat" id="chat">${intro}${msgs}${think}${off}</div></div>`;
 }
 
 function renderTabbar(){
-  const tabs = [["today", "Today"], ["coach", "Coach"], ["tasks", "Tasks"], ["stats", "Progress"]];
+  const tabs = [["today", "Today"], ["coach", "Atlas"], ["tasks", "Tasks"], ["stats", "Progress"]];
   $("#tabbar").innerHTML = tabs.map(([id, name]) =>
     `<button class="tab${ui.tab === id ? " active" : ""}" data-tab="${id}" aria-label="${name}">${icon(id)}${name}</button>`).join("");
   renderLevelChip();
@@ -1203,11 +1292,11 @@ function fmtWhen(iso){
 // ===================================================================
 // Claude coach
 // ===================================================================
-const COACH_RULES = `You are Joseph's accountability coach and the manager of his checklist app. He's an ambitious founder on a tight budget, running JKB Global (creative/tech agency), SafeGate (escrow platform), CVG, and a weekly CEO routine. Your job: keep the list clean and make sure he actually finishes things.
+const COACH_RULES = `Your name is Atlas. You are Joseph's accountability coach and the manager of his checklist app. He's an ambitious founder on a tight budget, running JKB Global (creative/tech agency), SafeGate (escrow platform), CVG, and a weekly CEO routine. Your job: keep the list clean and make sure he actually finishes things.
 
 How to talk: casual and direct, like a smart friend. No fluff. Keep replies under 80 words unless he asks for more. Use **bold** sparingly and "- " bullets for lists. Celebrate real wins in one line. If he's dodging high-priority or overdue work, call it out and push him. If he's vague, ask one sharp question. Never show task ids to him — refer to tasks by their text.
 
-How to manage: you change the checklist ONLY through "actions". Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (section "Inbox" if nothing fits). Delete only when he explicitly asks. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise.
+How to manage: you change the checklist ONLY through "actions". Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (section "Inbox" if nothing fits). Delete only when he explicitly asks. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise. He can attach a photo (a screenshot, a handwritten note, a whiteboard, a receipt) — read it and act on it like anything else he tells you, and say what you saw in your reply.
 
 Reply with ONLY JSON:
 {"reply":"what you say to him","actions":[ ... ]}
@@ -1343,12 +1432,14 @@ function sampleErrorText(e){
 }
 
 const HEAVY = /plan my day|review my week|plan my week|voice session|break .* into steps/i;
-async function askCoach(text){
+async function askCoach(text, image){
   text = String(text || "").trim();
-  if(!text || thinking) return;
+  if((!text && !image) || thinking) return;
   const sample = await getSample();
-  if(!sample){ render(); toast("Open this page on claude.ai to use the coach."); return; }
-  coach.messages.push({ role:"user", content:text, ts:Date.now() });
+  if(!sample){ render(); toast("Open this page on claude.ai to talk to Atlas."); if(image) setPendingImage(image); return; }
+  const ts = Date.now();
+  coach.messages.push({ role:"user", content: text || "📷 Photo", ts });
+  if(image) imageThumbs.set(ts, URL.createObjectURL(image));
   saveCoach();
   thinking = true;
   ui.tab = "coach"; ui.project = null;
@@ -1359,7 +1450,9 @@ async function askCoach(text){
   const ctl = new AbortController();
   currentCtl = ctl;
   try{
-    const res = await sample.json(turns, { modelTier: HEAVY.test(text) ? "default" : "quick", cache:false, signal:ctl.signal });
+    const opts = { modelTier: HEAVY.test(text) ? "default" : "quick", cache:false, signal:ctl.signal };
+    if(image) opts.images = image;
+    const res = await sample.json(turns, opts);
     const before = JSON.stringify(state);
     const changes = applyActions(res && Array.isArray(res.actions) ? res.actions : []);
     const msg = { role:"assistant", content: String((res && res.reply) || "").trim() || "Done.", ts:Date.now(), changes };
@@ -1367,10 +1460,12 @@ async function askCoach(text){
     if(changes.length){ lastUndo = { ts:msg.ts, snapshot:before }; save(); }
     saveCoach();
   }catch(e){
+    if(imageThumbs.has(ts)){ URL.revokeObjectURL(imageThumbs.get(ts)); imageThumbs.delete(ts); }
     coach.messages.pop();
     saveCoach();
     $("#input").value = text; autoGrow();
-    if(!e || e.code !== "cancelled") toast(sampleErrorText(e));
+    if(image) setPendingImage(image);
+    if(!e || e.code !== "cancelled") toast(e && e.code === "image_rejected" ? "That photo didn't work — try a different one." : e && e.code === "images_unavailable" ? "Photos aren't available in this view." : sampleErrorText(e));
   }finally{
     thinking = false;
     currentCtl = null;
@@ -1418,12 +1513,12 @@ function voiceBriefing(){
 }
 function talkSheet(){
   const url = VOICE_URL + "#b=" + encodeURIComponent(voiceBriefing());
-  openSheet(`<h3>🎧 Talk live with your coach</h3>
+  openSheet(`<h3>🎧 Talk live with Atlas</h3>
     <p class="sub">claude.ai doesn't let this page use your mic, so the live voice chat runs on JKB Voice. Your task briefing goes with it.</p>
     <div class="card pad" style="box-shadow:none;font-size:0.85rem;line-height:1.6">
       <b>1.</b> Tap <b>Start voice chat</b> and talk it through.<br>
-      <b>2.</b> When you're done, tap <b>Copy for Coach</b> there.<br>
-      <b>3.</b> Come back here, paste into Coach and send — Claude updates your list.
+      <b>2.</b> When you're done, tap <b>Copy for Atlas</b> there.<br>
+      <b>3.</b> Come back here, paste into Atlas and send — it updates your list.
     </div>
     <div class="btn-row"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none" data-act="closeSheet">Start voice chat ↗</a></div>`);
 }
@@ -1478,7 +1573,7 @@ $("#micBtn").addEventListener("click", () => {
 function autoGrow(){ const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; }
 $("#input").addEventListener("input", autoGrow);
 $("#input").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)){ e.preventDefault(); send(); } });
-function send(){ stopRec(); const v = $("#input").value; $("#input").value = ""; autoGrow(); if(!micBlocked) $("#hint").textContent = ""; askCoach(v); }
+function send(){ stopRec(); const v = $("#input").value; const img = pendingImage; $("#input").value = ""; autoGrow(); if(!micBlocked) $("#hint").textContent = ""; clearPendingImage(); askCoach(v, img); }
 $("#sendBtn").addEventListener("click", send);
 $("#chips").addEventListener("click", (e) => {
   const b = e.target.closest("[data-q]");
@@ -1615,6 +1710,11 @@ document.addEventListener("click", async (e) => {
   else if(act === "ask") askCoach(el.dataset.q);
   else if(act === "talk"){ e.preventDefault(); talkSheet(); }
   else if(act === "stop"){ if(currentCtl) currentCtl.abort(); }
+  else if(act === "speak"){
+    const ts = Number(el.dataset.ts);
+    const m = coach.messages.find(x => x.ts === ts);
+    if(m) speakMessage(ts, m.content);
+  }
   else if(act === "breakDown") breakDown(el.dataset.id, el);
   else if(act === "quickTimer") startTimer(el.dataset.id, 25);
   else if(act === "startTimer") startTimer(el.dataset.id, +el.dataset.min);
@@ -1727,7 +1827,7 @@ $("#mAddProject").addEventListener("click", addProject);
 $("#mTalk").addEventListener("click", () => { closeDrawer(); talkSheet(); });
 $("#mClearChat").addEventListener("click", async () => {
   closeDrawer();
-  if(!(await confirmBox("Clear the coach chat?", "Your tasks stay exactly as they are.", "Clear chat"))) return;
+  if(!(await confirmBox("Clear the chat with Atlas?", "Your tasks stay exactly as they are.", "Clear chat"))) return;
   coach.messages = []; lastUndo = null; saveCoach(); closeDrawer(); render();
 });
 $("#mExport").addEventListener("click", async () => {
@@ -1783,7 +1883,7 @@ $("#lvlBtn").addEventListener("click", () => go("stats"));
 loadLocal();
 render();
 connectCloud();
-getSample().then(() => { if(ui.tab === "coach") render(); });
+getSample().then(() => { checkImageCaps(); if(ui.tab === "coach") render(); });
 </script>
 </body>
 </html>
