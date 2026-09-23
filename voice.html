@@ -66,7 +66,7 @@
 <div class="wrap">
   <div class="top"><a class="brand" href="./" style="text-decoration:none;color:inherit">JKB<span>.</span> Voice</a><button class="link" id="settingsBtn">Settings</button></div>
 
-  <div class="tabs"><button class="on" data-mode="live">🎧 Talk to Atlas</button><button data-mode="dictate">🎙 Dictate</button></div>
+  <div class="tabs"><button class="on" data-mode="live"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><path d="M4 13v-1a8 8 0 0 1 16 0v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg> Talk to Atlas</button><button data-mode="dictate"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><rect x="9" y="2" width="6" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Dictate</button></div>
 
   <!-- ============ LIVE ATLAS ============ -->
   <section id="live">
@@ -77,7 +77,7 @@
       <div class="row" style="margin-top:10px"><button class="btn" id="saveAgent">Save</button></div>
 
       <div class="label" style="margin-top:20px">Atlas's voice</div>
-      <div style="font-size:0.86rem;line-height:1.5;color:var(--text-2);margin-bottom:10px">A separate ElevenLabs <b>API key</b> lets the 🎧 button on Atlas's messages read them out loud. Saved on this device only — never sent anywhere but ElevenLabs.</div>
+      <div style="font-size:0.86rem;line-height:1.5;color:var(--text-2);margin-bottom:10px">A separate ElevenLabs <b>API key</b> lets the <svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><path d="M4 13v-1a8 8 0 0 1 16 0v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg> button on Atlas's messages read them out loud. Saved on this device only — never sent anywhere but ElevenLabs.</div>
       <input id="ttsKeyInput" type="password" placeholder="ElevenLabs API key" autocomplete="off" spellcheck="false">
       <input id="ttsVoiceInput" placeholder="Voice ID (optional)" autocomplete="off" spellcheck="false" style="margin-top:8px">
       <div class="row" style="margin-top:10px"><button class="btn" id="saveTts">Save voice</button></div>
@@ -88,7 +88,7 @@
     <p class="sub">Tell Atlas what you got done and what's next. When you hang up, send the conversation to Atlas and it updates your checklist.</p>
 
     <div class="orb-wrap">
-      <button class="orb" id="orb" aria-label="Start voice chat">🎧</button>
+      <button class="orb" id="orb" aria-label="Start voice chat"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><path d="M4 13v-1a8 8 0 0 1 16 0v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
       <div class="status" id="liveStatus">Tap to start</div>
     </div>
 
@@ -112,7 +112,7 @@
   <section id="dictate" hidden>
     <h1>Say what you need to do</h1>
     <p class="sub">Ramble freely. Claude turns it into tasks and updates your checklist.</p>
-    <div class="orb-wrap"><button class="mic" id="mic">🎙</button><div class="status" id="dStatus">Tap to start talking</div></div>
+    <div class="orb-wrap"><button class="mic" id="mic"><svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><rect x="9" y="2" width="6" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><div class="status" id="dStatus">Tap to start talking</div></div>
     <textarea id="text" placeholder="Your words appear here…"></textarea>
     <div class="empty" id="interim" style="text-align:left;padding:6px 2px;font-style:italic"></div>
     <div class="row"><button class="btn ghost" id="clear" style="flex:0 0 auto;padding:14px 18px">Clear</button><button class="btn" id="send">Copy &amp; open checklist</button></div>
@@ -123,7 +123,7 @@
     <h1>Atlas says</h1>
     <p class="saytext" id="readerText"></p>
     <div class="orb-wrap">
-      <button class="mic" id="readerPlay" aria-label="Play">▶</button>
+      <button class="mic" id="readerPlay" aria-label="Play"><svg viewBox="0 0 24 24" style="width:0.9em;height:0.9em"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg></button>
       <div class="status" id="readerStatus">Tap to play</div>
     </div>
     <button class="link" id="readerBack">← Back to JKB Voice</button>
@@ -180,7 +180,7 @@ $("#saveTts").addEventListener("click", () => {
   ttsKey = $("#ttsKeyInput").value.trim();
   ttsVoice = $("#ttsVoiceInput").value.trim();
   set(K_TTS_KEY, ttsKey); set(K_TTS_VOICE, ttsVoice);
-  $("#ttsMsg").textContent = ttsKey ? "Saved. Try the 🎧 button on one of Atlas's messages." : "Key cleared — the 🎧 button will ask for one again.";
+  $("#ttsMsg").textContent = ttsKey ? "Saved. Try the listen button on one of Atlas's messages." : "Key cleared — the listen button will ask for one again.";
 });
 
 let ttsAudio = null;
@@ -210,12 +210,12 @@ async function playTts(text, btn, statusEl){
     const url = URL.createObjectURL(await res.blob());
     ttsAudio = new Audio(url);
     ttsAudio._text = text;
-    ttsAudio.onplay = () => { btn.disabled = false; btn.textContent = "❚❚"; statusEl.textContent = "Playing…"; };
-    ttsAudio.onpause = () => { btn.textContent = "▶"; statusEl.textContent = "Paused"; };
-    ttsAudio.onended = () => { btn.textContent = "▶"; statusEl.textContent = "Done — tap to play again"; };
+    ttsAudio.onplay = () => { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:0.9em;height:0.9em"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>'; statusEl.textContent = "Playing…"; };
+    ttsAudio.onpause = () => { btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:0.9em;height:0.9em"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg>'; statusEl.textContent = "Paused"; };
+    ttsAudio.onended = () => { btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:0.9em;height:0.9em"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg>'; statusEl.textContent = "Done — tap to play again"; };
     await ttsAudio.play();
   }catch(e){
-    btn.disabled = false; btn.textContent = "▶";
+    btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:0.9em;height:0.9em"><path d="M8 5l12 7-12 7V5z" fill="currentColor"/></svg>';
     statusEl.textContent = e.message || "Couldn't reach ElevenLabs.";
   }
 }
@@ -266,7 +266,7 @@ async function loadSdk(){
 function setOrb(mode, text){
   const orb = $("#orb");
   orb.className = "orb" + (mode ? " " + mode : "");
-  orb.textContent = mode === "speaking" ? "🗣" : mode === "listening" ? "👂" : mode === "connecting" ? "…" : "🎧";
+  orb.innerHTML = mode === "speaking" || mode === "listening" ? '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><rect x="9" y="2" width="6" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' : mode === "connecting" ? "…" : '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><path d="M4 13v-1a8 8 0 0 1 16 0v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="13" width="4" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
   $("#liveStatus").textContent = text;
 }
 async function startCall(){
@@ -329,7 +329,7 @@ const text = $("#text"), interimEl = $("#interim"), mic = $("#mic"), dStatus = $
 let rec = null, listening = false;
 text.value = get(K_DRAFT) || "";
 text.addEventListener("input", () => set(K_DRAFT, text.value));
-function setMic(on){ mic.classList.toggle("live", on); mic.textContent = on ? "■" : "🎙"; dStatus.textContent = on ? "Listening… tap ■ when done" : "Tap to keep talking"; }
+function setMic(on){ mic.classList.toggle("live", on); mic.innerHTML = on ? '<svg viewBox="0 0 24 24" style="width:1em;height:1em"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>' : '<svg viewBox="0 0 24 24" style="width:1em;height:1em;vertical-align:-0.15em;display:inline-block"><rect x="9" y="2" width="6" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'; dStatus.textContent = on ? "Listening… tap to stop" : "Tap to keep talking"; }
 function startRec(){
   if(!SR){ dStatus.textContent = "This browser can't do speech-to-text. Try Chrome or Safari."; return; }
   rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || "en-US";

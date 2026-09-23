@@ -200,7 +200,8 @@
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .p-card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; cursor:pointer; text-align:left; box-shadow:var(--shadow); }
   .p-card:active{ transform:scale(0.98); }
-  .p-card .e{ font-size:1.4rem; }
+  .p-mono{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:var(--gold-soft); color:var(--gold); font-family:var(--font-display); font-weight:800; font-size:0.95rem; flex-shrink:0; }
+  .p-mono.lg{ width:44px; height:44px; font-size:1.15rem; border-radius:12px; }
   .p-card .n{ font-weight:700; font-size:0.9rem; margin-top:8px; }
   .p-card .c{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
   .bar{ height:5px; background:var(--card-2); border-radius:5px; margin-top:10px; overflow:hidden; }
@@ -351,7 +352,8 @@
   .level-body .s{ font-size:0.76rem; color:var(--text-dim); margin-top:3px; }
   .badges{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:10px; }
   .bdg{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 8px; text-align:center; }
-  .bdg .e{ font-size:1.5rem; line-height:1; }
+  .bdg .e{ display:flex; justify-content:center; color:var(--gold); margin-bottom:4px; }
+  .bdg .e .ico{ width:24px; height:24px; }
   .bdg .n{ font-size:0.72rem; font-weight:700; margin-top:6px; }
   .bdg .d{ font-size:0.62rem; color:var(--text-dim); margin-top:2px; line-height:1.3; }
   .bdg.locked{ opacity:0.45; filter:grayscale(1); }
@@ -396,7 +398,7 @@
   <div class="timer" id="timer" hidden>
     <div class="tt" id="timerTime">25:00</div>
     <div class="tn" id="timerName"></div>
-    <button id="timerPause" aria-label="Pause">❚❚</button>
+    <button id="timerPause" aria-label="Pause"><svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></svg></button>
     <button id="timerStop" aria-label="Stop">■</button>
   </div>
 </div>
@@ -408,10 +410,10 @@
     <div class="chips" id="chips"></div>
     <div class="img-preview" id="imgPreview" hidden></div>
     <div class="compose-row">
-      <button class="round alt" id="attachBtn" aria-label="Attach a photo" hidden><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.5" fill="currentColor" stroke="none"/><path d="M21 16l-5.5-5.5a2 2 0 0 0-2.8 0L4 19"/></svg></button>
-      <button class="round alt" id="micBtn" aria-label="Dictate">🎙</button>
+      <button class="round alt" id="attachBtn" aria-label="Attach a photo"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="round alt" id="micBtn" aria-label="Dictate"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <textarea id="input" rows="1" placeholder="Tell Atlas what you did or need to do…"></textarea>
-      <button class="round" id="sendBtn" aria-label="Send">➤</button>
+      <button class="round" id="sendBtn" aria-label="Send"><svg class="ico" viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg></button>
     </div>
     <input type="file" id="imgInput" accept="image/*" hidden>
     <div class="compose-hint" id="hint"></div>
@@ -427,16 +429,16 @@
 <div class="sheet" id="sheet"><div class="sheet-inner" id="sheetBody"></div></div>
 
 <div class="drawer" id="drawer">
-  <button class="d-close" id="drawerClose" aria-label="Close">✕</button>
+  <button class="d-close" id="drawerClose" aria-label="Close"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <h4>Voice</h4>
-  <button class="d-item" id="mTalk">Talk live with Atlas <span>🎧</span></button>
-  <a class="d-item" href="https://checklist.jkbglobal.site/voice.html" target="_blank" rel="noopener">Open JKB Voice <span>↗</span></a>
+  <button class="d-item" id="mTalk">Talk live with Atlas <span><svg class="ico" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg></span></button>
+  <a class="d-item" href="https://checklist.jkbglobal.site/voice.html" target="_blank" rel="noopener">Open JKB Voice <span><svg class="ico" viewBox="0 0 24 24"><path d="M9 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M14 4h6v6M20 4l-9 9"/></svg></span></a>
   <h4>Projects</h4>
   <button class="d-item" id="mAddProject">New project <span>+</span></button>
   <h4>Data</h4>
-  <button class="d-item" id="mExport">Export backup (.json) <span>⬇</span></button>
-  <button class="d-item" id="mImport">Import backup (.json) <span>⬆</span></button>
-  <button class="d-item" id="mClearChat">Clear chat with Atlas <span>✕</span></button>
+  <button class="d-item" id="mExport">Export backup (.json) <span><svg class="ico" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></span></button>
+  <button class="d-item" id="mImport">Import backup (.json) <span><svg class="ico" viewBox="0 0 24 24"><path d="M12 20V9M7 13l5-5 5 5M5 20h14"/></svg></span></button>
+  <button class="d-item" id="mClearChat">Clear chat with Atlas <span><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
   <input type="file" id="importFile" accept="application/json">
 </div>
 
@@ -640,25 +642,38 @@ function badges(){
   const early = done.some(x => new Date(x.t.doneAt).getHours() < 9);
   const f = todayFocus();
   return [
-    ["🥇", "First win", "Finish a task", done.length >= 1],
-    ["🔟", "Ten down", "Finish 10 tasks", done.length >= 10],
-    ["💯", "Century", "Finish 100 tasks", done.length >= 100],
-    ["🔥", "On fire", "3-day streak", best >= 3],
-    ["⚡", "Unstoppable", "7-day streak", best >= 7],
-    ["👑", "Machine", "30-day streak", best >= 30],
-    ["🎯", "Locked in", "Clear today's focus", f.length > 0 && f.every(x => x.t.done)],
-    ["⏱", "Deep work", "60 focused min in a day", maxFocusDay >= 60],
-    ["📈", "Big week", "15 tasks in 7 days", week >= 15],
-    ["🌅", "Early bird", "Finish one before 9am", early],
-  ].map(([e, n, d, got]) => ({ e, n, d, got }));
+    ["check", "First win", "Finish a task", done.length >= 1],
+    ["layers", "Ten down", "Finish 10 tasks", done.length >= 10],
+    ["medal", "Century", "Finish 100 tasks", done.length >= 100],
+    ["flame", "On fire", "3-day streak", best >= 3],
+    ["bolt", "Unstoppable", "7-day streak", best >= 7],
+    ["crown", "Machine", "30-day streak", best >= 30],
+    ["target", "Locked in", "Clear today's focus", f.length > 0 && f.every(x => x.t.done)],
+    ["stopwatch", "Deep work", "60 focused min in a day", maxFocusDay >= 60],
+    ["trend", "Big week", "15 tasks in 7 days", week >= 15],
+    ["sunrise", "Early bird", "Finish one before 9am", early],
+  ].map(([icon, n, d, got]) => ({ icon, n, d, got }));
 }
+const BADGE_ICONS = {
+  check: '<path d="M4 12l5 5L20 6"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  medal: '<circle cx="12" cy="15" r="6"/><path d="M9 10L6 3M15 10l3-7M9.5 13.5l2 2 3.5-4"/>',
+  flame: '<path d="M12 3c1 3-3 4-3 8a3 3 0 0 0 6 0c0-1-1-2-1-3 2 1 3 3 3 5a5 5 0 0 1-10 0c0-5 4-6 5-10z"/>',
+  bolt: '<path d="M13 2L4 14h6l-1 8 9-12h-6z"/>',
+  crown: '<path d="M4 18h16M5 18l-1.5-9L9 12l3-7 3 7 5.5-3L19 18"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/>',
+  stopwatch: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4M12 2v2"/>',
+  trend: '<path d="M4 16l6-6 4 4 6-8"/><path d="M15 6h5v5"/>',
+  sunrise: '<path d="M4 18h16M6 18a6 6 0 0 1 12 0"/><path d="M12 4v4M4.5 10l2 2M19.5 10l-2 2"/>',
+};
+function badgeIcon(key){ return `<svg class="ico" viewBox="0 0 24 24">${BADGE_ICONS[key] || ""}</svg>`; }
 let lastLevel = null;
 function renderLevelChip(){
   const li = levelInfo();
   $("#lvlNum").textContent = li.level;
   $("#lvlBar").style.width = li.pct + "%";
   $("#lvlBtn").setAttribute("aria-label", `Level ${li.level} ${li.name}, ${li.into} of ${li.need} XP to next level`);
-  if(lastLevel !== null && li.level > lastLevel){ celebrate(); toast(`Level ${li.level} — ${li.name} 🎉`); }
+  if(lastLevel !== null && li.level > lastLevel){ celebrate(); toast(`Level ${li.level} — ${li.name}`); }
   lastLevel = li.level;
 }
 function xpPop(el, amount){
@@ -841,7 +856,7 @@ function finishTimer(completed){
   if(completed){
     buzz();
     const x = findTask(t.taskId);
-    openSheet(`<h3>Time's up 🔥</h3><p class="sub">${fmtMin(min)} on <b>${esc(t.text)}</b>. Is it done?</p>
+    openSheet(`<h3>Time's up</h3><p class="sub">${fmtMin(min)} on <b>${esc(t.text)}</b>. Is it done?</p>
       <div class="btn-row">${x && !x.t.done ? `<button class="btn" data-act="toggle" data-id="${esc(t.taskId)}" data-close="1">✓ Mark done</button>` : ""}
       <button class="btn soft" data-act="timerAgain" data-id="${esc(t.taskId)}">Another 25</button>
       <button class="btn ghost" data-act="closeSheet">Break</button></div>`);
@@ -856,7 +871,7 @@ function tickTimer(){
   const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
   $("#timerTime").textContent = m + ":" + String(s).padStart(2, "0");
   $("#timerName").textContent = timer.text;
-  $("#timerPause").textContent = timer.paused ? "▶" : "❚❚";
+  $("#timerPause").innerHTML = timer.paused ? '<svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M7 4l13 8-13 8V4z" fill="currentColor" stroke="none"/></svg>' : '<svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></svg>';
   el.classList.toggle("paused", timer.paused);
   if(left <= 0) finishTimer(true);
 }
@@ -867,6 +882,13 @@ $("#timerStop").addEventListener("click", async () => { if(await confirmBox("Sto
 // ===================================================================
 // rendering
 // ===================================================================
+function monogram(title){
+  const w = String(title || "").trim().split(/\s+/).filter(Boolean);
+  const s = (w[0]?.[0] || "?") + (w.length > 1 ? w[1][0] : "");
+  return s.toUpperCase();
+}
+function projectIcon(p, big){ return `<div class="p-mono${big ? " lg" : ""}">${esc(monogram(p.title))}</div>`; }
+
 function taskRow(x, opts = {}){
   const { t, p, s } = x;
   const chips = [];
@@ -875,7 +897,7 @@ function taskRow(x, opts = {}){
   if(t.repeat) chips.push(`<span class="chip">↻ ${repeatLabel(t.repeat)}</span>`);
   if(t.subtasks && t.subtasks.length){ const d = t.subtasks.filter(z => z.done).length; chips.push(`<span class="chip${d === t.subtasks.length ? " ok" : ""}">☰ ${d}/${t.subtasks.length}</span>`); }
   if(t.minutes) chips.push(`<span class="chip">⏱ ${fmtMin(t.minutes)}</span>`);
-  const where = opts.showWhere ? `<span>${esc(p.emoji)} ${esc(p.title)} · ${esc(s.name)}</span>` : "";
+  const where = opts.showWhere ? `<span>${esc(p.title)} · ${esc(s.name)}</span>` : "";
   const meta = where || chips.length ? `<div class="t-meta">${where}${chips.join("")}</div>` : "";
   const play = opts.play && !t.done ? `<button class="play" data-act="quickTimer" data-id="${t.id}" aria-label="Start focus timer">▶</button>` : "";
   return `<div class="task${t.done ? " done" : ""}">
@@ -910,16 +932,16 @@ function renderToday(){
   let note, buttons;
   if(!planned){
     note = "New day. Let's lock in what actually moves the needle.";
-    buttons = `<button class="btn" data-act="plan">✦ Plan my day</button>`;
+    buttons = `<button class="btn" data-act="plan">${SPARK} Plan my day</button>`;
   } else if(focus.length && fDone === focus.length){
-    note = "Focus cleared. That's how it's done 🔥 Want to push further or call it?";
+    note = "Focus cleared. That's how it's done. Want to push further or call it?";
     buttons = `<button class="btn" data-act="ask" data-q="I finished today's focus. What should I knock out next?">What's next?</button><button class="btn ghost" data-act="checkin">Check in</button>`;
   } else {
     note = state.today.note || "Here's your focus for today.";
-    buttons = `<button class="btn" data-act="checkin">${hour >= 17 ? "Evening check-in" : "Check in"}</button><button class="btn ghost" data-act="talk">🎧 Talk</button>`;
+    buttons = `<button class="btn" data-act="checkin">${hour >= 17 ? "Evening check-in" : "Check in"}</button><button class="btn ghost" data-act="talk">${HEADPHONES} Talk</button>`;
   }
   const latest = lastCoach && lastCoach.content !== state.today.note && planned
-    ? `<div class="card pad" style="margin-top:14px" data-act="goCoach"><div class="coach-tag">✦ Latest from Atlas · ${esc(new Date(lastCoach.ts).toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" }))}</div><div class="coach-note" style="font-size:0.86rem;color:var(--text-2)">${md(lastCoach.content.length > 220 ? lastCoach.content.slice(0, 220) + "…" : lastCoach.content)}</div></div>` : "";
+    ? `<div class="card pad" style="margin-top:14px" data-act="goCoach"><div class="coach-tag">${SPARK} Latest from Atlas · ${esc(new Date(lastCoach.ts).toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" }))}</div><div class="coach-note" style="font-size:0.86rem;color:var(--text-2)">${md(lastCoach.content.length > 220 ? lastCoach.content.slice(0, 220) + "…" : lastCoach.content)}</div></div>` : "";
   const nextUp = focus.find(x => !x.t.done);
 
   return `<div class="view-in">
@@ -928,13 +950,13 @@ function renderToday(){
     <div class="hero">
       <div class="ring">${ringSvg(focus.length ? fDone / focus.length : 0)}<div class="rv"><b>${fDone}/${focus.length}</b><span>focus</span></div></div>
       <div class="hero-body">
-        <div class="coach-tag">✦ Atlas</div>
+        <div class="coach-tag">${SPARK} Atlas</div>
         <div class="coach-note">${md(note)}</div>
       </div>
     </div>
     <div class="btn-row">${buttons}</div>
     <div class="tiles">
-      <div class="tile"><div class="v">${streak()}🔥</div><div class="k">day streak</div></div>
+      <div class="tile"><div class="v">${streak()}</div><div class="k">day streak</div></div>
       <div class="tile"><div class="v">${doneOn(today)}</div><div class="k">done today</div></div>
       <div class="tile"><div class="v">${fmtMin(focusMinutesOn(today))}</div><div class="k">focused today</div></div>
     </div>
@@ -948,7 +970,7 @@ function renderToday(){
     ${soon.length ? `<div class="label">Coming up <span class="count">${soon.length}</span></div><div class="card">${soon.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
     <div class="label">Check-ins</div>
     <div class="card">
-      ${upcomingCheckins().map(c => `<div class="task"><div class="t-main"><div class="t-text">⏰ ${esc(fmtWhen(c.at))}</div><div class="t-meta"><span>${esc(c.about)}</span>${c.status === "pending" ? `<span class="chip">queued</span>` : `<span class="chip ok">scheduled</span>`}</div></div><button class="x" data-act="cancelCheckin" data-id="${esc(c.id)}" aria-label="Cancel check-in">✕</button></div>`).join("")}
+      ${upcomingCheckins().map(c => `<div class="task"><div class="t-main"><div class="t-text">${CLOCK} ${esc(fmtWhen(c.at))}</div><div class="t-meta"><span>${esc(c.about)}</span>${c.status === "pending" ? `<span class="chip">queued</span>` : `<span class="chip ok">scheduled</span>`}</div></div><button class="x" data-act="cancelCheckin" data-id="${esc(c.id)}" aria-label="Cancel check-in">✕</button></div>`).join("")}
       <div class="task"><div class="t-main"><div class="t-text">Daily · 8:00 AM plan &amp; 8:00 PM review</div><div class="t-meta"><span>Say “check on me at 3pm” to Atlas for more</span></div></div></div>
     </div>
   </div>`;
@@ -980,7 +1002,7 @@ function renderTasks(){
   const head = `<div class="eyebrow">Everything on your plate</div><div class="h1">Your <span class="accent">Tasks</span></div>
     <div class="search"><span class="si">⌕</span><input id="searchBox" type="search" placeholder="Search tasks…" value="${esc(ui.q)}" autocomplete="off"></div>
     <div class="filters">${FILTERS.map(([id, label]) => `<button class="fchip${ui.filter === id ? " on" : ""}" data-act="filter" data-id="${id}">${label}</button>`).join("")}
-      <select class="fchip" id="projFilter" style="appearance:auto">${[`<option value="">All projects</option>`, ...state.projects.map(p => `<option value="${esc(p.id)}"${ui.projFilter === p.id ? " selected" : ""}>${esc(p.emoji)} ${esc(p.title)}</option>`)].join("")}</select>
+      <select class="fchip" id="projFilter" style="appearance:auto">${[`<option value="">All projects</option>`, ...state.projects.map(p => `<option value="${esc(p.id)}"${ui.projFilter === p.id ? " selected" : ""}>${esc(p.title)}</option>`)].join("")}</select>
     </div>`;
   if(searching){
     let list = allTasks().filter(matchFilter).filter(x => !ui.projFilter || x.p.id === ui.projFilter);
@@ -1001,7 +1023,7 @@ function renderTasks(){
     const pct = ts.length ? Math.round(d / ts.length * 100) : 0;
     const hi = ts.filter(t => !t.done && t.priority === "high").length;
     return `<button class="p-card" data-act="openProject" data-id="${esc(p.id)}">
-      <div class="e">${esc(p.emoji)}</div><div class="n">${esc(p.title)}</div>
+      ${projectIcon(p)}<div class="n">${esc(p.title)}</div>
       <div class="c">${d}/${ts.length} done${hi ? ` · <span style="color:var(--danger)">${hi} high</span>` : ""}</div><div class="bar"><div style="width:${pct}%"></div></div>
     </button>`;
   }).join("");
@@ -1026,7 +1048,7 @@ function renderProject(p){
   }).join("");
   const ts = p.sections.flatMap(s => s.tasks), d = ts.filter(t => t.done).length;
   return `<div class="view-in"><button class="back" data-act="backProjects">← All projects</button>
-    <div class="h1" style="margin-bottom:6px">${esc(p.emoji)} <span class="accent">${esc(p.title)}</span></div>
+    <div class="h1" style="margin-bottom:6px;display:flex;align-items:center;gap:10px">${projectIcon(p, true)} <span class="accent">${esc(p.title)}</span></div>
     <div class="eyebrow" style="margin-bottom:14px">${d} of ${ts.length} done</div>
     ${secs}
     <button class="dashed" data-act="addSec" data-id="${esc(p.id)}">+ Add section</button>
@@ -1091,28 +1113,28 @@ function renderStats(){
         <div class="s">${li.xp} XP · ${li.need - li.into} XP to level ${li.level + 1}</div></div>
     </div>
     <div class="label">Badges <span class="count">${got}/${bs.length}</span></div>
-    <div class="badges">${bs.map(b => `<div class="bdg${b.got ? "" : " locked"}" title="${esc(b.d)}"><div class="e">${b.e}</div><div class="n">${esc(b.n)}</div><div class="d">${esc(b.d)}</div></div>`).join("")}</div>
+    <div class="badges">${bs.map(b => `<div class="bdg${b.got ? "" : " locked"}" title="${esc(b.d)}"><div class="e">${badgeIcon(b.icon)}</div><div class="n">${esc(b.n)}</div><div class="d">${esc(b.d)}</div></div>`).join("")}</div>
     <div class="label">This week</div>`; })()}
     <div class="tiles four" style="margin-top:0">
       <div class="tile"><div class="v">${weekDone}</div><div class="k">done this week</div></div>
       <div class="tile"><div class="v">${fmtMin(weekFocus)}</div><div class="k">focused this week</div></div>
-      <div class="tile"><div class="v">${streak()}🔥</div><div class="k">current streak</div></div>
+      <div class="tile"><div class="v">${streak()}</div><div class="k">current streak</div></div>
       <div class="tile"><div class="v">${bestStreak()}</div><div class="k">best streak</div></div>
     </div>
     <div class="label">Completions</div>
     <div class="chart-card"><div class="chart-title">Tasks completed per day</div><div class="chart-sub">Last 14 days · ${esc(trend)}</div>${barChart("done", doneData, v => v + " task" + (v === 1 ? "" : "s"))}</div>
     <div class="chart-card"><div class="chart-title">Focus time per day</div><div class="chart-sub">Last 7 days · from the focus timer</div>${barChart("focus", focusData, v => fmtMin(v))}</div>
-    ${neglected.length ? `<div class="card pad" style="border-color:color-mix(in srgb, var(--danger) 45%, var(--line))"><div class="coach-tag" style="color:var(--danger)">⚠ Getting neglected</div>
-      <div class="coach-note" style="font-size:0.88rem">${neglected.map(r => `<b>${esc(r.p.emoji)} ${esc(r.p.title)}</b> — ${r.idle === null ? "nothing finished yet" : r.idle + " days since anything got done"}`).join("<br>")}</div></div>` : ""}
+    ${neglected.length ? `<div class="card pad" style="border-color:color-mix(in srgb, var(--danger) 45%, var(--line))"><div class="coach-tag" style="color:var(--danger)">${WARN} Getting neglected</div>
+      <div class="coach-note" style="font-size:0.88rem">${neglected.map(r => `<b>${esc(r.p.title)}</b> — ${r.idle === null ? "nothing finished yet" : r.idle + " days since anything got done"}`).join("<br>")}</div></div>` : ""}
     <div class="label">Projects</div>
     <div class="card">${projRows.map(r => `<div class="prow">
-      <div class="top"><b>${esc(r.p.emoji)} ${esc(r.p.title)}</b><span style="color:var(--text-2);font-size:0.8rem">${r.d}/${r.total} · ${r.pct}%</span></div>
+      <div class="top"><b>${esc(r.p.title)}</b><span style="color:var(--text-2);font-size:0.8rem">${r.d}/${r.total} · ${r.pct}%</span></div>
       <div class="bar" role="img" aria-label="${r.pct}% done"><div style="width:${r.pct}%"></div></div>
       <div class="sub"><span>${r.open} open</span><span>·</span><span>${r.idle === null ? "no completions yet" : r.idle === 0 ? "active today" : "last done " + r.idle + "d ago"}</span>${r.neglected ? `<span class="chip over">neglected</span>` : ""}</div>
     </div>`).join("")}</div>
     ${topTasks.length ? `<div class="label">Most focus time</div><div class="card">${topTasks.map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
     <div class="empty" style="text-align:left;padding:14px 4px 6px;font-size:0.76rem">XP: 10 per task (20 if high priority) · 3 per step · 1 per focused minute · 5 per streak day.</div>
-    <button class="btn" style="width:100%;margin-top:6px" data-act="ask" data-q="Review my week — what did I get done, what am I avoiding, and what should change next week?">✦ Ask Claude for a weekly review</button>
+    <button class="btn" style="width:100%;margin-top:6px" data-act="ask" data-q="Review my week — what did I get done, what am I avoiding, and what should change next week?">${SPARK} Ask Claude for a weekly review</button>
   </div>`;
 }
 
@@ -1123,6 +1145,11 @@ let pendingImage = null, pendingImageUrl = null, imagesAvailable = false;
 // ---------- read a message aloud (the device's own voice — free, no key, no network) ----------
 const ICO_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z" fill="currentColor" stroke="none"/></svg>';
 const ICO_STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>';
+const ICO_MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const SPARK = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/></svg>';
+const HEADPHONES = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg>';
+const CLOCK = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
+const WARN = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M12 3.5L2.5 20h19z"/><path d="M12 9.5v4.5M12 17h.01"/></svg>';
 let speakingTs = null;
 function stripForSpeech(text){ return String(text).replace(/\*\*(.+?)\*\*/g, "$1").replace(/^[-•]\s+/gm, "").replace(/\n+/g, ". "); }
 function updateSpeakButtons(){
@@ -1154,7 +1181,6 @@ async function checkImageCaps(){
   if(!sample) return false;
   try{ const caps = await sample.limits(); imagesAvailable = !!caps.images; }
   catch(e){ imagesAvailable = false; }
-  $("#attachBtn").hidden = !imagesAvailable;
   return imagesAvailable;
 }
 function downscaleImage(file, maxDim = 160, quality = 0.55){
@@ -1217,16 +1243,16 @@ function renderCoach(){
         }</div>` : "";
     return sep + (m.role === "user"
       ? `<div class="msg user">${m.img ? `<img class="msg-img" src="${m.img}" alt="">` : ""}${esc(m.content)}</div>`
-      : `<div class="msg assistant"><div class="who-row"><div class="who">✦ Atlas</div><div class="msg-actions">
+      : `<div class="msg assistant"><div class="who-row"><div class="who">${SPARK} Atlas</div><div class="msg-actions">
           <button class="icon-mini${speakingTs === m.ts ? " on" : ""}" data-act="speak" data-ts="${m.ts}" aria-label="${speakingTs === m.ts ? "Stop reading" : "Read this message aloud"}">${speakingTs === m.ts ? ICO_STOP : ICO_PLAY}</button>
-          <a class="icon-mini" href="${VOICE_URL}#say=${encodeURIComponent(stripForSpeech(m.content).slice(0, 600))}" target="_blank" rel="noopener" aria-label="Listen in Atlas's voice (ElevenLabs)">🎧</a>
+          <a class="icon-mini" href="${VOICE_URL}#say=${encodeURIComponent(stripForSpeech(m.content).slice(0, 600))}" target="_blank" rel="noopener" aria-label="Listen in Atlas's voice (ElevenLabs)">${HEADPHONES}</a>
         </div></div>${md(m.content)}${changes}</div>`);
   }).join("");
-  const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">✦ Atlas</div>Hey Joseph, I'm Atlas. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
+  const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">${SPARK} Atlas</div>Hey Joseph, I'm Atlas. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
   const think = thinking ? `<div class="msg assistant thinking"><span class="dots"><span></span><span></span><span></span></span>Thinking… <button class="undo" data-act="stop" style="margin:0">Stop</button></div>` : "";
-  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">✦ Atlas</div>Atlas runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
+  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">${SPARK} Atlas</div>Atlas runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
   return `<div class="view-in"><div class="coach-top"><div><div class="eyebrow">Your accountability partner</div><div class="h1"><span class="accent">Atlas</span></div></div>
-    <button class="btn sm ghost" data-act="talk" style="margin-bottom:18px">🎧 Talk live</button></div>
+    <button class="btn sm ghost" data-act="talk" style="margin-bottom:18px">${HEADPHONES} Talk live</button></div>
     <div class="chat" id="chat">${intro}${msgs}${think}${off}</div></div>`;
 }
 
@@ -1367,10 +1393,10 @@ function applyActions(actions){
     const x = a.id != null ? findTask(String(a.id)) : null;
     switch(a.type){
       case "complete":
-        if(x && !x.t.done){ const next = setDone(x, true); changes.push("✓ Done: " + x.t.text + (next ? " (next: " + fmtDue(next.due) + ")" : "")); }
+        if(x && !x.t.done){ const next = setDone(x, true); changes.push("Done: " + x.t.text + (next ? " (next: " + fmtDue(next.due) + ")" : "")); }
         break;
       case "reopen":
-        if(x && x.t.done){ setDone(x, false); changes.push("↺ Reopened: " + x.t.text); }
+        if(x && x.t.done){ setDone(x, false); changes.push("Reopened: " + x.t.text); }
         break;
       case "add": {
         const text = String(a.text || "").trim();
@@ -1382,7 +1408,7 @@ function applyActions(actions){
         if(t.repeat && !t.due) t.due = dayStr();
         s.tasks.push(t);
         if(a.focus === true) addFocus(t.id);
-        changes.push("+ Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? " ↻ " + repeatLabel(t.repeat) : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
+        changes.push("Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? ", repeats " + repeatLabel(t.repeat) : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
         break;
       }
       case "update": {
@@ -1392,7 +1418,7 @@ function applyActions(actions){
         if(a.priority && normPri(a.priority) !== x.t.priority){ x.t.priority = normPri(a.priority); bits.push(x.t.priority + " priority"); }
         if("due" in a){ const d = normDue(a.due); if(d !== x.t.due){ x.t.due = d; bits.push(d ? "due " + fmtDue(d) : "no due date"); } }
         if("repeat" in a){ const r = normRepeat(a.repeat); if(r !== (x.t.repeat || null)){ x.t.repeat = r; if(r && !x.t.due) x.t.due = dayStr(); bits.push(r ? "repeats " + r : "no repeat"); } }
-        if(bits.length) changes.push("✎ " + x.t.text + " — " + bits.join(", "));
+        if(bits.length) changes.push("Updated: " + x.t.text + " — " + bits.join(", "));
         break;
       }
       case "subtasks": {
@@ -1400,17 +1426,17 @@ function applyActions(actions){
         const items = (Array.isArray(a.items) ? a.items : []).map(z => String(z).trim()).filter(Boolean).slice(0, 12);
         if(!items.length) break;
         x.t.subtasks = (x.t.subtasks || []).concat(items.map(z => ({ id:newId("u"), text:z, done:false })));
-        changes.push("☰ " + items.length + " steps added to: " + x.t.text);
+        changes.push(items.length + " steps added to: " + x.t.text);
         break;
       }
       case "delete":
-        if(x){ x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1); removeFocus(x.t.id); changes.push("🗑 Deleted: " + x.t.text); }
+        if(x){ x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1); removeFocus(x.t.id); changes.push("Deleted: " + x.t.text); }
         break;
       case "focus": {
         const ids = (Array.isArray(a.ids) ? a.ids : []).map(String).filter(id => findTask(id));
         if(ids.length){
           state.today = { date:dayStr(), focus:[...new Set(ids)].slice(0, 7), note:String(a.note || "").trim() };
-          changes.push("🎯 Today's focus set: " + state.today.focus.length + " tasks");
+          changes.push("Focus set: " + state.today.focus.length + " tasks");
         }
         break;
       }
@@ -1419,12 +1445,12 @@ function applyActions(actions){
         if(!when || isNaN(when) || when.getTime() < Date.now()) break;
         const c = { id:newId("c"), at:when.toISOString(), about:String(a.about || "Check in").trim().slice(0, 140), status:"pending", createdAt:Date.now() };
         state.checkins.push(c);
-        changes.push("⏰ Check-in " + fmtWhen(c.at) + ": " + c.about);
+        changes.push("Check-in " + fmtWhen(c.at) + ": " + c.about);
         break;
       }
       case "cancel_checkin": {
         const c = state.checkins.find(q => q.id === String(a.id));
-        if(c && c.status !== "cancel" && c.status !== "done"){ cancelCheckin(c); changes.push("✕ Cancelled check-in: " + c.about); }
+        if(c && c.status !== "cancel" && c.status !== "done"){ cancelCheckin(c); changes.push("Cancelled check-in: " + c.about); }
         break;
       }
     }
@@ -1454,7 +1480,7 @@ async function askCoach(text, image){
   if(!sample){ render(); toast("Open this page on claude.ai to talk to Atlas."); if(image) setPendingImage(image); return; }
   const ts = Date.now();
   const thumb = image ? await downscaleImage(image) : null;
-  coach.messages.push({ role:"user", content: text || "📷 Photo", ts, img: thumb || undefined });
+  coach.messages.push({ role:"user", content: text || "Photo", ts, img: thumb || undefined });
   saveCoach();
   thinking = true;
   ui.tab = "coach"; ui.project = null;
@@ -1503,7 +1529,7 @@ Reply with only JSON: {"steps":["...","..."]}`, { modelTier:"quick" });
       if(draft && draft.id === id) draft.subtasks = draft.subtasks.concat(clone(added)); // keep unsaved edits in the open sheet
       save(); taskSheet(id, { keepFocus:true }); render();
     } else toast("Claude didn't come up with steps. Try again.");
-  }catch(e){ toast(sampleErrorText(e)); btn.disabled = false; btn.textContent = "✦ Break it down with Claude"; }
+  }catch(e){ toast(sampleErrorText(e)); btn.disabled = false; btn.innerHTML = SPARK + " Break it down with Claude"; }
 }
 
 // ===================================================================
@@ -1527,7 +1553,7 @@ function voiceBriefing(){
 }
 function talkSheet(){
   const url = VOICE_URL + "#b=" + encodeURIComponent(voiceBriefing());
-  openSheet(`<h3>🎧 Talk live with Atlas</h3>
+  openSheet(`<h3>${HEADPHONES} Talk live with Atlas</h3>
     <p class="sub">claude.ai doesn't let this page use your mic, so the live voice chat runs on JKB Voice. Your task briefing goes with it.</p>
     <div class="card pad" style="box-shadow:none;font-size:0.85rem;line-height:1.6">
       <b>1.</b> Tap <b>Start voice chat</b> and talk it through.<br>
@@ -1551,7 +1577,7 @@ function micAllowed(){
 function keyboardDictation(){
   micBlocked = true;
   $("#micBtn").classList.remove("live");
-  $("#hint").innerHTML = `Press the <b>🎤 on your keyboard</b> to dictate — or <a href="#" data-act="talk">talk live</a> on JKB Voice.`;
+  $("#hint").innerHTML = `Press the <b>mic key on your keyboard</b> to dictate — or <a href="#" data-act="talk">talk live</a> on JKB Voice.`;
   $("#input").focus();
 }
 function startRec(){
@@ -1566,18 +1592,18 @@ function startRec(){
       if(r.isFinal){ const c = r[0].transcript.trim(); if(c){ const inp = $("#input"); inp.value = (inp.value.trim() ? inp.value.trim() + " " : "") + c + "."; autoGrow(); } }
       else interim += r[0].transcript;
     }
-    $("#hint").textContent = interim ? "… " + interim : "Listening — tap ■ when done.";
+    $("#hint").textContent = interim ? "… " + interim : "Listening — tap the mic to stop.";
   };
   rec.onerror = (e) => { if(["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)){ listening = false; keyboardDictation(); } };
   rec.onend = () => {
     if(listening){ try{ rec.start(); }catch(err){ listening = false; } }
-    if(!listening){ $("#micBtn").classList.remove("live"); $("#micBtn").textContent = "🎙"; if(!micBlocked) $("#hint").textContent = ""; }
+    if(!listening){ $("#micBtn").classList.remove("live"); $("#micBtn").innerHTML = ICO_MIC; if(!micBlocked) $("#hint").textContent = ""; }
   };
   listening = true;
   rec.start();
   $("#micBtn").classList.add("live");
-  $("#micBtn").textContent = "■";
-  $("#hint").textContent = "Listening — tap ■ when done.";
+  $("#micBtn").innerHTML = ICO_STOP;
+  $("#hint").textContent = "Listening — tap the mic to stop.";
 }
 function stopRec(){ listening = false; if(rec){ try{ rec.stop(); }catch(e){} } }
 $("#micBtn").addEventListener("click", () => {
@@ -1605,7 +1631,7 @@ function closeSheet(){ $("#overlay").classList.remove("show"); $("#sheet").class
 function closeDrawer(){ $("#drawer").classList.remove("show"); if(!$("#sheet").classList.contains("show")) $("#overlay").classList.remove("show"); }
 $("#overlay").addEventListener("click", () => { closeSheet(); closeDrawer(); });
 
-function projectOptions(sel){ return state.projects.map(p => `<option value="${esc(p.id)}"${p.id === sel ? " selected" : ""}>${esc(p.emoji)} ${esc(p.title)}</option>`).join(""); }
+function projectOptions(sel){ return state.projects.map(p => `<option value="${esc(p.id)}"${p.id === sel ? " selected" : ""}>${esc(p.title)}</option>`).join(""); }
 function sectionOptions(pid, sel){ const p = state.projects.find(x => x.id === pid) || state.projects[0]; return p.sections.map(s => `<option value="${esc(s.id)}"${s.id === sel ? " selected" : ""}>${esc(s.name)}</option>`).join(""); }
 
 // draft holds unsaved edits while the sheet is open (so subtasks / segments can re-render)
@@ -1624,7 +1650,7 @@ function taskSheet(id, preset = {}){
   openSheet(`
     <h3>${x ? "Edit task" : "New task"}</h3>
     <div class="f-label">Task</div><input id="fText" value="${esc(d.text)}" placeholder="What needs doing?">
-    <div class="f-label">Priority</div>${seg("priority", [["high", "🔥 High"], ["normal", "Normal"], ["low", "Low"]])}
+    <div class="f-label">Priority</div>${seg("priority", [["high", "High"], ["normal", "Normal"], ["low", "Low"]])}
     <div class="two">
       <div><div class="f-label">Due</div><input id="fDue" type="date" value="${esc(d.due)}"></div>
       <div><div class="f-label">Repeat</div><select id="fRepeat">${[["", "Never"], ...REPEATS.map(r => [r, repeatLabel(r)])].map(([v, l]) => `<option value="${v}"${(d.repeat || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></div>
@@ -1636,7 +1662,7 @@ function taskSheet(id, preset = {}){
     <div class="f-label">Steps ${d.subtasks.length ? `(${d.subtasks.filter(z => z.done).length}/${d.subtasks.length})` : ""}</div>
     <div>${subs}</div>
     <div class="add-row"><input id="fSub" placeholder="Add a step…"><button data-act="subAdd" aria-label="Add step">+</button></div>
-    ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">✦ Break it down with Claude</button>` : ""}
+    ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">${SPARK} Break it down with Claude</button>` : ""}
     <label class="toggle-row"><input type="checkbox" id="fFocus"${d.focus ? " checked" : ""}> In today's focus</label>
     ${x && !x.t.done ? `<div class="f-label">Focus timer</div><div class="seg">${[15, 25, 50].map(m => `<button type="button" data-act="startTimer" data-id="${esc(x.t.id)}" data-min="${m}">▶ ${m} min</button>`).join("")}</div>` : ""}
     <div class="btn-row" style="margin-top:20px">
@@ -1709,7 +1735,7 @@ document.addEventListener("click", async (e) => {
     if(x.t.done){
       xpPop(document.querySelector(`[data-act="toggle"][data-id="${CSS.escape(x.t.id)}"]`) || el, x.t.priority === "high" ? 20 : 10);
       const f = todayFocus();
-      if(f.length && f.every(y => y.t.done)){ toast("Focus complete. Big day 🔥"); celebrate(); }
+      if(f.length && f.every(y => y.t.done)){ toast("Focus complete. Big day."); celebrate(); }
       else if(next) toast("Nice. Next one set for " + fmtDue(next.due).toLowerCase());
       else toast("Done ✓");
     }
@@ -1784,8 +1810,6 @@ document.addEventListener("click", async (e) => {
     const title = p && await askText("Rename project", p.title);
     if(!title || !title.trim()) return;
     p.title = title.trim();
-    const emoji = await askText("Project emoji", p.emoji);
-    if(emoji && emoji.trim()) p.emoji = emoji.trim().slice(0, 4);
     save(); render();
   }
   else if(act === "delProject"){
@@ -1823,9 +1847,8 @@ async function addProject(){
   closeDrawer();
   const title = await askText("New project", "", "e.g. Kopa Store");
   if(!title || !title.trim()) return;
-  const emoji = ((await askText("Pick an emoji for it", "📌")) || "📌").trim().slice(0, 4) || "📌";
   const id = "p" + Date.now().toString(36);
-  state.projects.push({ id, emoji, title:title.trim(), sections:[{ id:newId("s"), name:"General", tasks:[] }] });
+  state.projects.push({ id, emoji: monogram(title), title:title.trim(), sections:[{ id:newId("s"), name:"General", tasks:[] }] });
   save();
   ui.tab = "tasks"; ui.project = id;
   closeDrawer();
