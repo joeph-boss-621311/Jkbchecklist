@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>JKB Voice</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0b; --card:#1b1b1e; --gold:#d9ad33; --text:#f4f3f1; --text-dim:#8d8b88;
+    --line:#2a2a2d; --danger:#d1573f;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; padding:22px 16px calc(22px + env(safe-area-inset-bottom)); }
+  .brand{ font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; }
+  .brand span{ color:var(--gold); }
+  h1{ font-family:'Sora',sans-serif; font-size:1.4rem; margin:18px 0 4px; }
+  .sub{ color:var(--text-dim); font-size:0.85rem; margin:0 0 22px; }
+  .mic-wrap{ display:flex; flex-direction:column; align-items:center; gap:12px; margin:8px 0 20px; }
+  .mic{ width:110px; height:110px; border-radius:50%; border:none; background:var(--gold); color:#1a1305;
+    font-size:2.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .mic.live{ background:var(--danger); color:#fff; animation:pulse 1.2s ease infinite; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(209,87,63,0.55);} 100%{ box-shadow:0 0 0 26px rgba(209,87,63,0);} }
+  .status{ color:var(--text-dim); font-size:0.85rem; text-align:center; min-height:1.2em; }
+  textarea{ width:100%; flex:1; min-height:180px; background:var(--card); border:1px solid var(--line); color:var(--text);
+    border-radius:14px; padding:12px; font-size:0.95rem; font-family:inherit; resize:vertical; }
+  textarea:focus{ outline:none; border-color:var(--gold); }
+  .interim{ color:var(--text-dim); font-style:italic; font-size:0.85rem; min-height:1.2em; margin:6px 2px 0; }
+  .row{ display:flex; gap:10px; margin-top:14px; }
+  button.go{ flex:1; padding:14px; border-radius:12px; border:none; background:var(--gold); color:#1a1305;
+    font-weight:700; font-size:0.95rem; cursor:pointer; }
+  button.ghost{ padding:14px 16px; border-radius:12px; border:1.5px solid var(--line); background:transparent;
+    color:var(--text-dim); font-size:0.9rem; cursor:pointer; }
+  .hint{ color:var(--text-dim); font-size:0.78rem; text-align:center; margin-top:12px; line-height:1.4; }
+</style>
+</head>
+<body>
+  <div class="brand">JKB<span>.</span> Voice</div>
+  <h1>Say what you need to do</h1>
+  <p class="sub">Ramble freely. Claude will pick out the tasks in your checklist.</p>
+
+  <div class="mic-wrap">
+    <button class="mic" id="mic">🎙</button>
+    <div class="status" id="status">Tap to start talking</div>
+  </div>
+
+  <textarea id="text" placeholder="Your words appear here…"></textarea>
+  <div class="interim" id="interim"></div>
+
+  <div class="row">
+    <button class="ghost" id="clear">Clear</button>
+    <button class="go" id="send">Copy &amp; open checklist</button>
+  </div>
+  <div class="hint">In the checklist: tap 🎙, long-press the box → Paste → Extract tasks.</div>
+
+<script>
+const CHECKLIST_URL = "https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8";
+const DRAFT_KEY = "jkb_voice_draft";
+const text = document.getElementById("text");
+const interimEl = document.getElementById("interim");
+const mic = document.getElementById("mic");
+const status = document.getElementById("status");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+
+try{ text.value = localStorage.getItem(DRAFT_KEY) || ""; }catch(e){}
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, text.value); }catch(e){} }
+text.addEventListener("input", saveDraft);
+
+function setUi(on){
+  mic.classList.toggle("live", on);
+  mic.textContent = on ? "■" : "🎙";
+  status.textContent = on ? "Listening… tap ■ when done" : "Tap to keep talking";
+}
+function start(){
+  if(!SR){ status.textContent = "This browser can't do speech-to-text. Open this page in Chrome or Safari."; return; }
+  rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = navigator.language || "en-US";
+  rec.onresult = (e) => {
+    let interim = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){
+        const chunk = r[0].transcript.trim();
+        if(chunk){ text.value = (text.value.trim() ? text.value.trim() + " " : "") + chunk + "."; saveDraft(); }
+      } else interim += r[0].transcript;
+    }
+    interimEl.textContent = interim;
+  };
+  rec.onerror = (e) => {
+    if(e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture"){
+      listening = false;
+      status.textContent = "Mic permission denied. Allow the microphone for this site in your browser settings.";
+    }
+  };
+  // mobile browsers stop after a pause; keep going until the user taps stop
+  rec.onend = () => {
+    if(listening){ try{ rec.start(); }catch(err){ listening = false; setUi(false); } }
+    else{ setUi(false); interimEl.textContent = ""; }
+  };
+  listening = true;
+  rec.start();
+  setUi(true);
+}
+function stop(){ listening = false; if(rec){ try{ rec.stop(); }catch(e){} } }
+mic.addEventListener("click", () => listening ? stop() : start());
+
+document.getElementById("clear").addEventListener("click", () => { text.value = ""; saveDraft(); });
+
+document.getElementById("send").addEventListener("click", async () => {
+  stop();
+  const t = text.value.trim();
+  if(!t){ status.textContent = "Say something first."; return; }
+  let copied = false;
+  try{ await navigator.clipboard.writeText(t); copied = true; }
+  catch(e){ text.select(); try{ copied = document.execCommand("copy"); }catch(err){} }
+  status.textContent = copied ? "Copied! Opening checklist…" : "Couldn't copy — select the text and copy it manually.";
+  if(copied) setTimeout(() => { window.location.href = CHECKLIST_URL; }, 500);
+});
+</script>
+</body>
+</html>
