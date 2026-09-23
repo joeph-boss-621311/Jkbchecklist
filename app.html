@@ -190,7 +190,7 @@
 
   /* tasks tab */
   .search{ position:relative; margin-bottom:10px; }
-  .search input{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:13px 14px 13px 40px; border-radius:14px; font-size:0.92rem; }
+  .search input{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:13px 14px 13px 40px; border-radius:14px; font-size:16px; }
   .search input:focus{ outline:none; border-color:var(--gold); }
   .search .si{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:0.9rem; }
   .filters{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none; }
@@ -215,7 +215,7 @@
   .sec-body{ padding:0 14px 12px; display:none; }
   .sec.open .sec-body{ display:block; }
   .add-row{ display:flex; gap:8px; padding:10px 0 2px; }
-  .add-row input{ flex:1; background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:12px; font-size:0.86rem; min-width:0; }
+  .add-row input{ flex:1; background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:12px; font-size:16px; min-width:0; }
   .add-row input:focus{ outline:none; border-color:var(--gold); }
   .add-row button{ background:var(--gold); color:var(--on-gold); border:none; padding:0 16px; border-radius:12px; font-weight:800; cursor:pointer; font-size:1rem; }
   .link-btn{ background:none; border:none; color:var(--text-dim); font-size:0.75rem; cursor:pointer; padding:8px 2px; }
@@ -277,7 +277,7 @@
   .chips::-webkit-scrollbar{ display:none; }
   .qchip{ flex-shrink:0; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:7px 12px; font-size:0.76rem; cursor:pointer; }
   .compose-row{ display:flex; gap:8px; align-items:flex-end; }
-  .compose-row textarea{ flex:1; min-height:46px; max-height:140px; background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:16px; padding:12px 13px; font-size:0.93rem; resize:none; }
+  .compose-row textarea{ flex:1; min-height:46px; max-height:140px; background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:16px; padding:12px 13px; font-size:16px; resize:none; }
   .compose-row textarea:focus{ outline:none; border-color:var(--gold); }
   .round{ width:46px; height:46px; border-radius:50%; border:none; background:var(--grad); color:var(--on-gold); font-size:1.05rem; cursor:pointer; flex-shrink:0; }
   .round.alt{ background:var(--card); color:var(--gold); border:1.5px solid var(--gold); }
@@ -304,7 +304,7 @@
   .sheet h3{ margin:0 0 6px; font-size:1.1rem; font-family:var(--font-display); }
   .sheet p.sub{ margin:0 0 12px; color:var(--text-dim); font-size:0.85rem; line-height:1.45; }
   .f-label{ font-size:0.7rem; color:var(--text-dim); margin:14px 0 6px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
-  .sheet input, .sheet select, .sheet textarea{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:13px; font-size:0.9rem; }
+  .sheet input, .sheet select, .sheet textarea{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:13px; font-size:16px; }
   .sheet textarea{ min-height:90px; resize:vertical; }
   .sheet input:focus, .sheet select:focus, .sheet textarea:focus{ outline:none; border-color:var(--gold); }
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -364,7 +364,7 @@
   .dlg{ width:100%; max-width:380px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); animation:fadein 0.18s ease; }
   .dlg h4{ margin:0 0 6px; font-family:var(--font-display); font-size:1.05rem; }
   .dlg p{ margin:0 0 14px; font-size:0.86rem; color:var(--text-2); line-height:1.45; }
-  .dlg input{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:var(--radius-sm); font-size:0.95rem; margin-bottom:14px; }
+  .dlg input{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:var(--radius-sm); font-size:16px; margin-bottom:14px; }
   .dlg input:focus{ outline:none; border-color:var(--gold); }
 
   /* ---------- look picker ---------- */
@@ -1118,7 +1118,6 @@ function renderStats(){
 
 // ---------- Coach ----------
 let thinking = false, currentCtl = null, lastUndo = null, sampleFn = null, sampleReady = false;
-const imageThumbs = new Map(); // ts -> object URL, this session only (never persisted or synced)
 let pendingImage = null, pendingImageUrl = null, imagesAvailable = false;
 
 // ---------- read a message aloud (the device's own voice — free, no key, no network) ----------
@@ -1157,6 +1156,23 @@ async function checkImageCaps(){
   catch(e){ imagesAvailable = false; }
   $("#attachBtn").hidden = !imagesAvailable;
   return imagesAvailable;
+}
+function downscaleImage(file, maxDim = 160, quality = 0.55){
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
 }
 function clearPendingImage(){
   if(pendingImageUrl) URL.revokeObjectURL(pendingImageUrl);
@@ -1199,9 +1215,8 @@ function renderCoach(){
       ? `<div class="changes">${m.changes.map(c => `<div>${esc(c)}</div>`).join("")}${
           m.undone ? `<div><i>Undone</i></div>` : (lastUndo && lastUndo.ts === m.ts ? `<button class="undo" data-act="undo">↶ Undo these changes</button>` : "")
         }</div>` : "";
-    const thumb = imageThumbs.get(m.ts);
     return sep + (m.role === "user"
-      ? `<div class="msg user">${thumb ? `<img class="msg-img" src="${thumb}" alt="">` : ""}${esc(m.content)}</div>`
+      ? `<div class="msg user">${m.img ? `<img class="msg-img" src="${m.img}" alt="">` : ""}${esc(m.content)}</div>`
       : `<div class="msg assistant"><div class="who-row"><div class="who">✦ Atlas</div><div class="msg-actions">
           <button class="icon-mini${speakingTs === m.ts ? " on" : ""}" data-act="speak" data-ts="${m.ts}" aria-label="${speakingTs === m.ts ? "Stop reading" : "Read this message aloud"}">${speakingTs === m.ts ? ICO_STOP : ICO_PLAY}</button>
           <a class="icon-mini" href="${VOICE_URL}#say=${encodeURIComponent(stripForSpeech(m.content).slice(0, 600))}" target="_blank" rel="noopener" aria-label="Listen in Atlas's voice (ElevenLabs)">🎧</a>
@@ -1438,8 +1453,8 @@ async function askCoach(text, image){
   const sample = await getSample();
   if(!sample){ render(); toast("Open this page on claude.ai to talk to Atlas."); if(image) setPendingImage(image); return; }
   const ts = Date.now();
-  coach.messages.push({ role:"user", content: text || "📷 Photo", ts });
-  if(image) imageThumbs.set(ts, URL.createObjectURL(image));
+  const thumb = image ? await downscaleImage(image) : null;
+  coach.messages.push({ role:"user", content: text || "📷 Photo", ts, img: thumb || undefined });
   saveCoach();
   thinking = true;
   ui.tab = "coach"; ui.project = null;
@@ -1460,7 +1475,6 @@ async function askCoach(text, image){
     if(changes.length){ lastUndo = { ts:msg.ts, snapshot:before }; save(); }
     saveCoach();
   }catch(e){
-    if(imageThumbs.has(ts)){ URL.revokeObjectURL(imageThumbs.get(ts)); imageThumbs.delete(ts); }
     coach.messages.pop();
     saveCoach();
     $("#input").value = text; autoGrow();
