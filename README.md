@@ -1,28 +1,17 @@
-# JKB Checklist
+# JKB Ops
 
-Your ops checklist, now with voice. Tap 🎙, talk, and it turns your rambling into clean tasks filed under the right project.
+Your checklist, managed by Claude. It plans your day, updates your tasks when you tell it what happened, and calls you out when you're dodging the important stuff.
 
-## Run it
+**Live app:** https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8 (private to your Claude account)
+**Voice capture:** https://joeph-boss-621311.github.io/Jkbchecklist/voice.html (needs GitHub Pages on)
 
-```bash
-npm start            # → http://localhost:3000
-```
+## Screens
 
-No installs needed, just Node. Open it in **Chrome, Edge or Safari**, since those have built-in speech-to-text.
+- **Today** — Claude's note for the day, your 3–5 focus tasks, streak, and what's overdue or due soon.
+- **Coach** — chat with Claude. Say "finished the login bug, add call Tunde Friday" and it updates the list. Every batch of changes shows up in the chat with an **Undo** button.
+- **Projects** — the full list: priorities, due dates, sections. Tap a task to edit it.
 
-## How the filtering works
+## How it works
 
-1. **Speech → text**: the browser's free built-in speech recognition. It works on `localhost` or https.
-2. **Text → tasks**:
-   - **With Claude (default when `server.js` is running):** the server runs `claude -p` (the Claude Code CLI) on your transcript. It drops filler, writes each task as a short action, and picks the project + section. It runs on your Claude login, so no API key needed. You need to have run `claude` once to sign in.
-   - **Without Claude** (opening `index.html` directly, or the CLI isn't installed): a built-in filter keeps phrases like "I need to…", "remember to…" or anything starting with an action verb, and throws out the chatter.
-3. You review the list, fix anything, and hit **Add**. Anything that doesn't fit a section goes to an **Inbox** section.
-
-## Options
-
-| Env var | Default | What it does |
-|---|---|---|
-| `PORT` | `3000` | Port to serve on |
-| `HOST` | `127.0.0.1` | Set `0.0.0.0` to open it from your phone on the same Wi-Fi (the mic needs https there; use your keyboard's dictation button instead) |
-| `CLAUDE_MODEL` | `haiku` | `sonnet` sorts smarter but uses more of your limits |
-| `CLAUDE_BIN` | `claude` | Path to the CLI if it isn't on your PATH |
+- `index.html` is the whole app. On claude.ai it uses Claude on your account (`sample`) and saves to the artifact database (`app/state`, `app/coach`), so your list follows you across devices. Opened anywhere else it still works as a plain checklist saved in the browser.
+- `voice.html` is a small page for real speech-to-text. claude.ai blocks the mic for pages it hosts, so this page does the listening, copies what you said and opens the app. There you paste it into Coach.
