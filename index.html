@@ -2,304 +2,308 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>JKB — Ops</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>JKB Ops</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0a0b;
-    --surface:#151517;
-    --card:#1b1b1e;
-    --card-2:#232326;
-    --gold:#d9ad33;
-    --gold-2:#f0c968;
-    --gold-soft:rgba(217,173,51,0.12);
-    --text:#f4f3f1;
-    --text-dim:#8d8b88;
-    --line:#2a2a2d;
-    --done:#565659;
-    --danger:#d1573f;
-    --shadow: 0 8px 24px rgba(0,0,0,0.35);
-    --radius: 18px;
+    color-scheme: dark;
+    --bg:#0b0b0d; --surface:#131316; --card:#1a1a1e; --card-2:#232328; --raise:#2a2a30;
+    --gold:#d9ad33; --gold-2:#f0c968; --gold-soft:rgba(217,173,51,0.13); --on-gold:#1a1305;
+    --chart:#ad8a25;
+    --text:#f4f3f1; --text-2:#c9c7c3; --text-dim:#8d8b88; --line:#2a2a2f; --done:#5d5d62;
+    --danger:#e0654b; --danger-soft:rgba(224,101,75,0.13); --ok:#62b67e; --ok-soft:rgba(98,182,126,0.13);
+    --shadow:0 10px 30px rgba(0,0,0,0.35); --radius:20px;
   }
-  body.light{
-    --bg:#f6f2e9;
-    --surface:#fbf8f1;
-    --card:#ffffff;
-    --card-2:#f1ebdc;
-    --gold:#b8860f;
-    --gold-2:#8a6608;
-    --gold-soft:rgba(184,134,15,0.10);
-    --text:#1c1a15;
-    --text-dim:#7a7568;
-    --line:#e8e0cd;
-    --done:#c2b9a3;
-    --danger:#b3462c;
-    --shadow: 0 8px 24px rgba(90,70,20,0.10);
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --bg:#f6f2e9; --surface:#fbf8f1; --card:#ffffff; --card-2:#f3eddf; --raise:#ebe3d0;
+    --gold:#b8860f; --gold-2:#8a6608; --gold-soft:rgba(184,134,15,0.11); --on-gold:#fffaf0;
+    --chart:#b8860f;
+    --text:#1c1a15; --text-2:#3d392f; --text-dim:#7a7568; --line:#e8e0cd; --done:#b3aa94;
+    --danger:#b3462c; --danger-soft:rgba(179,70,44,0.10); --ok:#2f8a4f; --ok-soft:rgba(47,138,79,0.10);
+    --shadow:0 10px 30px rgba(90,70,20,0.10);
   }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-  html,body{ height:100%; }
-  body{
-    margin:0;
-    background: var(--bg);
-    color: var(--text);
-    font-family:'Inter',system-ui,-apple-system,sans-serif;
-    transition: background 0.25s ease, color 0.25s ease;
-    overscroll-behavior-y: none;
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      color-scheme: light;
+      --bg:#f6f2e9; --surface:#fbf8f1; --card:#ffffff; --card-2:#f3eddf; --raise:#ebe3d0;
+      --gold:#b8860f; --gold-2:#8a6608; --gold-soft:rgba(184,134,15,0.11); --on-gold:#fffaf0;
+      --chart:#b8860f;
+      --text:#1c1a15; --text-2:#3d392f; --text-dim:#7a7568; --line:#e8e0cd; --done:#b3aa94;
+      --danger:#b3462c; --danger-soft:rgba(179,70,44,0.10); --ok:#2f8a4f; --ok-soft:rgba(47,138,79,0.10);
+      --shadow:0 10px 30px rgba(90,70,20,0.10);
+    }
   }
-  h1,h2,h3,.display{ font-family:'Sora',system-ui,sans-serif; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ min-height:100%; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Inter',system-ui,-apple-system,sans-serif; overscroll-behavior-y:none; -webkit-font-smoothing:antialiased; }
+  button, input, select, textarea{ font-family:inherit; }
+  button{ color:inherit; }
+  a{ color:var(--gold); }
+  [hidden]{ display:none !important; }
+  .sora{ font-family:'Sora',system-ui,sans-serif; }
 
-  /* ---- Top bar ---- */
-  .topbar{
-    position:sticky; top:0; z-index:30;
-    background: var(--bg);
-    padding: 18px 18px 10px;
-    display:flex; align-items:center; justify-content:space-between;
-  }
-  .brand{ font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:0.3px; }
-  .brand .dot{ color: var(--gold); }
+  /* ---------- top ---------- */
+  .topbar{ position:sticky; top:0; z-index:30; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:calc(12px + env(safe-area-inset-top)) 16px 10px; }
+  .topbar-in{ max-width:720px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
+  .brand{ font-family:'Sora',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:0.2px; }
+  .brand .dot{ color:var(--gold); }
   .top-actions{ display:flex; gap:8px; }
-  .icon-btn{
-    width:36px; height:36px; border-radius:50%;
-    border:1.5px solid var(--gold); background:transparent; color:var(--gold);
-    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.95rem;
-  }
-  .icon-btn.plain{ border-color:var(--line); color:var(--text); }
+  .icon-btn{ width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.95rem; }
+  .icon-btn:active{ transform:scale(0.94); }
 
-  /* ---- Views ---- */
-  .view{ display:none; padding: 6px 18px 110px; max-width:720px; margin:0 auto; animation: fadein 0.2s ease; }
-  .view.active{ display:block; }
-  @keyframes fadein{ from{ opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+  /* focus timer pill */
+  .timer{ max-width:720px; margin:8px auto 0; display:flex; align-items:center; gap:10px; background:var(--gold); color:var(--on-gold); border-radius:16px; padding:8px 8px 8px 14px; box-shadow:0 8px 20px rgba(217,173,51,0.25); }
+  .timer .tt{ font-family:'Sora',sans-serif; font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+  .timer .tn{ flex:1; min-width:0; font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.85; }
+  .timer button{ width:34px; height:34px; border-radius:50%; border:none; background:rgba(0,0,0,0.14); color:inherit; cursor:pointer; font-size:0.85rem; }
+  .timer.paused{ background:var(--card-2); color:var(--text); box-shadow:none; border:1px solid var(--line); }
 
-  /* ---- Dashboard ---- */
-  .greet{ color:var(--text-dim); font-size:0.85rem; margin: 6px 0 2px; }
-  .greet b{ color:var(--gold); font-weight:600; }
-  .h-title{ font-size:1.5rem; font-weight:800; margin: 2px 0 16px; line-height:1.2; }
-  .h-title .accent{ color: var(--gold); }
+  main{ max-width:720px; margin:0 auto; padding:6px 16px 130px; }
+  .view-in{ animation:fadein 0.22s ease; }
+  @keyframes fadein{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  .eyebrow{ color:var(--text-dim); font-size:0.8rem; margin:6px 0 2px; }
+  .h1{ font-family:'Sora',sans-serif; font-size:1.55rem; font-weight:800; margin:2px 0 18px; line-height:1.2; letter-spacing:-0.2px; }
+  .accent{ color:var(--gold); }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:6px 14px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card.pad{ padding:16px; }
+  .label{ display:flex; align-items:center; justify-content:space-between; font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; font-weight:700; margin:22px 4px 8px; }
+  .label .count{ background:var(--card-2); color:var(--text-2); border-radius:20px; padding:2px 8px; font-size:0.66rem; letter-spacing:0; }
 
-  .hero-ring-card{
-    background: var(--card); border:1px solid var(--line); border-radius: var(--radius);
-    padding: 22px; display:flex; align-items:center; gap:20px; box-shadow: var(--shadow); margin-bottom:18px;
-  }
-  .hero-ring-text{ flex:1; }
-  .hero-ring-text .big{ font-size:1.8rem; font-weight:800; font-family:'Sora',sans-serif; }
-  .hero-ring-text .small{ color:var(--text-dim); font-size:0.82rem; margin-top:2px; }
+  /* hero */
+  .hero{ display:flex; gap:16px; align-items:center; background:linear-gradient(135deg, var(--gold-soft), transparent 65%), var(--card); border:1px solid color-mix(in srgb, var(--gold) 45%, var(--line)); border-radius:24px; padding:18px; box-shadow:var(--shadow); }
+  .ring{ flex-shrink:0; position:relative; width:86px; height:86px; }
+  .ring svg{ display:block; }
+  .ring .rv{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring .rv b{ font-family:'Sora',sans-serif; font-size:1.2rem; }
+  .ring .rv span{ font-size:0.62rem; color:var(--text-dim); }
+  .hero-body{ flex:1; min-width:0; }
+  .coach-tag{ font-size:0.68rem; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; }
+  .coach-note{ font-size:0.93rem; line-height:1.45; color:var(--text); }
+  .btn-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .btn{ flex:1; min-width:110px; padding:12px 14px; border-radius:14px; border:none; background:var(--gold); color:var(--on-gold); font-weight:700; font-size:0.87rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+  .btn:active{ transform:scale(0.98); }
+  .btn.ghost{ background:transparent; color:var(--gold); border:1.5px solid var(--gold); }
+  .btn.soft{ background:var(--card-2); color:var(--text); }
+  .btn.danger{ background:transparent; color:var(--danger); border:1.5px solid var(--danger); }
+  .btn:disabled{ opacity:0.5; cursor:default; }
+  .btn.sm{ flex:0 0 auto; min-width:0; padding:8px 12px; font-size:0.78rem; border-radius:11px; }
 
-  .section-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-  .sec-card{
-    background: var(--card); border:1px solid var(--line); border-radius: 16px;
-    padding: 16px; cursor:pointer; transition: transform 0.15s ease, border-color 0.15s ease;
-  }
-  .sec-card:active{ transform: scale(0.97); }
-  .sec-card:hover{ border-color: var(--gold); }
-  .sec-card .row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .sec-card .emoji{ font-size:1.3rem; }
-  .sec-card .title{ font-weight:700; font-size:0.9rem; margin-top:8px; }
-  .sec-card .count{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
+  .tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .tile{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 10px; text-align:center; }
+  .tile .v{ font-family:'Sora',sans-serif; font-size:1.3rem; font-weight:800; }
+  .tile .k{ font-size:0.68rem; color:var(--text-dim); margin-top:2px; }
+  .tiles.four{ grid-template-columns:repeat(2,1fr); }
+  @media (min-width:560px){ .tiles.four{ grid-template-columns:repeat(4,1fr); } }
 
-  /* ---- Section list view ---- */
-  .sub-card{
-    background: var(--card); border:1px solid var(--line); border-radius: 16px;
-    margin-bottom:14px; overflow:hidden; box-shadow: var(--shadow);
-  }
-  .sub-head{
-    padding: 14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;
-  }
-  .sub-head .name{ font-weight:700; font-size:0.92rem; }
-  .sub-head .meta{ display:flex; align-items:center; gap:10px; }
-  .sub-head .frac{ color:var(--gold); font-size:0.75rem; font-weight:600; }
-  .sub-progress{ height:4px; background:var(--line); }
-  .sub-progress-fill{ height:100%; background:var(--gold); width:0%; transition:width 0.3s ease; }
-  .sub-body{ display:none; padding: 4px 10px 12px; }
-  .sub-card.open .sub-body{ display:block; }
-  .sub-card.open .chev{ transform: rotate(90deg); }
-  .chev{ color:var(--text-dim); transition: transform 0.2s ease; font-size:0.8rem; }
-
-  .task{
-    display:flex; align-items:center; gap:12px; padding:9px 8px; border-radius:12px;
-  }
-  .task:hover{ background: var(--gold-soft); }
-  .check{
-    width:22px; height:22px; border-radius:50%; border:2px solid var(--text-dim); flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.15s ease;
-  }
-  .check.done{ background: var(--gold); border-color: var(--gold); }
-  .check svg{ width:12px; height:12px; opacity:0; transition:opacity 0.1s ease; }
+  /* tasks */
+  .task{ display:flex; align-items:center; gap:12px; padding:12px 2px; }
+  .task + .task{ border-top:1px solid var(--line); }
+  .check{ width:26px; height:26px; border-radius:50%; border:2px solid var(--text-dim); flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer; background:transparent; padding:0; transition:background 0.15s, border-color 0.15s; }
+  .check.done{ background:var(--gold); border-color:var(--gold); animation:pop 0.28s ease; }
+  @keyframes pop{ 0%{ transform:scale(0.7); } 60%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
+  .check svg{ width:13px; height:13px; opacity:0; }
   .check.done svg{ opacity:1; }
-  .task-label{ flex:1; font-size:0.9rem; cursor:pointer; word-break:break-word; }
-  .task.done .task-label{ color: var(--done); text-decoration: line-through; }
-  .task-edit{
-    flex:1; background: var(--card-2); border:1px solid var(--gold); color:var(--text);
-    padding:5px 8px; border-radius:8px; font-size:0.88rem; font-family:inherit;
-  }
-  .kebab{
-    color: var(--text-dim); cursor:pointer; font-size:1.1rem; padding: 2px 6px; flex-shrink:0; line-height:1;
-  }
-  .task-actions{ display:flex; gap:2px; flex-shrink:0; }
-  .mini-btn{
-    font-size:0.75rem; color:var(--text-dim); cursor:pointer; padding:4px 7px; border-radius:6px;
-  }
-  .mini-btn:hover{ background: var(--gold-soft); color: var(--gold); }
-  .mini-btn.danger:hover{ color: var(--danger); background: rgba(209,87,63,0.12); }
+  .t-main{ flex:1; min-width:0; cursor:pointer; }
+  .t-text{ font-size:0.92rem; line-height:1.35; word-break:break-word; }
+  .task.done .t-text{ color:var(--done); text-decoration:line-through; }
+  .t-meta{ font-size:0.7rem; color:var(--text-dim); margin-top:4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .chip{ font-size:0.65rem; padding:2px 8px; border-radius:20px; background:var(--card-2); color:var(--text-2); font-weight:600; white-space:nowrap; }
+  .chip.high{ background:var(--danger-soft); color:var(--danger); }
+  .chip.due{ background:var(--gold-soft); color:var(--gold); }
+  .chip.over{ background:var(--danger-soft); color:var(--danger); }
+  .chip.ok{ background:var(--ok-soft); color:var(--ok); }
+  .play{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card-2); cursor:pointer; flex-shrink:0; font-size:0.72rem; color:var(--gold); }
+  .empty{ color:var(--text-dim); font-size:0.86rem; padding:18px 6px; text-align:center; line-height:1.5; }
+  .empty b{ color:var(--text); display:block; font-size:0.95rem; margin-bottom:2px; }
 
-  .add-task-row{ display:flex; gap:8px; padding: 8px 8px 4px; }
-  .add-task-row input{
-    flex:1; background: var(--card-2); border:1px solid var(--line); color:var(--text);
-    padding:9px 12px; border-radius:10px; font-size:0.85rem; font-family:inherit;
-  }
-  .add-task-row input:focus{ outline:none; border-color: var(--gold); }
-  .add-task-row button{
-    background: var(--gold); color:#1a1305; border:none; padding:0 16px; border-radius:10px;
-    font-weight:700; cursor:pointer; font-size:1rem;
-  }
-  .sub-del-row{ text-align:right; padding: 2px 8px 8px; }
-  .sub-del{ font-size:0.72rem; color:var(--text-dim); cursor:pointer; }
-  .sub-del:hover{ color: var(--danger); }
+  /* tasks tab */
+  .search{ position:relative; margin-bottom:10px; }
+  .search input{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:13px 14px 13px 40px; border-radius:14px; font-size:0.92rem; }
+  .search input:focus{ outline:none; border-color:var(--gold); }
+  .search .si{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:0.9rem; }
+  .filters{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 8px; margin:0 -16px; padding-left:16px; padding-right:16px; scrollbar-width:none; }
+  .filters::-webkit-scrollbar{ display:none; }
+  .fchip{ flex-shrink:0; background:var(--card); border:1px solid var(--line); color:var(--text-2); border-radius:20px; padding:7px 13px; font-size:0.78rem; cursor:pointer; font-weight:600; }
+  .fchip.on{ background:var(--gold); color:var(--on-gold); border-color:var(--gold); }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .p-card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; cursor:pointer; text-align:left; box-shadow:var(--shadow); }
+  .p-card:active{ transform:scale(0.98); }
+  .p-card .e{ font-size:1.4rem; }
+  .p-card .n{ font-weight:700; font-size:0.9rem; margin-top:8px; }
+  .p-card .c{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
+  .bar{ height:5px; background:var(--card-2); border-radius:5px; margin-top:10px; overflow:hidden; }
+  .bar > div{ height:100%; background:var(--gold); border-radius:5px; }
+  .back{ background:none; border:none; color:var(--text-dim); font-size:0.85rem; cursor:pointer; padding:4px 0 8px; }
+  .sec{ background:var(--card); border:1px solid var(--line); border-radius:18px; margin-bottom:12px; overflow:hidden; }
+  .sec-head{ padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; width:100%; background:none; border:none; text-align:left; }
+  .sec-head .n{ font-weight:700; font-size:0.9rem; }
+  .sec-head .f{ color:var(--gold); font-size:0.75rem; font-weight:700; display:flex; gap:8px; align-items:center; }
+  .sec-head .chev{ color:var(--text-dim); transition:transform 0.2s; }
+  .sec.open .chev{ transform:rotate(90deg); }
+  .sec-body{ padding:0 14px 12px; display:none; }
+  .sec.open .sec-body{ display:block; }
+  .add-row{ display:flex; gap:8px; padding:10px 0 2px; }
+  .add-row input{ flex:1; background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:12px; font-size:0.86rem; min-width:0; }
+  .add-row input:focus{ outline:none; border-color:var(--gold); }
+  .add-row button{ background:var(--gold); color:var(--on-gold); border:none; padding:0 16px; border-radius:12px; font-weight:800; cursor:pointer; font-size:1rem; }
+  .link-btn{ background:none; border:none; color:var(--text-dim); font-size:0.75rem; cursor:pointer; padding:8px 2px; }
+  .dashed{ width:100%; padding:14px; border-radius:18px; border:1.5px dashed var(--line); background:transparent; color:var(--text-dim); cursor:pointer; font-size:0.86rem; }
+  .group-h{ font-size:0.72rem; color:var(--text-dim); margin:14px 4px 6px; font-weight:700; }
 
-  .empty-note{ color:var(--text-dim); font-size:0.82rem; font-style:italic; padding: 6px 8px; }
-  .add-sub-btn{
-    width:100%; padding:13px; border-radius:16px; border:1.5px dashed var(--line);
-    background:transparent; color:var(--text-dim); cursor:pointer; font-size:0.85rem; margin-top:4px;
-  }
-  .add-sub-btn:hover{ border-color: var(--gold); color: var(--gold); }
+  /* stats */
+  .chart-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px 14px 10px; box-shadow:var(--shadow); margin-bottom:14px; position:relative; }
+  .chart-title{ font-weight:700; font-size:0.9rem; }
+  .chart-sub{ font-size:0.74rem; color:var(--text-dim); margin-top:2px; }
+  .chart{ position:relative; }
+  .chart svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .chart .gridl{ stroke:var(--line); stroke-width:1; }
+  .chart .axis{ fill:var(--text-dim); font-size:10px; font-family:'Inter',sans-serif; }
+  .chart .barm{ fill:var(--chart); }
+  .chart .hit{ fill:transparent; cursor:pointer; }
+  .chart .hit:hover + .barm, .chart .barm.hot{ fill:var(--gold); }
+  .tip{ position:absolute; pointer-events:none; background:var(--text); color:var(--bg); font-size:0.75rem; padding:6px 9px; border-radius:8px; white-space:nowrap; transform:translate(-50%, -110%); opacity:0; transition:opacity 0.1s; z-index:5; }
+  .tip.show{ opacity:1; }
+  .prow{ padding:10px 0; }
+  .prow + .prow{ border-top:1px solid var(--line); }
+  .prow .top{ display:flex; justify-content:space-between; align-items:center; font-size:0.86rem; gap:8px; }
+  .prow .top b{ font-weight:600; }
+  .prow .sub{ font-size:0.72rem; color:var(--text-dim); margin-top:4px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .table-toggle{ background:none; border:none; color:var(--text-dim); font-size:0.72rem; cursor:pointer; padding:6px 0 0; }
+  table.data{ width:100%; border-collapse:collapse; font-size:0.78rem; margin-top:6px; }
+  table.data td, table.data th{ padding:5px 4px; border-bottom:1px solid var(--line); text-align:left; }
+  table.data th{ color:var(--text-dim); font-weight:600; }
 
-  /* ---- Bottom tab nav ---- */
-  .tabbar{
-    position:fixed; bottom:0; left:0; right:0; z-index:40;
-    background: var(--surface); border-top:1px solid var(--line);
-    display:flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-  }
-  .tab-btn{
-    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:8px 2px; color:var(--text-dim); cursor:pointer; border-radius:12px; font-size:0.63rem;
-    font-weight:600; background:none; border:none; font-family:'Inter',sans-serif;
-  }
-  .tab-btn .ic{ font-size:1.15rem; }
-  .tab-btn.active{ color: var(--gold); }
+  /* coach */
+  .coach-top{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+  .chat{ display:flex; flex-direction:column; gap:10px; padding-bottom:190px; }
+  .msg{ max-width:88%; padding:11px 14px; border-radius:18px; font-size:0.9rem; line-height:1.5; word-break:break-word; }
+  .msg.user{ align-self:flex-end; background:var(--gold); color:var(--on-gold); border-bottom-right-radius:6px; white-space:pre-wrap; }
+  .msg.assistant{ align-self:flex-start; background:var(--card); border:1px solid var(--line); border-bottom-left-radius:6px; }
+  .msg .who{ font-size:0.66rem; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .msg .changes{ margin-top:10px; padding-top:9px; border-top:1px solid var(--line); font-size:0.78rem; color:var(--text-2); }
+  .msg .changes div{ margin:3px 0; }
+  .msg .undo{ margin-top:8px; background:var(--card-2); border:1px solid var(--line); color:var(--text-2); border-radius:9px; font-size:0.74rem; padding:5px 10px; cursor:pointer; }
+  .msg.thinking{ color:var(--text-dim); display:flex; align-items:center; gap:10px; }
+  .dots span{ display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--gold); margin-right:3px; animation:blink 1.2s infinite; }
+  .dots span:nth-child(2){ animation-delay:0.2s; } .dots span:nth-child(3){ animation-delay:0.4s; }
+  @keyframes blink{ 0%,80%,100%{ opacity:0.25; } 40%{ opacity:1; } }
+  .day-sep{ align-self:center; font-size:0.68rem; color:var(--text-dim); background:var(--card-2); padding:3px 10px; border-radius:20px; }
+  .composer{ position:fixed; left:0; right:0; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:35; background:color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:8px 12px 10px; }
+  .composer-in{ max-width:720px; margin:0 auto; }
+  .chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .qchip{ flex-shrink:0; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:7px 12px; font-size:0.76rem; cursor:pointer; }
+  .compose-row{ display:flex; gap:8px; align-items:flex-end; }
+  .compose-row textarea{ flex:1; min-height:46px; max-height:140px; background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:16px; padding:12px 13px; font-size:0.93rem; resize:none; }
+  .compose-row textarea:focus{ outline:none; border-color:var(--gold); }
+  .round{ width:46px; height:46px; border-radius:50%; border:none; background:var(--gold); color:var(--on-gold); font-size:1.05rem; cursor:pointer; flex-shrink:0; }
+  .round.alt{ background:var(--card); color:var(--gold); border:1.5px solid var(--gold); }
+  .round.live{ background:var(--danger); color:#fff; border-color:var(--danger); }
+  .round:disabled{ opacity:0.5; }
+  .compose-hint{ font-size:0.72rem; color:var(--text-dim); margin-top:6px; min-height:1em; }
 
-  /* ---- FAB ---- */
-  .fab{
-    position:fixed; right:18px; bottom:76px; z-index:35;
-    width:56px; height:56px; border-radius:50%; background: var(--gold); color:#1a1305;
-    border:none; font-size:1.6rem; box-shadow: 0 6px 18px rgba(217,173,51,0.4); cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
+  /* nav */
+  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar-in{ max-width:720px; margin:0 auto; display:flex; gap:4px; }
+  .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; color:var(--text-dim); cursor:pointer; border-radius:14px; font-size:0.66rem; font-weight:700; background:none; border:none; }
+  .tab .ic{ font-size:1.1rem; line-height:1; }
+  .tab.active{ color:var(--gold); background:var(--gold-soft); }
+  .fab{ position:fixed; right:16px; bottom:calc(82px + env(safe-area-inset-bottom)); z-index:35; width:56px; height:56px; border-radius:18px; background:var(--gold); color:var(--on-gold); border:none; font-size:1.7rem; box-shadow:0 10px 24px rgba(217,173,51,0.35); cursor:pointer; }
+  .fab:active{ transform:scale(0.95); }
 
-  /* ---- Bottom sheet ---- */
-  .sheet-overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:50;
-    opacity:0; pointer-events:none; transition:opacity 0.2s ease;
-  }
-  .sheet-overlay.show{ opacity:1; pointer-events:auto; }
-  .sheet{
-    position:fixed; left:0; right:0; bottom:0; z-index:60;
-    background: var(--surface); border-radius: 22px 22px 0 0; padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
-    transform: translateY(100%); transition: transform 0.25s ease; max-height:80vh; overflow-y:auto;
-  }
-  .sheet.show{ transform: translateY(0); }
-  .sheet-handle{ width:38px; height:4px; background:var(--line); border-radius:4px; margin: 8px auto 14px; }
-  .sheet h3{ font-size:1.05rem; margin: 0 0 14px; }
-  .field-label{ font-size:0.75rem; color:var(--text-dim); margin: 12px 0 6px; text-transform:uppercase; letter-spacing:0.4px; }
-  .sheet select, .sheet input{
-    width:100%; background: var(--card); border:1px solid var(--line); color:var(--text);
-    padding:11px 12px; border-radius:12px; font-size:0.9rem; font-family:inherit;
-  }
-  .sheet select:focus, .sheet input:focus{ outline:none; border-color:var(--gold); }
-  .sheet-submit{
-    width:100%; background:var(--gold); color:#1a1305; border:none; padding:13px; border-radius:12px;
-    font-weight:700; font-size:0.92rem; cursor:pointer; margin-top:18px;
-  }
-
-  /* ---- Menu drawer ---- */
-  .drawer{
-    position:fixed; top:0; right:0; height:100%; width:280px; max-width:82vw;
-    background:var(--surface); border-left:1px solid var(--line); z-index:70;
-    transform: translateX(100%); transition: transform 0.25s ease; padding:18px; overflow-y:auto;
-  }
+  /* sheet + drawer */
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:50; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{ position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--surface); border-radius:26px 26px 0 0; padding:8px 18px calc(22px + env(safe-area-inset-bottom)); transform:translateY(105%); visibility:hidden; transition:transform 0.26s cubic-bezier(.2,.8,.2,1), visibility 0s 0.26s; max-height:90vh; overflow-y:auto; }
+  .sheet.show{ transform:translateY(0); visibility:visible; transition:transform 0.26s cubic-bezier(.2,.8,.2,1); }
+  .sheet-inner{ max-width:620px; margin:0 auto; }
+  .handle{ width:40px; height:4px; background:var(--line); border-radius:4px; margin:6px auto 16px; }
+  .sheet h3{ margin:0 0 6px; font-size:1.1rem; font-family:'Sora',sans-serif; }
+  .sheet p.sub{ margin:0 0 12px; color:var(--text-dim); font-size:0.85rem; line-height:1.45; }
+  .f-label{ font-size:0.7rem; color:var(--text-dim); margin:14px 0 6px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; }
+  .sheet input, .sheet select, .sheet textarea{ width:100%; background:var(--card); border:1px solid var(--line); color:var(--text); padding:12px; border-radius:13px; font-size:0.9rem; }
+  .sheet textarea{ min-height:90px; resize:vertical; }
+  .sheet input:focus, .sheet select:focus, .sheet textarea:focus{ outline:none; border-color:var(--gold); }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .seg{ display:flex; gap:6px; flex-wrap:wrap; }
+  .seg button{ flex:1; min-width:64px; padding:10px 8px; border-radius:12px; border:1px solid var(--line); background:var(--card); font-size:0.8rem; font-weight:600; cursor:pointer; }
+  .seg button.on{ background:var(--gold); border-color:var(--gold); color:var(--on-gold); }
+  .toggle-row{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:0.88rem; }
+  .toggle-row input{ width:20px; height:20px; accent-color:var(--gold); }
+  .sub-row{ display:flex; align-items:center; gap:10px; padding:8px 0; }
+  .sub-row + .sub-row{ border-top:1px solid var(--line); }
+  .sub-row .check{ width:22px; height:22px; }
+  .sub-row span{ flex:1; font-size:0.87rem; }
+  .sub-row.done span{ color:var(--done); text-decoration:line-through; }
+  .x{ background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.9rem; padding:4px 6px; }
+  .drawer{ position:fixed; top:0; right:0; height:100%; width:300px; max-width:86vw; background:var(--surface); border-left:1px solid var(--line); z-index:70; transform:translateX(100%); transition:transform 0.25s; padding:calc(18px + env(safe-area-inset-top)) 18px 18px; overflow-y:auto; }
   .drawer.show{ transform:translateX(0); }
-  .drawer h3{ font-size:0.8rem; margin:20px 0 6px; color:var(--gold); text-transform:uppercase; letter-spacing:0.5px; }
-  .drawer h3:first-of-type{ margin-top:8px; }
-  .drawer-close{ background:none; border:none; color:var(--text-dim); font-size:1.3rem; cursor:pointer; float:right; }
-  .drawer-item{
-    display:flex; align-items:center; justify-content:space-between; padding:11px 2px;
-    font-size:0.87rem; cursor:pointer; border-bottom:1px solid var(--line);
-  }
-  .drawer-item:hover{ color:var(--gold); }
+  .drawer h4{ font-size:0.72rem; margin:22px 0 6px; color:var(--gold); text-transform:uppercase; letter-spacing:0.6px; }
+  .d-item{ display:flex; justify-content:space-between; align-items:center; padding:13px 2px; font-size:0.88rem; cursor:pointer; border:none; border-bottom:1px solid var(--line); background:none; width:100%; text-align:left; text-decoration:none; color:var(--text); }
+  .d-close{ background:none; border:none; color:var(--text-dim); font-size:1.3rem; cursor:pointer; float:right; }
+  .toast{ position:fixed; left:50%; bottom:calc(150px + env(safe-area-inset-bottom)); transform:translate(-50%, 10px); background:var(--text); color:var(--bg); padding:10px 16px; border-radius:22px; font-size:0.83rem; z-index:90; opacity:0; transition:opacity 0.2s, transform 0.2s; pointer-events:none; max-width:90vw; text-align:center; font-weight:600; }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
   #importFile{ display:none; }
-
-  ::-webkit-scrollbar{ width:0; height:0; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="brand">JKB<span class="dot">.</span></div>
-  <div class="top-actions">
-    <button class="icon-btn" id="themeToggle">☀</button>
-    <button class="icon-btn plain" id="menuBtn">☰</button>
-  </div>
-</div>
-
-<!-- DASHBOARD -->
-<div class="view active" id="view-home">
-  <div class="greet">👋 Hello, <b>Joseph</b></div>
-  <div class="h-title">Your <span class="accent">Ops</span> Dashboard</div>
-
-  <div class="hero-ring-card">
-    <svg width="76" height="76" viewBox="0 0 76 76">
-      <circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="8"/>
-      <circle id="heroRing" cx="38" cy="38" r="32" fill="none" stroke="var(--gold)" stroke-width="8"
-        stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201" transform="rotate(-90 38 38)"/>
-      <text id="heroPct" x="38" y="43" text-anchor="middle" font-family="Sora" font-weight="700" font-size="16" fill="var(--text)">0%</text>
-    </svg>
-    <div class="hero-ring-text">
-      <div class="big" id="heroCount">0 / 0</div>
-      <div class="small">tasks complete across everything</div>
+  <div class="topbar-in">
+    <div class="brand">JKB<span class="dot">.</span> <span style="font-weight:600;color:var(--text-dim);font-size:0.85rem">Ops</span></div>
+    <div class="top-actions">
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">◐</button>
+      <button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button>
     </div>
   </div>
-
-  <div class="section-grid" id="sectionGrid"></div>
+  <div class="timer" id="timer" hidden>
+    <div class="tt" id="timerTime">25:00</div>
+    <div class="tn" id="timerName"></div>
+    <button id="timerPause" aria-label="Pause">❚❚</button>
+    <button id="timerStop" aria-label="Stop">■</button>
+  </div>
 </div>
 
-<!-- SECTION VIEW (shared template, filled dynamically) -->
-<div class="view" id="view-section">
-  <div class="greet" id="secBreadcrumb">Section</div>
-  <div class="h-title"><span id="secEmoji"></span> <span id="secTitle" class="accent"></span></div>
-  <div id="secBody"></div>
-  <button class="add-sub-btn" id="addSubBtn">+ Add section group</button>
+<main id="view"></main>
+
+<div class="composer" id="composer" hidden>
+  <div class="composer-in">
+    <div class="chips" id="chips"></div>
+    <div class="compose-row">
+      <button class="round alt" id="micBtn" aria-label="Dictate">🎙</button>
+      <textarea id="input" rows="1" placeholder="Tell Claude what you did or need to do…"></textarea>
+      <button class="round" id="sendBtn" aria-label="Send">➤</button>
+    </div>
+    <div class="compose-hint" id="hint"></div>
+  </div>
 </div>
 
-<button class="fab" id="fabBtn">+</button>
+<button class="fab" id="fab" aria-label="Add task">+</button>
+<nav class="tabbar"><div class="tabbar-in" id="tabbar"></div></nav>
 
-<div class="tabbar" id="tabbar"></div>
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet"><div class="sheet-inner" id="sheetBody"></div></div>
 
-<!-- Add task sheet -->
-<div class="sheet-overlay" id="sheetOverlay"></div>
-<div class="sheet" id="addSheet">
-  <div class="sheet-handle"></div>
-  <h3>Add a task</h3>
-  <div class="field-label">Project</div>
-  <select id="sheetGroup"></select>
-  <div class="field-label">Section</div>
-  <select id="sheetSub"></select>
-  <div class="field-label">Task</div>
-  <input id="sheetTaskInput" placeholder="What needs doing?">
-  <button class="sheet-submit" id="sheetSubmit">Add task</button>
-</div>
-
-<!-- Menu drawer -->
 <div class="drawer" id="drawer">
-  <button class="drawer-close" id="drawerClose">✕</button>
-  <h3>Data</h3>
-  <div class="drawer-item" id="menuReset">Reset all checkmarks <span>↺</span></div>
-  <div class="drawer-item" id="menuExport">Export backup (.json) <span>⬇</span></div>
-  <div class="drawer-item" id="menuImport">Import backup (.json) <span>⬆</span></div>
+  <button class="d-close" id="drawerClose" aria-label="Close">✕</button>
+  <h4>Voice</h4>
+  <button class="d-item" id="mTalk">Talk live with your coach <span>🎧</span></button>
+  <a class="d-item" href="https://joeph-boss-621311.github.io/Jkbchecklist/voice.html" target="_blank" rel="noopener">Open JKB Voice <span>↗</span></a>
+  <h4>Projects</h4>
+  <button class="d-item" id="mAddProject">New project <span>+</span></button>
+  <h4>Data</h4>
+  <button class="d-item" id="mExport">Export backup (.json) <span>⬇</span></button>
+  <button class="d-item" id="mImport">Import backup (.json) <span>⬆</span></button>
+  <button class="d-item" id="mClearChat">Clear coach chat <span>✕</span></button>
   <input type="file" id="importFile" accept="application/json">
-  <h3>Projects</h3>
-  <div class="drawer-item" id="menuAddGroup">Add new project <span>+</span></div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const DEFAULT_DATA = [
@@ -335,365 +339,1195 @@ const DEFAULT_DATA = [
   ]},
 ];
 
-const STORAGE_KEY = "jkb_checklist_state_v3";
-const THEME_KEY = "jkb_checklist_theme";
+// ===================================================================
+// utilities
+// ===================================================================
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const lsGet = (k) => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet = (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} };
+const lsDel = (k) => { try{ localStorage.removeItem(k); }catch(e){} };
+const LS_STATE = "jkb_v2_state", LS_COACH = "jkb_v2_coach", LS_UI = "jkb_v2_ui", LS_OLD = "jkb_checklist_state_v3", LS_THEME = "jkb_checklist_theme", LS_TIMER = "jkb_v2_timer";
+const VOICE_URL = "https://joeph-boss-621311.github.io/Jkbchecklist/voice.html";
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="var(--on-gold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const DAY = 86400000;
 
-function loadState(){
+function dayStr(d = new Date()){ const z = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }
+function parseDay(s){ const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function addDays(s, n){ const d = parseDay(s); d.setDate(d.getDate() + n); return dayStr(d); }
+function daysBetween(a, b){ return Math.round((parseDay(b) - parseDay(a)) / DAY); }
+function weekdayShort(s){ return parseDay(s).toLocaleDateString(undefined, { weekday:"short" }); }
+function fmtDue(due){
+  const diff = daysBetween(dayStr(), due);
+  if(diff === 0) return "Today";
+  if(diff === 1) return "Tomorrow";
+  if(diff === -1) return "Yesterday";
+  if(diff < 0) return (-diff) + "d overdue";
+  if(diff < 7) return weekdayShort(due);
+  return parseDay(due).toLocaleDateString(undefined, { month:"short", day:"numeric" });
+}
+function fmtMin(m){ m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60 ? (m % 60) + "m" : "") : m + "m"; }
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2400); }
+function buzz(){ try{ navigator.vibrate && navigator.vibrate(30); }catch(e){} }
+// light markdown for coach replies: **bold** and "- " bullets
+function md(s){ return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^[-•] (.*)$/gm, "• $1").replace(/\n/g, "<br>"); }
+
+// ===================================================================
+// state
+// ===================================================================
+// state: { v:2, nextId, savedAt,
+//   projects:[{id, emoji, title, sections:[{id, name, tasks:[Task]}]}],
+//   today:{date, focus:[ids], note}, checkins:[...], sessions:[{taskId, min, end}] }
+// Task: { id, text, done, doneAt, priority, due, createdAt, repeat, subtasks:[{id,text,done}], minutes }
+let state = null;
+let coach = { messages: [], savedAt: 0 };
+let ui = { tab:"today", project:null, open:{}, filter:"all", q:"", projFilter:"" };
+try{ const u = JSON.parse(lsGet(LS_UI) || "{}"); ui.open = u.open || {}; }catch(e){}
+const saveUi = () => lsSet(LS_UI, JSON.stringify({ open: ui.open }));
+
+function newId(prefix){ state.nextId = (state.nextId || 1) + 1; return prefix + state.nextId.toString(36); }
+function blankState(){ return { v:2, nextId:1, savedAt:0, projects:[], today:{ date:"", focus:[], note:"" }, checkins:[], sessions:[] }; }
+
+function fromOld(old){
+  state = blankState();
+  (old.data || []).forEach(g => {
+    const p = { id:g.id, emoji:g.emoji || "📌", title:g.title, sections:[] };
+    (g.subs || []).forEach((sub, si) => {
+      const s = { id:newId("s"), name:sub.name, tasks:[] };
+      (sub.items || []).forEach((text, ii) => {
+        const done = !!(old.checked || {})[g.id + "::" + si + "::" + ii];
+        s.tasks.push({ id:newId("t"), text, done, doneAt:null, priority:"normal", due:null, createdAt:Date.now() });
+      });
+      p.sections.push(s);
+    });
+    state.projects.push(p);
+  });
+}
+function normalize(){
+  if(!state.today) state.today = { date:"", focus:[], note:"" };
+  if(!Array.isArray(state.checkins)) state.checkins = [];
+  if(!Array.isArray(state.sessions)) state.sessions = [];
+}
+
+function loadLocal(){
+  try{ const s = JSON.parse(lsGet(LS_STATE) || "null"); if(s && s.v === 2 && Array.isArray(s.projects)) state = s; }catch(e){}
+  if(!state){
+    let old = null;
+    try{ old = JSON.parse(lsGet(LS_OLD) || "null"); }catch(e){}
+    fromOld(old && old.data && old.data.length ? old : { data: DEFAULT_DATA, checked: {} });
+  }
+  normalize();
+  try{ const c = JSON.parse(lsGet(LS_COACH) || "null"); if(c && Array.isArray(c.messages)) coach = c; }catch(e){}
+}
+
+function allTasks(){ const out = []; state.projects.forEach(p => p.sections.forEach(s => s.tasks.forEach(t => out.push({ t, p, s })))); return out; }
+function findTask(id){ return allTasks().find(x => x.t.id === id) || null; }
+function normPri(p){ return p === "high" || p === "low" ? p : "normal"; }
+function normDue(d){ return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null; }
+const REPEATS = ["daily", "weekdays", "weekly", "monthly"];
+function normRepeat(r){ return REPEATS.includes(r) ? r : null; }
+function repeatLabel(r){ return { daily:"Daily", weekdays:"Weekdays", weekly:"Weekly", monthly:"Monthly" }[r] || ""; }
+function nextDue(from, r){
+  let d = from;
+  if(r === "daily") d = addDays(from, 1);
+  else if(r === "weekly") d = addDays(from, 7);
+  else if(r === "weekdays"){ d = addDays(from, 1); while([0, 6].includes(parseDay(d).getDay())) d = addDays(d, 1); }
+  else if(r === "monthly"){ const x = parseDay(from); x.setMonth(x.getMonth() + 1); d = dayStr(x); }
+  // a long-overdue repeating task rolls forward from today, not from its old date
+  return daysBetween(dayStr(), d) < 0 ? nextDue(dayStr(), r) : d;
+}
+function getSection(p, name){
+  const n = String(name || "").trim().toLowerCase();
+  let s = n && p.sections.find(x => x.name.toLowerCase() === n);
+  if(!s) s = p.sections.find(x => x.name === "Inbox");
+  if(!s){ s = { id:newId("s"), name:"Inbox", tasks:[] }; p.sections.push(s); }
+  return s;
+}
+
+// completing a recurring task spawns its next occurrence
+function setDone(x, done){
+  const { t, s } = x;
+  if(t.done === done) return null;
+  t.done = done;
+  t.doneAt = done ? Date.now() : null;
+  if(done && t.repeat){
+    const next = { id:newId("t"), text:t.text, done:false, doneAt:null, priority:t.priority, due:nextDue(t.due || dayStr(), t.repeat), createdAt:Date.now(), repeat:t.repeat,
+      subtasks:(t.subtasks || []).map(st => ({ id:newId("u"), text:st.text, done:false })), minutes:0 };
+    t.repeat = null;
+    s.tasks.splice(s.tasks.indexOf(t) + 1, 0, next);
+    return next;
+  }
+  return null;
+}
+
+function todayFocus(){ return state.today && state.today.date === dayStr() ? state.today.focus.map(findTask).filter(Boolean) : []; }
+function addFocus(id){
+  if(!state.today || state.today.date !== dayStr()) state.today = { date:dayStr(), focus:[], note:"" };
+  if(!state.today.focus.includes(id)) state.today.focus.push(id);
+}
+function removeFocus(id){ if(state.today) state.today.focus = state.today.focus.filter(x => x !== id); }
+
+// ---------- stats ----------
+function completionDays(){ const m = {}; allTasks().forEach(x => { if(x.t.doneAt){ const d = dayStr(new Date(x.t.doneAt)); m[d] = (m[d] || 0) + 1; } }); return m; }
+function doneOn(day){ return completionDays()[day] || 0; }
+function streak(){
+  const days = completionDays();
+  let d = days[dayStr()] ? dayStr() : addDays(dayStr(), -1), n = 0;
+  while(days[d]){ n++; d = addDays(d, -1); }
+  return n;
+}
+function bestStreak(){
+  const keys = Object.keys(completionDays()).sort();
+  let best = 0, run = 0, prev = null;
+  keys.forEach(k => { run = prev && daysBetween(prev, k) === 1 ? run + 1 : 1; best = Math.max(best, run); prev = k; });
+  return best;
+}
+function focusMinutesOn(day){ return state.sessions.filter(s => dayStr(new Date(s.end)) === day).reduce((a, s) => a + s.min, 0); }
+
+// ===================================================================
+// saving: this device + the claude.ai cloud database
+// ===================================================================
+const runtime = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+let stateRef = null, coachRef = null, lastStateSave = 0, lastCoachSave = 0;
+const writers = { state:{ busy:false, dirty:false }, coach:{ busy:false, dirty:false } };
+function queueWrite(which){
+  const ref = which === "state" ? stateRef : coachRef;
+  if(!ref) return;
+  const w = writers[which];
+  w.dirty = true;
+  if(w.busy) return;
+  w.busy = true;
+  setTimeout(async () => {
+    while(w.dirty){
+      w.dirty = false;
+      try{ await ref.set(clone(which === "state" ? state : coach)); }catch(e){}
+    }
+    w.busy = false;
+  }, 500);
+}
+function save(){ state.sessions = state.sessions.slice(-400); state.savedAt = lastStateSave = Math.max(Date.now(), lastStateSave + 1); lsSet(LS_STATE, JSON.stringify(state)); queueWrite("state"); }
+function saveCoach(){ coach.messages = coach.messages.slice(-40); coach.savedAt = lastCoachSave = Math.max(Date.now(), lastCoachSave + 1); lsSet(LS_COACH, JSON.stringify(coach)); queueWrite("coach"); }
+// scheduled check-ins also post messages — merge instead of letting one side win
+function mergeMessages(a, b){
+  const seen = new Map();
+  [...a, ...b].forEach(m => { const k = m.ts + "|" + m.role + "|" + String(m.content).slice(0, 40); const prev = seen.get(k); seen.set(k, prev ? Object.assign({}, prev, m) : m); });
+  return [...seen.values()].sort((x, y) => x.ts - y.ts).slice(-40);
+}
+
+async function connectCloud(){
+  if(!runtime) return;
+  let db = null;
+  try{ db = await runtime.use("db"); }catch(e){}
+  if(!db) return;
+  const sRef = db.doc("app/state"), cRef = db.doc("app/coach");
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
+    const snap = await sRef.get();
+    const cloud = snap.exists ? snap.data() : null;
+    if(cloud && cloud.v === 2 && Array.isArray(cloud.projects)){
+      if((cloud.savedAt || 0) >= (state.savedAt || 0)){ state = clone(cloud); normalize(); lastStateSave = state.savedAt || 0; lsSet(LS_STATE, JSON.stringify(state)); }
+      stateRef = sRef;
+      if((state.savedAt || 0) > (cloud.savedAt || 0)) save();
+    } else {
+      try{
+        const old = await db.doc("checklist/main").get();
+        if(old.exists && typeof old.data().state === "string"){
+          const parsed = JSON.parse(old.data().state);
+          if(parsed && parsed.data && parsed.data.length && !lsGet(LS_STATE)) fromOld(parsed);
+        }
+      }catch(e){}
+      normalize();
+      stateRef = sRef;
+      save();
+    }
+    const cs = await cRef.get();
+    coachRef = cRef;
+    if(cs.exists && Array.isArray(cs.data().messages)){
+      const merged = mergeMessages(coach.messages, cs.data().messages);
+      const changed = JSON.stringify(merged) !== JSON.stringify(cs.data().messages);
+      coach.messages = merged;
+      lastCoachSave = Math.max(lastCoachSave, cs.data().savedAt || 0);
+      if(changed) saveCoach(); else lsSet(LS_COACH, JSON.stringify(coach));
+    } else if(coach.messages.length) saveCoach();
+    render();
+    sRef.onSnapshot(s => {
+      if(!s.exists || s.metadata.hasPendingWrites) return;
+      const d = s.data();
+      if(d.v === 2 && Array.isArray(d.projects) && (d.savedAt || 0) > lastStateSave){ state = clone(d); normalize(); lastStateSave = d.savedAt || 0; lsSet(LS_STATE, JSON.stringify(state)); render(); }
+    }, () => {});
+    cRef.onSnapshot(s => {
+      if(!s.exists || s.metadata.hasPendingWrites) return;
+      const d = s.data();
+      if(!Array.isArray(d.messages)) return;
+      const merged = mergeMessages(coach.messages, d.messages);
+      if(JSON.stringify(merged) !== JSON.stringify(coach.messages)){ coach.messages = merged; lastCoachSave = Math.max(lastCoachSave, d.savedAt || 0); lsSet(LS_COACH, JSON.stringify(coach)); if(ui.tab === "coach" || ui.tab === "today") render(); }
+    }, () => {});
   }catch(e){}
-  return { data: JSON.parse(JSON.stringify(DEFAULT_DATA)), checked: {}, open: {} };
-}
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-let state = loadState();
-if(!state.data || !state.data.length) state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-
-let currentGroupId = null; // null = dashboard
-
-function groupStats(group){
-  let done=0, total=0;
-  group.subs.forEach((sub, si) => sub.items.forEach((_, ii) => {
-    total++;
-    if(state.checked[group.id+"::"+si+"::"+ii]) done++;
-  }));
-  return { done, total };
-}
-function overallStats(){
-  let done=0, total=0;
-  state.data.forEach(g => { const s = groupStats(g); done += s.done; total += s.total; });
-  return { done, total };
 }
 
-const CIRC = 2 * Math.PI * 32;
+// ===================================================================
+// focus timer
+// ===================================================================
+let timer = null; // { taskId, text, durationMin, startedAt, elapsedMs, paused }
+try{ timer = JSON.parse(lsGet(LS_TIMER) || "null"); }catch(e){}
+function timerElapsed(){ return timer ? timer.elapsedMs + (timer.paused ? 0 : Date.now() - timer.startedAt) : 0; }
+function startTimer(taskId, min){
+  const x = findTask(taskId);
+  if(!x) return;
+  if(timer) finishTimer(false);
+  timer = { taskId, text:x.t.text, durationMin:min, startedAt:Date.now(), elapsedMs:0, paused:false };
+  lsSet(LS_TIMER, JSON.stringify(timer));
+  closeSheet(); tickTimer(); buzz();
+  toast("Focus on. " + min + " minutes — phone down.");
+}
+function pauseTimer(){
+  if(!timer) return;
+  if(timer.paused){ timer.paused = false; timer.startedAt = Date.now(); }
+  else{ timer.elapsedMs = timerElapsed(); timer.paused = true; }
+  lsSet(LS_TIMER, JSON.stringify(timer)); tickTimer();
+}
+function finishTimer(completed){
+  if(!timer) return;
+  const min = Math.min(timer.durationMin, timerElapsed() / 60000);
+  const t = timer;
+  timer = null; lsDel(LS_TIMER);
+  $("#timer").hidden = true;
+  if(min >= 1){
+    state.sessions.push({ taskId:t.taskId, min:Math.round(min), end:Date.now() });
+    const x = findTask(t.taskId);
+    if(x) x.t.minutes = (x.t.minutes || 0) + Math.round(min);
+    save();
+  }
+  if(completed){
+    buzz();
+    const x = findTask(t.taskId);
+    openSheet(`<h3>Time's up 🔥</h3><p class="sub">${fmtMin(min)} on <b>${esc(t.text)}</b>. Is it done?</p>
+      <div class="btn-row">${x && !x.t.done ? `<button class="btn" data-act="toggle" data-id="${esc(t.taskId)}" data-close="1">✓ Mark done</button>` : ""}
+      <button class="btn soft" data-act="timerAgain" data-id="${esc(t.taskId)}">Another 25</button>
+      <button class="btn ghost" data-act="closeSheet">Break</button></div>`);
+  }
+  render();
+}
+function tickTimer(){
+  const el = $("#timer");
+  if(!timer){ el.hidden = true; return; }
+  el.hidden = false;
+  const left = Math.max(0, timer.durationMin * 60000 - timerElapsed());
+  const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
+  $("#timerTime").textContent = m + ":" + String(s).padStart(2, "0");
+  $("#timerName").textContent = timer.text;
+  $("#timerPause").textContent = timer.paused ? "▶" : "❚❚";
+  el.classList.toggle("paused", timer.paused);
+  if(left <= 0) finishTimer(true);
+}
+setInterval(tickTimer, 1000);
+$("#timerPause").addEventListener("click", pauseTimer);
+$("#timerStop").addEventListener("click", () => { if(confirm("Stop the focus timer? Time so far is kept.")) finishTimer(false); });
+
+// ===================================================================
+// rendering
+// ===================================================================
+function taskRow(x, opts = {}){
+  const { t, p, s } = x;
+  const chips = [];
+  if(t.priority === "high" && !t.done) chips.push(`<span class="chip high">High</span>`);
+  if(t.due && !t.done){ const over = daysBetween(dayStr(), t.due) < 0; chips.push(`<span class="chip ${over ? "over" : "due"}">${esc(fmtDue(t.due))}</span>`); }
+  if(t.repeat) chips.push(`<span class="chip">↻ ${repeatLabel(t.repeat)}</span>`);
+  if(t.subtasks && t.subtasks.length){ const d = t.subtasks.filter(z => z.done).length; chips.push(`<span class="chip${d === t.subtasks.length ? " ok" : ""}">☰ ${d}/${t.subtasks.length}</span>`); }
+  if(t.minutes) chips.push(`<span class="chip">⏱ ${fmtMin(t.minutes)}</span>`);
+  const where = opts.showWhere ? `<span>${esc(p.emoji)} ${esc(p.title)} · ${esc(s.name)}</span>` : "";
+  const meta = where || chips.length ? `<div class="t-meta">${where}${chips.join("")}</div>` : "";
+  const play = opts.play && !t.done ? `<button class="play" data-act="quickTimer" data-id="${t.id}" aria-label="Start focus timer">▶</button>` : "";
+  return `<div class="task${t.done ? " done" : ""}">
+    <button class="check${t.done ? " done" : ""}" data-act="toggle" data-id="${t.id}" aria-label="${t.done ? "Mark not done" : "Mark done"}">${CHECK_SVG}</button>
+    <div class="t-main" data-act="edit" data-id="${t.id}"><div class="t-text">${esc(t.text)}</div>${meta}</div>${play}
+  </div>`;
+}
+function ringSvg(frac, size = 86, stroke = 9){
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--card-2)" stroke-width="${stroke}"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${stroke}" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.max(0, Math.min(1, frac)))}" transform="rotate(-90 ${size / 2} ${size / 2})" style="transition:stroke-dashoffset 0.5s"/>
+  </svg>`;
+}
+
+// ---------- Today ----------
+function renderToday(){
+  const today = dayStr();
+  const focus = todayFocus();
+  const fDone = focus.filter(x => x.t.done).length;
+  const planned = state.today && state.today.date === today;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening";
+  const open = allTasks().filter(x => !x.t.done);
+  const focusIds = new Set(focus.map(x => x.t.id));
+  const overdue = open.filter(x => x.t.due && daysBetween(today, x.t.due) < 0 && !focusIds.has(x.t.id));
+  const dueToday = open.filter(x => x.t.due === today && !focusIds.has(x.t.id));
+  const soon = open.filter(x => x.t.due && daysBetween(today, x.t.due) > 0 && daysBetween(today, x.t.due) <= 3 && !focusIds.has(x.t.id));
+  const lastCoach = [...coach.messages].reverse().find(m => m.role === "assistant" && dayStr(new Date(m.ts)) === today);
+
+  let note, buttons;
+  if(!planned){
+    note = "New day. Let's lock in what actually moves the needle.";
+    buttons = `<button class="btn" data-act="plan">✦ Plan my day</button>`;
+  } else if(focus.length && fDone === focus.length){
+    note = "Focus cleared. That's how it's done 🔥 Want to push further or call it?";
+    buttons = `<button class="btn" data-act="ask" data-q="I finished today's focus. What should I knock out next?">What's next?</button><button class="btn ghost" data-act="checkin">Check in</button>`;
+  } else {
+    note = state.today.note || "Here's your focus for today.";
+    buttons = `<button class="btn" data-act="checkin">${hour >= 17 ? "Evening check-in" : "Check in"}</button><button class="btn ghost" data-act="talk">🎧 Talk</button>`;
+  }
+  const latest = lastCoach && lastCoach.content !== state.today.note && planned
+    ? `<div class="card pad" style="margin-top:14px" data-act="goCoach"><div class="coach-tag">✦ Latest from coach · ${esc(new Date(lastCoach.ts).toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" }))}</div><div class="coach-note" style="font-size:0.86rem;color:var(--text-2)">${md(lastCoach.content.length > 220 ? lastCoach.content.slice(0, 220) + "…" : lastCoach.content)}</div></div>` : "";
+  const nextUp = focus.find(x => !x.t.done);
+
+  return `<div class="view-in">
+    <div class="eyebrow">${esc(new Date().toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" }))}</div>
+    <div class="h1">${greet}, <span class="accent">Joseph</span></div>
+    <div class="hero">
+      <div class="ring">${ringSvg(focus.length ? fDone / focus.length : 0)}<div class="rv"><b>${fDone}/${focus.length}</b><span>focus</span></div></div>
+      <div class="hero-body">
+        <div class="coach-tag">✦ Coach Claude</div>
+        <div class="coach-note">${md(note)}</div>
+      </div>
+    </div>
+    <div class="btn-row">${buttons}</div>
+    <div class="tiles">
+      <div class="tile"><div class="v">${streak()}🔥</div><div class="k">day streak</div></div>
+      <div class="tile"><div class="v">${doneOn(today)}</div><div class="k">done today</div></div>
+      <div class="tile"><div class="v">${fmtMin(focusMinutesOn(today))}</div><div class="k">focused today</div></div>
+    </div>
+    ${latest}
+    <div class="label">Today's focus <span class="count">${focus.length}</span></div>
+    <div class="card">${focus.length ? focus.map(x => taskRow(x, { showWhere:true, play:true })).join("")
+      : `<div class="empty"><b>No focus yet</b>Tap “Plan my day” and Claude will pick your top tasks.</div>`}</div>
+    ${nextUp && !timer ? `<button class="btn soft" style="width:100%" data-act="quickTimer" data-id="${nextUp.t.id}">▶ Start 25-min focus on “${esc(nextUp.t.text.length > 34 ? nextUp.t.text.slice(0, 34) + "…" : nextUp.t.text)}”</button>` : ""}
+    ${overdue.length ? `<div class="label">Overdue <span class="count">${overdue.length}</span></div><div class="card">${overdue.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
+    ${dueToday.length ? `<div class="label">Also due today <span class="count">${dueToday.length}</span></div><div class="card">${dueToday.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
+    ${soon.length ? `<div class="label">Coming up <span class="count">${soon.length}</span></div><div class="card">${soon.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
+    <div class="label">Check-ins</div>
+    <div class="card">
+      ${upcomingCheckins().map(c => `<div class="task"><div class="t-main"><div class="t-text">⏰ ${esc(fmtWhen(c.at))}</div><div class="t-meta"><span>${esc(c.about)}</span>${c.status === "pending" ? `<span class="chip">queued</span>` : `<span class="chip ok">scheduled</span>`}</div></div><button class="x" data-act="cancelCheckin" data-id="${esc(c.id)}" aria-label="Cancel check-in">✕</button></div>`).join("")}
+      <div class="task"><div class="t-main"><div class="t-text">Daily · 8:00 AM plan &amp; 8:00 PM review</div><div class="t-meta"><span>Say “check on me at 3pm” in Coach for more</span></div></div></div>
+    </div>
+  </div>`;
+}
+
+// ---------- Tasks ----------
+const FILTERS = [["all", "All"], ["today", "Today"], ["week", "This week"], ["overdue", "Overdue"], ["high", "High priority"], ["repeat", "Recurring"], ["nodate", "No date"], ["done", "Done"]];
+function matchFilter(x){
+  const t = x.t, today = dayStr();
+  switch(ui.filter){
+    case "today": return !t.done && (t.due === today || todayFocus().some(f => f.t.id === t.id));
+    case "week": return !t.done && t.due && daysBetween(today, t.due) <= 7;
+    case "overdue": return !t.done && t.due && daysBetween(today, t.due) < 0;
+    case "high": return !t.done && t.priority === "high";
+    case "repeat": return !t.done && !!t.repeat;
+    case "nodate": return !t.done && !t.due;
+    case "done": return t.done;
+    default: return true;
+  }
+}
+function renderTasks(){
+  if(ui.project){
+    const p = state.projects.find(x => x.id === ui.project);
+    if(p) return renderProject(p);
+    ui.project = null;
+  }
+  const q = ui.q.trim().toLowerCase();
+  const searching = q || ui.filter !== "all" || ui.projFilter;
+  const head = `<div class="eyebrow">Everything on your plate</div><div class="h1">Your <span class="accent">Tasks</span></div>
+    <div class="search"><span class="si">⌕</span><input id="searchBox" type="search" placeholder="Search tasks…" value="${esc(ui.q)}" autocomplete="off"></div>
+    <div class="filters">${FILTERS.map(([id, label]) => `<button class="fchip${ui.filter === id ? " on" : ""}" data-act="filter" data-id="${id}">${label}</button>`).join("")}
+      <select class="fchip" id="projFilter" style="appearance:auto">${[`<option value="">All projects</option>`, ...state.projects.map(p => `<option value="${esc(p.id)}"${ui.projFilter === p.id ? " selected" : ""}>${esc(p.emoji)} ${esc(p.title)}</option>`)].join("")}</select>
+    </div>`;
+  if(searching){
+    let list = allTasks().filter(matchFilter).filter(x => !ui.projFilter || x.p.id === ui.projFilter);
+    if(q) list = list.filter(x => (x.t.text + " " + x.s.name + " " + x.p.title + " " + (x.t.subtasks || []).map(z => z.text).join(" ")).toLowerCase().includes(q));
+    if(ui.filter !== "done" && !q) list = list.filter(x => !x.t.done || ui.filter === "all");
+    const rank = x => (x.t.done ? 1e9 : 0) + (x.t.due ? daysBetween(dayStr(), x.t.due) * 10 : 5000) + (x.t.priority === "high" ? -3 : x.t.priority === "low" ? 3 : 0);
+    list.sort((a, b) => rank(a) - rank(b));
+    const shown = list.slice(0, 150);
+    return `<div class="view-in">${head}
+      <div class="label">${list.length} task${list.length === 1 ? "" : "s"}</div>
+      <div class="card">${shown.length ? shown.map(x => taskRow(x, { showWhere:true, play:true })).join("") : `<div class="empty"><b>Nothing here</b>Try another filter or search.</div>`}</div>
+      ${list.length > shown.length ? `<div class="empty">Showing first ${shown.length}. Narrow it down with search.</div>` : ""}
+    </div>`;
+  }
+  const cards = state.projects.map(p => {
+    const ts = p.sections.flatMap(s => s.tasks);
+    const d = ts.filter(t => t.done).length;
+    const pct = ts.length ? Math.round(d / ts.length * 100) : 0;
+    const hi = ts.filter(t => !t.done && t.priority === "high").length;
+    return `<button class="p-card" data-act="openProject" data-id="${esc(p.id)}">
+      <div class="e">${esc(p.emoji)}</div><div class="n">${esc(p.title)}</div>
+      <div class="c">${d}/${ts.length} done${hi ? ` · <span style="color:var(--danger)">${hi} high</span>` : ""}</div><div class="bar"><div style="width:${pct}%"></div></div>
+    </button>`;
+  }).join("");
+  return `<div class="view-in">${head}
+    <div class="label">Projects</div>
+    <div class="grid">${cards}</div>
+    <div style="margin-top:12px"><button class="dashed" data-act="addProject">+ New project</button></div></div>`;
+}
+function renderProject(p){
+  const secs = p.sections.map(s => {
+    const d = s.tasks.filter(t => t.done).length;
+    const key = p.id + "/" + s.id;
+    const tasks = s.tasks.map(t => taskRow({ t, p, s }, { play:true })).join("") || `<div class="empty">No tasks yet.</div>`;
+    return `<div class="sec${ui.open[key] ? " open" : ""}">
+      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${d}/${s.tasks.length}<span class="chev">▸</span></span></button>
+      <div class="sec-body">
+        ${tasks}
+        <div class="add-row"><input placeholder="Add task…" data-add="${esc(p.id)}|${esc(s.id)}"><button data-act="addTask" data-sec="${esc(p.id)}|${esc(s.id)}" aria-label="Add">+</button></div>
+        <div style="display:flex;justify-content:space-between"><button class="link-btn" data-act="renameSec" data-sec="${esc(p.id)}|${esc(s.id)}">rename</button><button class="link-btn" data-act="delSec" data-sec="${esc(p.id)}|${esc(s.id)}">remove section ✕</button></div>
+      </div>
+    </div>`;
+  }).join("");
+  const ts = p.sections.flatMap(s => s.tasks), d = ts.filter(t => t.done).length;
+  return `<div class="view-in"><button class="back" data-act="backProjects">← All projects</button>
+    <div class="h1" style="margin-bottom:6px">${esc(p.emoji)} <span class="accent">${esc(p.title)}</span></div>
+    <div class="eyebrow" style="margin-bottom:14px">${d} of ${ts.length} done</div>
+    ${secs}
+    <button class="dashed" data-act="addSec" data-id="${esc(p.id)}">+ Add section</button>
+    <div style="display:flex;justify-content:space-between;margin-top:10px"><button class="link-btn" data-act="renameProject" data-id="${esc(p.id)}">rename project</button><button class="link-btn" data-act="delProject" data-id="${esc(p.id)}">delete project ✕</button></div></div>`;
+}
+
+// ---------- Stats ----------
+let showTables = {};
+function barChart(id, data, fmt){
+  // data: [{label, full, value}] — single series, gold bars on a zero baseline
+  const W = 340, H = 150, padL = 26, padB = 20, padT = 10;
+  const max = Math.max(1, ...data.map(d => d.value));
+  const nice = max <= 4 ? 4 : max <= 10 ? Math.ceil(max / 2) * 2 : Math.ceil(max / 10) * 10;
+  const n = data.length, slot = (W - padL) / n, bw = Math.max(6, Math.min(22, slot - 6));
+  const y = v => padT + (H - padT - padB) * (1 - v / nice);
+  const ticks = [0, nice / 2, nice];
+  const bars = data.map((d, i) => {
+    const x = padL + slot * i + (slot - bw) / 2;
+    const top = y(d.value), h = (H - padB) - top;
+    const r = Math.min(4, bw / 2, h);
+    // rounded top, square base anchored to the baseline
+    const path = h > 0 ? `M${x},${H - padB} L${x},${top + r} Q${x},${top} ${x + r},${top} L${x + bw - r},${top} Q${x + bw},${top} ${x + bw},${top + r} L${x + bw},${H - padB} Z` : "";
+    const showLabel = n <= 7 || i % 2 === (n - 1) % 2;
+    return `<g><rect class="hit" x="${padL + slot * i}" y="${padT}" width="${slot}" height="${H - padT}" data-tip="${esc(d.full + ": " + fmt(d.value))}"/>${path ? `<path class="barm" d="${path}"/>` : ""}
+      ${showLabel ? `<text class="axis" x="${x + bw / 2}" y="${H - 5}" text-anchor="middle">${esc(d.label)}</text>` : ""}</g>`;
+  }).join("");
+  const grid = ticks.map(t => `<line class="gridl" x1="${padL}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${padL - 6}" y="${y(t) + 3}" text-anchor="end">${t}</text>`).join("");
+  const table = showTables[id] ? `<table class="data"><tr><th>Day</th><th>Value</th></tr>${data.map(d => `<tr><td>${esc(d.full)}</td><td>${esc(fmt(d.value))}</td></tr>`).join("")}</table>` : "";
+  return `<div class="chart" data-chart="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="bar chart">${grid}${bars}</svg><div class="tip"></div></div>
+    <button class="table-toggle" data-act="toggleTable" data-id="${id}">${showTables[id] ? "Hide table" : "Show as table"}</button>${table}`;
+}
+function renderStats(){
+  const today = dayStr(), days = completionDays();
+  const last14 = [...Array(14)].map((_, i) => addDays(today, i - 13));
+  const doneData = last14.map(d => ({ label:weekdayShort(d).slice(0, 2), full:parseDay(d).toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" }), value:days[d] || 0 }));
+  const last7 = last14.slice(7);
+  const focusData = last7.map(d => ({ label:weekdayShort(d).slice(0, 3), full:parseDay(d).toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" }), value:focusMinutesOn(d) }));
+  const weekDone = last7.reduce((a, d) => a + (days[d] || 0), 0);
+  const prevWeek = last14.slice(0, 7).reduce((a, d) => a + (days[d] || 0), 0);
+  const weekFocus = last7.reduce((a, d) => a + focusMinutesOn(d), 0);
+  const trend = weekDone === prevWeek ? "same as last week" : weekDone > prevWeek ? `↑ ${weekDone - prevWeek} vs last week` : `↓ ${prevWeek - weekDone} vs last week`;
+
+  const projRows = state.projects.map(p => {
+    const ts = p.sections.flatMap(s => s.tasks);
+    const d = ts.filter(t => t.done).length, open = ts.length - d;
+    const lastDone = Math.max(0, ...ts.map(t => t.doneAt || 0));
+    const idle = lastDone ? Math.floor((Date.now() - lastDone) / DAY) : null;
+    const pct = ts.length ? Math.round(d / ts.length * 100) : 0;
+    const neglected = open > 0 && (idle === null || idle >= 7);
+    return { p, d, open, pct, idle, neglected, total:ts.length };
+  });
+  const neglected = projRows.filter(r => r.neglected);
+  const topTasks = allTasks().filter(x => x.t.minutes).sort((a, b) => b.t.minutes - a.t.minutes).slice(0, 5);
+
+  return `<div class="view-in">
+    <div class="eyebrow">How you're really doing</div><div class="h1">Your <span class="accent">Progress</span></div>
+    <div class="tiles four" style="margin-top:0">
+      <div class="tile"><div class="v">${weekDone}</div><div class="k">done this week</div></div>
+      <div class="tile"><div class="v">${fmtMin(weekFocus)}</div><div class="k">focused this week</div></div>
+      <div class="tile"><div class="v">${streak()}🔥</div><div class="k">current streak</div></div>
+      <div class="tile"><div class="v">${bestStreak()}</div><div class="k">best streak</div></div>
+    </div>
+    <div class="label">Completions</div>
+    <div class="chart-card"><div class="chart-title">Tasks completed per day</div><div class="chart-sub">Last 14 days · ${esc(trend)}</div>${barChart("done", doneData, v => v + " task" + (v === 1 ? "" : "s"))}</div>
+    <div class="chart-card"><div class="chart-title">Focus time per day</div><div class="chart-sub">Last 7 days · from the focus timer</div>${barChart("focus", focusData, v => fmtMin(v))}</div>
+    ${neglected.length ? `<div class="card pad" style="border-color:color-mix(in srgb, var(--danger) 45%, var(--line))"><div class="coach-tag" style="color:var(--danger)">⚠ Getting neglected</div>
+      <div class="coach-note" style="font-size:0.88rem">${neglected.map(r => `<b>${esc(r.p.emoji)} ${esc(r.p.title)}</b> — ${r.idle === null ? "nothing finished yet" : r.idle + " days since anything got done"}`).join("<br>")}</div></div>` : ""}
+    <div class="label">Projects</div>
+    <div class="card">${projRows.map(r => `<div class="prow">
+      <div class="top"><b>${esc(r.p.emoji)} ${esc(r.p.title)}</b><span style="color:var(--text-2);font-size:0.8rem">${r.d}/${r.total} · ${r.pct}%</span></div>
+      <div class="bar" role="img" aria-label="${r.pct}% done"><div style="width:${r.pct}%"></div></div>
+      <div class="sub"><span>${r.open} open</span><span>·</span><span>${r.idle === null ? "no completions yet" : r.idle === 0 ? "active today" : "last done " + r.idle + "d ago"}</span>${r.neglected ? `<span class="chip over">neglected</span>` : ""}</div>
+    </div>`).join("")}</div>
+    ${topTasks.length ? `<div class="label">Most focus time</div><div class="card">${topTasks.map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
+    <button class="btn" style="width:100%;margin-top:6px" data-act="ask" data-q="Review my week — what did I get done, what am I avoiding, and what should change next week?">✦ Ask Claude for a weekly review</button>
+  </div>`;
+}
+
+// ---------- Coach ----------
+let thinking = false, currentCtl = null, lastUndo = null, sampleFn = null, sampleReady = false;
+function renderCoach(){
+  let lastDay = "";
+  const msgs = coach.messages.map(m => {
+    const d = dayStr(new Date(m.ts));
+    const sep = d !== lastDay ? `<div class="day-sep">${d === dayStr() ? "Today" : d === addDays(dayStr(), -1) ? "Yesterday" : parseDay(d).toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" })}</div>` : "";
+    lastDay = d;
+    const changes = m.changes && m.changes.length
+      ? `<div class="changes">${m.changes.map(c => `<div>${esc(c)}</div>`).join("")}${
+          m.undone ? `<div><i>Undone</i></div>` : (lastUndo && lastUndo.ts === m.ts ? `<button class="undo" data-act="undo">↶ Undo these changes</button>` : "")
+        }</div>` : "";
+    return sep + (m.role === "user"
+      ? `<div class="msg user">${esc(m.content)}</div>`
+      : `<div class="msg assistant"><div class="who">✦ Claude</div>${md(m.content)}${changes}</div>`);
+  }).join("");
+  const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">✦ Claude</div>Hey Joseph. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
+  const think = thinking ? `<div class="msg assistant thinking"><span class="dots"><span></span><span></span><span></span></span>Thinking… <button class="undo" data-act="stop" style="margin:0">Stop</button></div>` : "";
+  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">✦ Claude</div>The coach runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
+  return `<div class="view-in"><div class="coach-top"><div><div class="eyebrow">Your accountability partner</div><div class="h1">Coach <span class="accent">Claude</span></div></div>
+    <button class="btn sm ghost" data-act="talk" style="margin-bottom:18px">🎧 Talk live</button></div>
+    <div class="chat" id="chat">${intro}${msgs}${think}${off}</div></div>`;
+}
 
 function renderTabbar(){
-  const bar = document.getElementById("tabbar");
-  bar.innerHTML = "";
-  const homeBtn = document.createElement("button");
-  homeBtn.className = "tab-btn" + (currentGroupId===null ? " active" : "");
-  homeBtn.innerHTML = `<div class="ic">⌂</div><div>Home</div>`;
-  homeBtn.addEventListener("click", () => showView(null));
-  bar.appendChild(homeBtn);
-
-  state.data.forEach(g => {
-    const b = document.createElement("button");
-    b.className = "tab-btn" + (currentGroupId===g.id ? " active" : "");
-    b.innerHTML = `<div class="ic">${g.emoji}</div><div>${g.title.split(" ")[0]}</div>`;
-    b.addEventListener("click", () => showView(g.id));
-    bar.appendChild(b);
-  });
+  const tabs = [["today", "◎", "Today"], ["coach", "✦", "Coach"], ["tasks", "☰", "Tasks"], ["stats", "▥", "Progress"]];
+  $("#tabbar").innerHTML = tabs.map(([id, ic, name]) =>
+    `<button class="tab${ui.tab === id ? " active" : ""}" data-tab="${id}" aria-label="${name}"><span class="ic">${ic}</span>${name}</button>`).join("");
 }
 
-function showView(groupId){
-  currentGroupId = groupId;
-  document.getElementById("view-home").classList.toggle("active", groupId===null);
-  document.getElementById("view-section").classList.toggle("active", groupId!==null);
+const CHIPS = [
+  ["Plan my day", "Plan my day."],
+  ["What's next?", "What should I work on right now?"],
+  ["Check in", "Check in: "],
+  ["Check on me at…", "Check on me at "],
+  ["Break down a task", "Break this task into steps: "],
+  ["Review my week", "Review my week — what did I get done, what am I avoiding, and what should change next week?"],
+];
+function render(){
+  const v = $("#view");
+  const searchFocused = document.activeElement && document.activeElement.id === "searchBox";
+  const caret = searchFocused ? document.activeElement.selectionStart : null;
+  if(ui.tab === "today") v.innerHTML = renderToday();
+  else if(ui.tab === "tasks") v.innerHTML = renderTasks();
+  else if(ui.tab === "stats") v.innerHTML = renderStats();
+  else v.innerHTML = renderCoach();
+  const onCoach = ui.tab === "coach";
+  $("#composer").hidden = !onCoach;
+  $("#fab").hidden = onCoach;
+  if(onCoach){
+    $("#chips").innerHTML = CHIPS.map(([label, q]) => `<button class="qchip" data-q="${esc(q)}">${esc(label)}</button>`).join("");
+    $("#sendBtn").disabled = thinking;
+    requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
+  }
+  if(searchFocused){ const sb = $("#searchBox"); if(sb){ sb.focus(); try{ sb.setSelectionRange(caret, caret); }catch(e){} } }
   renderTabbar();
-  if(groupId===null){ renderDashboard(); }
-  else{ renderSection(groupId); }
-  window.scrollTo(0,0);
+  tickTimer();
+}
+function go(tab){ ui.tab = tab; if(tab !== "tasks") ui.project = null; render(); window.scrollTo(0, 0); }
+
+// chart tooltips
+document.addEventListener("pointerover", (e) => {
+  const hit = e.target.closest && e.target.closest(".hit");
+  if(!hit) return;
+  const chart = hit.closest(".chart"), tip = chart.querySelector(".tip");
+  document.querySelectorAll(".barm.hot").forEach(b => b.classList.remove("hot"));
+  const bar = hit.nextElementSibling; if(bar && bar.classList.contains("barm")) bar.classList.add("hot");
+  const r = hit.getBoundingClientRect(), cr = chart.getBoundingClientRect();
+  tip.textContent = hit.dataset.tip;
+  tip.style.left = Math.min(cr.width - 50, Math.max(50, r.left - cr.left + r.width / 2)) + "px";
+  tip.style.top = Math.max(24, r.top - cr.top + 30) + "px";
+  tip.classList.add("show");
+});
+document.addEventListener("pointerout", (e) => {
+  if(e.target.closest && e.target.closest(".hit")){
+    document.querySelectorAll(".tip.show").forEach(t => t.classList.remove("show"));
+    document.querySelectorAll(".barm.hot").forEach(b => b.classList.remove("hot"));
+  }
+});
+
+// ===================================================================
+// check-ins (turned into scheduled routines by the JKB scheduler)
+// ===================================================================
+function upcomingCheckins(){
+  return (state.checkins || []).filter(c => (c.status === "pending" || c.status === "scheduled") && new Date(c.at).getTime() > Date.now() - 3600000)
+    .sort((a, b) => a.at.localeCompare(b.at));
+}
+function cancelCheckin(c){
+  if(c.status === "pending") state.checkins.splice(state.checkins.indexOf(c), 1);
+  else c.status = "cancel";
+}
+function fmtWhen(iso){
+  const d = new Date(iso);
+  const day = dayStr(d) === dayStr() ? "today" : dayStr(d) === addDays(dayStr(), 1) ? "tomorrow" : d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" });
+  return day + " " + d.toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" });
 }
 
-function renderDashboard(){
-  const o = overallStats();
-  const pct = o.total ? Math.round(o.done/o.total*100) : 0;
-  document.getElementById("heroCount").textContent = o.done + " / " + o.total;
-  document.getElementById("heroPct").textContent = pct + "%";
-  document.getElementById("heroRing").setAttribute("stroke-dasharray", CIRC);
-  document.getElementById("heroRing").setAttribute("stroke-dashoffset", CIRC - (pct/100)*CIRC);
+// ===================================================================
+// Claude coach
+// ===================================================================
+const COACH_RULES = `You are Joseph's accountability coach and the manager of his checklist app. He's an ambitious founder on a tight budget, running JKB Global (creative/tech agency), SafeGate (escrow platform), CVG, and a weekly CEO routine. Your job: keep the list clean and make sure he actually finishes things.
 
-  const grid = document.getElementById("sectionGrid");
-  grid.innerHTML = "";
-  state.data.forEach(g => {
-    const s = groupStats(g);
-    const gp = s.total ? Math.round(s.done/s.total*100) : 0;
-    const card = document.createElement("div");
-    card.className = "sec-card";
-    card.innerHTML = `
-      <div class="row">
-        <div class="emoji">${g.emoji}</div>
-        <svg width="34" height="34" viewBox="0 0 76 76">
-          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="9"/>
-          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--gold)" stroke-width="9"
-            stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC - (gp/100)*CIRC}" transform="rotate(-90 38 38)"/>
-        </svg>
-      </div>
-      <div class="title">${g.title}</div>
-      <div class="count">${s.done}/${s.total} · ${gp}%</div>
-    `;
-    card.addEventListener("click", () => showView(g.id));
-    grid.appendChild(card);
+How to talk: casual and direct, like a smart friend. No fluff. Keep replies under 80 words unless he asks for more. Use **bold** sparingly and "- " bullets for lists. Celebrate real wins in one line. If he's dodging high-priority or overdue work, call it out and push him. If he's vague, ask one sharp question. Never show task ids to him — refer to tasks by their text.
+
+How to manage: you change the checklist ONLY through "actions". Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (section "Inbox" if nothing fits). Delete only when he explicitly asks. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise.
+
+Reply with ONLY JSON:
+{"reply":"what you say to him","actions":[ ... ]}
+Action shapes:
+{"type":"complete","id":"t12"}
+{"type":"reopen","id":"t12"}
+{"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","subtasks":["step", "..."],"focus":false}
+{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null"}   (include only fields that change)
+{"type":"subtasks","id":"t12","items":["step one","step two"]}   (appends steps to a task)
+{"type":"delete","id":"t12"}
+{"type":"focus","ids":["t12","t40"],"note":"one or two sentences for today"}
+{"type":"checkin","at":"YYYY-MM-DDTHH:MM","about":"what to check on"}   (his local time)
+{"type":"cancel_checkin","id":"c5"}
+Use "actions":[] when nothing should change. Only use ids from the task list.
+
+Check-ins: you already ping his phone every day at 8am (plan) and 8pm (review). When he asks you to check on him — or when a deadline or a slipping task deserves it — schedule extra check-ins with "checkin". The scheduler picks new ones up every 2 hours between 9am and 7pm, so set them at least 2 hours out and tell him when you'll ping. Cancel or move them when he asks (moving = cancel + new).`;
+
+function taskLine({ t, p, s }){
+  const bits = [t.id, p.id + "/" + s.name, t.text, t.priority === "normal" ? "" : t.priority, t.due || "", t.repeat ? "repeats " + t.repeat : "",
+    t.subtasks && t.subtasks.length ? "steps " + t.subtasks.filter(z => z.done).length + "/" + t.subtasks.length : "", t.minutes ? t.minutes + "min focused" : "",
+    t.done ? "DONE " + (t.doneAt ? dayStr(new Date(t.doneAt)) : "") : ""];
+  return bits.join(" | ").replace(/( \| )+$/, "");
+}
+function buildContext(){
+  const today = dayStr(), now = new Date();
+  const lines = [];
+  allTasks().forEach(x => {
+    if(x.t.done && !(x.t.doneAt && daysBetween(dayStr(new Date(x.t.doneAt)), today) <= 3)) return;
+    lines.push(taskLine(x));
   });
+  const week = [...Array(7)].map((_, i) => { const d = addDays(today, -i); return d + ": " + doneOn(d) + " done, " + focusMinutesOn(d) + "min focus"; }).join("; ");
+  const focus = state.today && state.today.date === today
+    ? state.today.focus.map(id => { const x = findTask(id); return x ? `${id} (${x.t.done ? "done" : "open"})` : null; }).filter(Boolean).join(", ") || "empty"
+    : "not planned yet";
+  return `${COACH_RULES}
+
+NOW: ${now.toLocaleDateString("en-US", { weekday:"long" })} ${today}, ${now.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}
+Streak: ${streak()} day(s), best ${bestStreak()}. Last 7 days: ${week}
+Today's focus: ${focus}${timer ? `\nFocus timer running on: ${timer.text}` : ""}
+Upcoming check-ins: ${upcomingCheckins().map(c => `${c.id} at ${fmtWhen(c.at)} — ${c.about}`).join("; ") || "none besides the daily 8am/8pm"}
+
+Projects:
+${state.projects.map(p => `${p.id} = ${p.emoji} ${p.title} [sections: ${p.sections.map(s => s.name).join(" | ")}]`).join("\n")}
+
+Tasks (id | project/section | text | priority | due | repeat | steps | focus time | status) — open tasks plus anything finished in the last 3 days:
+${lines.join("\n")}`.slice(0, 60000);
 }
 
-function renderSection(groupId){
-  const group = state.data.find(g => g.id === groupId);
-  if(!group) return;
-  document.getElementById("secEmoji").textContent = group.emoji;
-  document.getElementById("secTitle").textContent = group.title;
-  const s = groupStats(group);
-  document.getElementById("secBreadcrumb").textContent = s.done + " of " + s.total + " tasks complete";
-
-  const body = document.getElementById("secBody");
-  body.innerHTML = "";
-
-  group.subs.forEach((sub, subIdx) => {
-    let done=0;
-    sub.items.forEach((_, ii) => { if(state.checked[group.id+"::"+subIdx+"::"+ii]) done++; });
-    const total = sub.items.length;
-    const pct = total ? (done/total*100) : 0;
-
-    const card = document.createElement("div");
-    card.className = "sub-card" + (state.open[group.id+"::"+subIdx] ? " open" : "");
-
-    const head = document.createElement("div");
-    head.className = "sub-head";
-    head.innerHTML = `<div class="name">${sub.name}</div><div class="meta"><div class="frac">${done}/${total}</div><div class="chev">▸</div></div>`;
-    head.addEventListener("click", () => {
-      const key = group.id+"::"+subIdx;
-      state.open[key] = !state.open[key];
-      saveState(); renderSection(groupId);
-    });
-
-    const progress = document.createElement("div");
-    progress.className = "sub-progress";
-    progress.innerHTML = `<div class="sub-progress-fill" style="width:${pct}%"></div>`;
-
-    const sbody = document.createElement("div");
-    sbody.className = "sub-body";
-
-    if(total === 0){
-      const e = document.createElement("div");
-      e.className = "empty-note";
-      e.textContent = "No tasks yet — add one below.";
-      sbody.appendChild(e);
-    }
-
-    sub.items.forEach((itemName, itemIdx) => {
-      const key = group.id+"::"+subIdx+"::"+itemIdx;
-      const isDone = !!state.checked[key];
-      const taskEl = document.createElement("div");
-      taskEl.className = "task" + (isDone ? " done" : "");
-
-      const check = document.createElement("div");
-      check.className = "check" + (isDone ? " done" : "");
-      check.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#1a1305" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      check.addEventListener("click", () => {
-        state.checked[key] = !isDone;
-        saveState(); renderSection(groupId);
-      });
-
-      const label = document.createElement("div");
-      label.className = "task-label";
-      label.textContent = itemName;
-      label.addEventListener("click", () => check.click());
-
-      const actions = document.createElement("div");
-      actions.className = "task-actions";
-      const editBtn = document.createElement("span");
-      editBtn.className = "mini-btn";
-      editBtn.textContent = "Edit";
-      editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const input = document.createElement("input");
-        input.className = "task-edit";
-        input.value = itemName;
-        taskEl.replaceChild(input, label);
-        actions.style.display = "none";
-        input.focus(); input.select();
-        const commit = () => {
-          const val = input.value.trim();
-          if(val) sub.items[itemIdx] = val;
-          saveState(); renderSection(groupId);
-        };
-        input.addEventListener("keydown", ev => { if(ev.key==="Enter") commit(); if(ev.key==="Escape") renderSection(groupId); });
-        input.addEventListener("blur", commit);
-      });
-      const delBtn = document.createElement("span");
-      delBtn.className = "mini-btn danger";
-      delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        sub.items.splice(itemIdx,1);
-        delete state.checked[key];
-        saveState(); renderSection(groupId);
-      });
-      actions.appendChild(editBtn);
-      actions.appendChild(delBtn);
-
-      taskEl.appendChild(check);
-      taskEl.appendChild(label);
-      taskEl.appendChild(actions);
-      sbody.appendChild(taskEl);
-    });
-
-    const addRow = document.createElement("div");
-    addRow.className = "add-task-row";
-    const input = document.createElement("input");
-    input.placeholder = "Add task…";
-    const btn = document.createElement("button");
-    btn.textContent = "+";
-    const addFn = () => {
-      const val = input.value.trim();
-      if(!val) return;
-      sub.items.push(val);
-      input.value = "";
-      saveState(); renderSection(groupId);
-    };
-    btn.addEventListener("click", addFn);
-    input.addEventListener("keydown", e => { if(e.key==="Enter") addFn(); });
-    addRow.appendChild(input); addRow.appendChild(btn);
-    sbody.appendChild(addRow);
-
-    const delRow = document.createElement("div");
-    delRow.className = "sub-del-row";
-    const delSub = document.createElement("span");
-    delSub.className = "sub-del";
-    delSub.textContent = "remove this section ✕";
-    delSub.addEventListener("click", () => {
-      if(confirm('Remove "'+sub.name+'" and its tasks?')){
-        group.subs.splice(subIdx,1);
-        saveState(); renderSection(groupId);
+function applyActions(actions){
+  const changes = [];
+  actions.slice(0, 80).forEach(a => {
+    if(!a || typeof a !== "object") return;
+    const x = a.id != null ? findTask(String(a.id)) : null;
+    switch(a.type){
+      case "complete":
+        if(x && !x.t.done){ const next = setDone(x, true); changes.push("✓ Done: " + x.t.text + (next ? " (next: " + fmtDue(next.due) + ")" : "")); }
+        break;
+      case "reopen":
+        if(x && x.t.done){ setDone(x, false); changes.push("↺ Reopened: " + x.t.text); }
+        break;
+      case "add": {
+        const text = String(a.text || "").trim();
+        if(!text) break;
+        const p = state.projects.find(q => q.id === a.project) || state.projects[0];
+        const s = getSection(p, a.section);
+        const t = { id:newId("t"), text, done:false, doneAt:null, priority:normPri(a.priority), due:normDue(a.due), createdAt:Date.now(), repeat:normRepeat(a.repeat),
+          subtasks:(Array.isArray(a.subtasks) ? a.subtasks : []).map(z => String(z).trim()).filter(Boolean).slice(0, 12).map(z => ({ id:newId("u"), text:z, done:false })), minutes:0 };
+        if(t.repeat && !t.due) t.due = dayStr();
+        s.tasks.push(t);
+        if(a.focus === true) addFocus(t.id);
+        changes.push("+ Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? " ↻ " + repeatLabel(t.repeat) : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
+        break;
       }
-    });
-    delRow.appendChild(delSub);
-    sbody.appendChild(delRow);
-
-    card.appendChild(head);
-    card.appendChild(progress);
-    card.appendChild(sbody);
-    body.appendChild(card);
+      case "update": {
+        if(!x) break;
+        const bits = [];
+        if(typeof a.text === "string" && a.text.trim() && a.text.trim() !== x.t.text){ x.t.text = a.text.trim(); bits.push("renamed"); }
+        if(a.priority && normPri(a.priority) !== x.t.priority){ x.t.priority = normPri(a.priority); bits.push(x.t.priority + " priority"); }
+        if("due" in a){ const d = normDue(a.due); if(d !== x.t.due){ x.t.due = d; bits.push(d ? "due " + fmtDue(d) : "no due date"); } }
+        if("repeat" in a){ const r = normRepeat(a.repeat); if(r !== (x.t.repeat || null)){ x.t.repeat = r; if(r && !x.t.due) x.t.due = dayStr(); bits.push(r ? "repeats " + r : "no repeat"); } }
+        if(bits.length) changes.push("✎ " + x.t.text + " — " + bits.join(", "));
+        break;
+      }
+      case "subtasks": {
+        if(!x) break;
+        const items = (Array.isArray(a.items) ? a.items : []).map(z => String(z).trim()).filter(Boolean).slice(0, 12);
+        if(!items.length) break;
+        x.t.subtasks = (x.t.subtasks || []).concat(items.map(z => ({ id:newId("u"), text:z, done:false })));
+        changes.push("☰ " + items.length + " steps added to: " + x.t.text);
+        break;
+      }
+      case "delete":
+        if(x){ x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1); removeFocus(x.t.id); changes.push("🗑 Deleted: " + x.t.text); }
+        break;
+      case "focus": {
+        const ids = (Array.isArray(a.ids) ? a.ids : []).map(String).filter(id => findTask(id));
+        if(ids.length){
+          state.today = { date:dayStr(), focus:[...new Set(ids)].slice(0, 7), note:String(a.note || "").trim() };
+          changes.push("🎯 Today's focus set: " + state.today.focus.length + " tasks");
+        }
+        break;
+      }
+      case "checkin": {
+        const when = typeof a.at === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(a.at) ? new Date(a.at.slice(0, 16)) : null;
+        if(!when || isNaN(when) || when.getTime() < Date.now()) break;
+        const c = { id:newId("c"), at:when.toISOString(), about:String(a.about || "Check in").trim().slice(0, 140), status:"pending", createdAt:Date.now() };
+        state.checkins.push(c);
+        changes.push("⏰ Check-in " + fmtWhen(c.at) + ": " + c.about);
+        break;
+      }
+      case "cancel_checkin": {
+        const c = state.checkins.find(q => q.id === String(a.id));
+        if(c && c.status !== "cancel" && c.status !== "done"){ cancelCheckin(c); changes.push("✕ Cancelled check-in: " + c.about); }
+        break;
+      }
+    }
   });
+  return changes;
 }
 
-document.getElementById("addSubBtn").addEventListener("click", () => {
-  const group = state.data.find(g => g.id === currentGroupId);
-  if(!group) return;
-  const name = prompt("New section name:");
-  if(!name) return;
-  group.subs.push({ name, items: [] });
-  state.open[group.id+"::"+(group.subs.length-1)] = true;
-  saveState(); renderSection(currentGroupId);
-});
-
-// ---------- theme ----------
-function applyTheme(mode){
-  document.body.classList.toggle("light", mode==="light");
-  document.getElementById("themeToggle").textContent = mode==="light" ? "☾" : "☀";
-  localStorage.setItem(THEME_KEY, mode);
+async function getSample(){
+  if(sampleReady) return sampleFn;
+  if(runtime){ try{ sampleFn = await runtime.use("sample"); }catch(e){ sampleFn = null; } }
+  sampleReady = true;
+  return sampleFn;
 }
-let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
-applyTheme(currentTheme);
-document.getElementById("themeToggle").addEventListener("click", () => {
-  currentTheme = currentTheme==="dark" ? "light" : "dark";
-  applyTheme(currentTheme);
-});
-
-// ---------- FAB / add sheet ----------
-const sheetOverlay = document.getElementById("sheetOverlay");
-const addSheet = document.getElementById("addSheet");
-function openSheet(){
-  const groupSel = document.getElementById("sheetGroup");
-  groupSel.innerHTML = "";
-  state.data.forEach(g => {
-    const o = document.createElement("option");
-    o.value = g.id; o.textContent = g.emoji + " " + g.title;
-    groupSel.appendChild(o);
-  });
-  if(currentGroupId) groupSel.value = currentGroupId;
-  populateSubSelect();
-  groupSel.onchange = populateSubSelect;
-  document.getElementById("sheetTaskInput").value = "";
-  sheetOverlay.classList.add("show");
-  addSheet.classList.add("show");
+function sampleErrorText(e){
+  const code = e && e.code;
+  return code === "not_granted" ? "Claude access was declined — reload the page to allow it."
+    : code === "rate_limited" ? "You've hit a usage limit. Try again in a bit."
+    : code === "invalid_json" ? "Claude's reply came back garbled. Try again."
+    : "Couldn't reach Claude. Try again.";
 }
-function populateSubSelect(){
-  const groupSel = document.getElementById("sheetGroup");
-  const subSel = document.getElementById("sheetSub");
-  const group = state.data.find(g => g.id === groupSel.value);
-  subSel.innerHTML = "";
-  if(group){
-    group.subs.forEach((s, i) => {
-      const o = document.createElement("option");
-      o.value = i; o.textContent = s.name;
-      subSel.appendChild(o);
-    });
+
+const HEAVY = /plan my day|review my week|plan my week|voice session|break .* into steps/i;
+async function askCoach(text){
+  text = String(text || "").trim();
+  if(!text || thinking) return;
+  const sample = await getSample();
+  if(!sample){ render(); toast("Open this page on claude.ai to use the coach."); return; }
+  coach.messages.push({ role:"user", content:text, ts:Date.now() });
+  saveCoach();
+  thinking = true;
+  ui.tab = "coach"; ui.project = null;
+  render();
+
+  const history = coach.messages.slice(-12).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content || "…" }));
+  const turns = [{ role:"user", content: buildContext() }, ...history];
+  const ctl = new AbortController();
+  currentCtl = ctl;
+  try{
+    const res = await sample.json(turns, { modelTier: HEAVY.test(text) ? "default" : "quick", cache:false, signal:ctl.signal });
+    const before = JSON.stringify(state);
+    const changes = applyActions(res && Array.isArray(res.actions) ? res.actions : []);
+    const msg = { role:"assistant", content: String((res && res.reply) || "").trim() || "Done.", ts:Date.now(), changes };
+    coach.messages.push(msg);
+    if(changes.length){ lastUndo = { ts:msg.ts, snapshot:before }; save(); }
+    saveCoach();
+  }catch(e){
+    coach.messages.pop();
+    saveCoach();
+    $("#input").value = text; autoGrow();
+    if(!e || e.code !== "cancelled") toast(sampleErrorText(e));
+  }finally{
+    thinking = false;
+    currentCtl = null;
+    render();
   }
 }
-function closeSheet(){
-  sheetOverlay.classList.remove("show");
-  addSheet.classList.remove("show");
+
+// "Break it down" straight from the task sheet
+async function breakDown(id, btn){
+  const x = findTask(id);
+  const sample = await getSample();
+  if(!x || !sample){ toast("Open this page on claude.ai to use Claude."); return; }
+  btn.disabled = true; btn.textContent = "Claude is thinking…";
+  try{
+    const res = await sample.json(`Break this task into 3-7 concrete, verb-first steps a busy founder can tick off. Task: "${x.t.text}" (project: ${x.p.title} / ${x.s.name}).${x.t.subtasks && x.t.subtasks.length ? " Existing steps: " + x.t.subtasks.map(z => z.text).join("; ") + ". Only add missing ones." : ""}
+Reply with only JSON: {"steps":["...","..."]}`, { modelTier:"quick" });
+    const steps = (res && Array.isArray(res.steps) ? res.steps : []).map(z => String(z).trim()).filter(Boolean).slice(0, 10);
+    if(steps.length){
+      const added = steps.map(z => ({ id:newId("u"), text:z, done:false }));
+      x.t.subtasks = (x.t.subtasks || []).concat(added);
+      if(draft && draft.id === id) draft.subtasks = draft.subtasks.concat(clone(added)); // keep unsaved edits in the open sheet
+      save(); taskSheet(id, { keepFocus:true }); render();
+    } else toast("Claude didn't come up with steps. Try again.");
+  }catch(e){ toast(sampleErrorText(e)); btn.disabled = false; btn.textContent = "✦ Break it down with Claude"; }
 }
-document.getElementById("fabBtn").addEventListener("click", openSheet);
-sheetOverlay.addEventListener("click", closeSheet);
-document.getElementById("sheetSubmit").addEventListener("click", () => {
-  const groupId = document.getElementById("sheetGroup").value;
-  const subIdx = parseInt(document.getElementById("sheetSub").value, 10);
-  const text = document.getElementById("sheetTaskInput").value.trim();
+
+// ===================================================================
+// live voice (ElevenLabs agent on the JKB Voice page)
+// ===================================================================
+function voiceBriefing(){
+  const today = dayStr();
+  const focus = todayFocus();
+  const open = allTasks().filter(x => !x.t.done);
+  const rank = x => (x.t.due ? daysBetween(today, x.t.due) : 30) - (x.t.priority === "high" ? 10 : 0);
+  const top = open.filter(x => !focus.some(f => f.t.id === x.t.id)).sort((a, b) => rank(a) - rank(b)).slice(0, 25);
+  const line = x => "- " + x.t.text + " [" + x.p.title + (x.t.priority === "high" ? ", high" : "") + (x.t.due ? ", due " + fmtDue(x.t.due) : "") + "]";
+  const doneToday = allTasks().filter(x => x.t.doneAt && dayStr(new Date(x.t.doneAt)) === today);
+  return [
+    "Joseph's checklist as of " + new Date().toLocaleString(undefined, { weekday:"long", hour:"numeric", minute:"2-digit" }) + ".",
+    "Streak: " + streak() + (streak() === 1 ? " day" : " days") + ". Done today: " + doneToday.length + ". Focused today: " + fmtMin(focusMinutesOn(today)) + ".",
+    "Today's focus:\n" + (focus.length ? focus.map(x => line(x) + (x.t.done ? " (DONE)" : "")).join("\n") : "- not planned yet"),
+    doneToday.length ? "Finished today:\n" + doneToday.slice(0, 10).map(line).join("\n") : "",
+    "Other important open tasks:\n" + top.map(line).join("\n"),
+  ].filter(Boolean).join("\n\n").slice(0, 6000);
+}
+function talkSheet(){
+  const url = VOICE_URL + "#b=" + encodeURIComponent(voiceBriefing());
+  openSheet(`<h3>🎧 Talk live with your coach</h3>
+    <p class="sub">claude.ai doesn't let this page use your mic, so the live voice chat runs on JKB Voice. Your task briefing goes with it.</p>
+    <div class="card pad" style="box-shadow:none;font-size:0.85rem;line-height:1.6">
+      <b>1.</b> Tap <b>Start voice chat</b> and talk it through.<br>
+      <b>2.</b> When you're done, tap <b>Copy for Coach</b> there.<br>
+      <b>3.</b> Come back here, paste into Coach and send — Claude updates your list.
+    </div>
+    <div class="btn-row"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none" data-act="closeSheet">Start voice chat ↗</a></div>`);
+}
+
+// ===================================================================
+// dictation in the composer (works where the browser allows the mic)
+// ===================================================================
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false, micBlocked = false;
+function micAllowed(){
+  if(!SR) return false;
+  const policy = document.permissionsPolicy || document.featurePolicy;
+  if(policy && typeof policy.allowsFeature === "function" && !policy.allowsFeature("microphone")) return false;
+  return true;
+}
+function keyboardDictation(){
+  micBlocked = true;
+  $("#micBtn").classList.remove("live");
+  $("#hint").innerHTML = `Press the <b>🎤 on your keyboard</b> to dictate — or <a href="#" data-act="talk">talk live</a> on JKB Voice.`;
+  $("#input").focus();
+}
+function startRec(){
+  rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = navigator.language || "en-US";
+  rec.onresult = (e) => {
+    let interim = "";
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal){ const c = r[0].transcript.trim(); if(c){ const inp = $("#input"); inp.value = (inp.value.trim() ? inp.value.trim() + " " : "") + c + "."; autoGrow(); } }
+      else interim += r[0].transcript;
+    }
+    $("#hint").textContent = interim ? "… " + interim : "Listening — tap ■ when done.";
+  };
+  rec.onerror = (e) => { if(["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)){ listening = false; keyboardDictation(); } };
+  rec.onend = () => {
+    if(listening){ try{ rec.start(); }catch(err){ listening = false; } }
+    if(!listening){ $("#micBtn").classList.remove("live"); $("#micBtn").textContent = "🎙"; if(!micBlocked) $("#hint").textContent = ""; }
+  };
+  listening = true;
+  rec.start();
+  $("#micBtn").classList.add("live");
+  $("#micBtn").textContent = "■";
+  $("#hint").textContent = "Listening — tap ■ when done.";
+}
+function stopRec(){ listening = false; if(rec){ try{ rec.stop(); }catch(e){} } }
+$("#micBtn").addEventListener("click", () => {
+  if(micBlocked || !micAllowed()) return keyboardDictation();
+  listening ? stopRec() : startRec();
+});
+function autoGrow(){ const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; }
+$("#input").addEventListener("input", autoGrow);
+$("#input").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)){ e.preventDefault(); send(); } });
+function send(){ stopRec(); const v = $("#input").value; $("#input").value = ""; autoGrow(); if(!micBlocked) $("#hint").textContent = ""; askCoach(v); }
+$("#sendBtn").addEventListener("click", send);
+$("#chips").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-q]");
+  if(!b) return;
+  const q = b.dataset.q;
+  if(/(: | at )$/.test(q)){ $("#input").value = q; $("#input").focus(); autoGrow(); }
+  else askCoach(q);
+});
+
+// ===================================================================
+// sheets
+// ===================================================================
+function openSheet(html){ $("#sheetBody").innerHTML = `<div class="handle"></div>` + html; $("#overlay").classList.add("show"); $("#sheet").classList.add("show"); }
+function closeSheet(){ $("#overlay").classList.remove("show"); $("#sheet").classList.remove("show"); }
+function closeDrawer(){ $("#drawer").classList.remove("show"); if(!$("#sheet").classList.contains("show")) $("#overlay").classList.remove("show"); }
+$("#overlay").addEventListener("click", () => { closeSheet(); closeDrawer(); });
+
+function projectOptions(sel){ return state.projects.map(p => `<option value="${esc(p.id)}"${p.id === sel ? " selected" : ""}>${esc(p.emoji)} ${esc(p.title)}</option>`).join(""); }
+function sectionOptions(pid, sel){ const p = state.projects.find(x => x.id === pid) || state.projects[0]; return p.sections.map(s => `<option value="${esc(s.id)}"${s.id === sel ? " selected" : ""}>${esc(s.name)}</option>`).join(""); }
+
+// draft holds unsaved edits while the sheet is open (so subtasks / segments can re-render)
+let draft = null;
+function taskSheet(id, preset = {}){
+  const x = id ? findTask(id) : null;
+  if(!draft || draft.id !== (x ? x.t.id : null)){
+    const t = x ? x.t : { text:"", priority:"normal", due:null, repeat:null, subtasks:[] };
+    draft = { id: x ? x.t.id : null, text:t.text, priority:t.priority || "normal", due:t.due || "", repeat:t.repeat || null,
+      subtasks: clone(t.subtasks || []), pid: x ? x.p.id : (preset.pid || ui.project || state.projects[0].id), sid: x ? x.s.id : preset.sid,
+      focus: x ? todayFocus().some(f => f.t.id === x.t.id) : false };
+  }
+  const d = draft;
+  const seg = (field, opts) => `<div class="seg">${opts.map(([v, l]) => `<button type="button" class="${String(d[field]) === String(v) ? "on" : ""}" data-act="seg" data-field="${field}" data-v="${v}">${l}</button>`).join("")}</div>`;
+  const subs = d.subtasks.map((st, i) => `<div class="sub-row${st.done ? " done" : ""}"><button class="check${st.done ? " done" : ""}" data-act="subToggle" data-i="${i}" aria-label="Toggle step">${CHECK_SVG}</button><span>${esc(st.text)}</span><button class="x" data-act="subDel" data-i="${i}" aria-label="Remove step">✕</button></div>`).join("");
+  openSheet(`
+    <h3>${x ? "Edit task" : "New task"}</h3>
+    <div class="f-label">Task</div><input id="fText" value="${esc(d.text)}" placeholder="What needs doing?">
+    <div class="f-label">Priority</div>${seg("priority", [["high", "🔥 High"], ["normal", "Normal"], ["low", "Low"]])}
+    <div class="two">
+      <div><div class="f-label">Due</div><input id="fDue" type="date" value="${esc(d.due)}"></div>
+      <div><div class="f-label">Repeat</div><select id="fRepeat">${[["", "Never"], ...REPEATS.map(r => [r, repeatLabel(r)])].map(([v, l]) => `<option value="${v}"${(d.repeat || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></div>
+    </div>
+    <div class="two">
+      <div><div class="f-label">Project</div><select id="fProj">${projectOptions(d.pid)}</select></div>
+      <div><div class="f-label">Section</div><select id="fSec">${sectionOptions(d.pid, d.sid)}</select></div>
+    </div>
+    <div class="f-label">Steps ${d.subtasks.length ? `(${d.subtasks.filter(z => z.done).length}/${d.subtasks.length})` : ""}</div>
+    <div>${subs}</div>
+    <div class="add-row"><input id="fSub" placeholder="Add a step…"><button data-act="subAdd" aria-label="Add step">+</button></div>
+    ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">✦ Break it down with Claude</button>` : ""}
+    <label class="toggle-row"><input type="checkbox" id="fFocus"${d.focus ? " checked" : ""}> In today's focus</label>
+    ${x && !x.t.done ? `<div class="f-label">Focus timer</div><div class="seg">${[15, 25, 50].map(m => `<button type="button" data-act="startTimer" data-id="${esc(x.t.id)}" data-min="${m}">▶ ${m} min</button>`).join("")}</div>` : ""}
+    <div class="btn-row" style="margin-top:20px">
+      ${x ? `<button class="btn danger" data-act="delTask">Delete</button>` : ""}
+      <button class="btn" data-act="saveTask">${x ? "Save" : "Add task"}</button>
+    </div>`);
+  const sync = () => { d.text = $("#fText").value; d.due = $("#fDue").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; };
+  ["#fText", "#fDue", "#fRepeat", "#fSec", "#fFocus"].forEach(s => $(s).addEventListener("input", sync));
+  $("#fProj").onchange = () => { $("#fSec").innerHTML = sectionOptions($("#fProj").value); sync(); };
+  $("#fSub").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); sheetAct("subAdd"); } });
+  if(!x && !preset.keepFocus) setTimeout(() => $("#fText") && $("#fText").focus(), 280);
+}
+function sheetAct(act, el){
+  const d = draft;
+  if(!d) return;
+  const sync = () => { const f = $("#fText"); if(f){ d.text = f.value; d.due = $("#fDue").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; } };
+  sync();
+  if(act === "seg"){ d[el.dataset.field] = el.dataset.v; taskSheet(d.id, { keepFocus:true }); }
+  else if(act === "subAdd"){ const v = $("#fSub").value.trim(); if(!v) return; d.subtasks.push({ id:"new" + Date.now(), text:v, done:false }); taskSheet(d.id, { keepFocus:true }); setTimeout(() => $("#fSub") && $("#fSub").focus(), 50); }
+  else if(act === "subToggle"){ const st = d.subtasks[+el.dataset.i]; st.done = !st.done; taskSheet(d.id, { keepFocus:true }); }
+  else if(act === "subDel"){ d.subtasks.splice(+el.dataset.i, 1); taskSheet(d.id, { keepFocus:true }); }
+  else if(act === "saveTask"){
+    const text = d.text.trim();
+    if(!text){ $("#fText").focus(); return; }
+    const x = d.id ? findTask(d.id) : null;
+    const p = state.projects.find(q => q.id === d.pid) || state.projects[0];
+    const s = p.sections.find(q => q.id === d.sid) || getSection(p, "Inbox");
+    let task;
+    if(x){ task = x.t; if(x.s !== s){ x.s.tasks.splice(x.s.tasks.indexOf(task), 1); s.tasks.push(task); } }
+    else{ task = { id:newId("t"), done:false, doneAt:null, createdAt:Date.now(), minutes:0 }; s.tasks.push(task); }
+    task.text = text;
+    task.priority = normPri(d.priority);
+    task.due = normDue(d.due);
+    task.repeat = normRepeat(d.repeat);
+    if(task.repeat && !task.due) task.due = dayStr();
+    task.subtasks = d.subtasks.map(st => ({ id: String(st.id).startsWith("new") ? newId("u") : st.id, text:st.text, done:!!st.done }));
+    if(d.focus) addFocus(task.id); else removeFocus(task.id);
+    draft = null;
+    save(); closeSheet(); render();
+    toast(x ? "Saved" : "Task added");
+  }
+  else if(act === "delTask"){
+    const x = findTask(d.id);
+    if(!x || !confirm("Delete this task?")) return;
+    x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1);
+    removeFocus(x.t.id);
+    draft = null;
+    save(); closeSheet(); render();
+  }
+}
+$("#fab").addEventListener("click", () => { draft = null; taskSheet(null); });
+
+// ===================================================================
+// click handling
+// ===================================================================
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-tab]");
+  if(tab) return go(tab.dataset.tab);
+  const el = e.target.closest("[data-act]");
+  if(!el) return;
+  const act = el.dataset.act;
+  if(["seg", "subAdd", "subToggle", "subDel", "saveTask", "delTask"].includes(act)) return sheetAct(act, el);
+  if(act === "toggle"){
+    const x = findTask(el.dataset.id);
+    if(!x) return;
+    const next = setDone(x, !x.t.done);
+    save(); buzz();
+    if(el.dataset.close) closeSheet();
+    render();
+    if(x.t.done){
+      const f = todayFocus();
+      if(f.length && f.every(y => y.t.done)) toast("Focus complete. Big day 🔥");
+      else if(next) toast("Nice. Next one set for " + fmtDue(next.due).toLowerCase());
+      else toast("Done ✓");
+    }
+  }
+  else if(act === "edit"){ draft = null; taskSheet(el.dataset.id); }
+  else if(act === "closeSheet") closeSheet();
+  else if(act === "plan") askCoach("Plan my day.");
+  else if(act === "checkin"){ go("coach"); $("#input").value = "Check in: "; $("#input").focus(); autoGrow(); }
+  else if(act === "goCoach") go("coach");
+  else if(act === "ask") askCoach(el.dataset.q);
+  else if(act === "talk"){ e.preventDefault(); talkSheet(); }
+  else if(act === "stop"){ if(currentCtl) currentCtl.abort(); }
+  else if(act === "breakDown") breakDown(el.dataset.id, el);
+  else if(act === "quickTimer") startTimer(el.dataset.id, 25);
+  else if(act === "startTimer") startTimer(el.dataset.id, +el.dataset.min);
+  else if(act === "timerAgain") startTimer(el.dataset.id, 25);
+  else if(act === "undo"){
+    if(!lastUndo) return;
+    state = JSON.parse(lastUndo.snapshot); normalize();
+    const m = coach.messages.find(y => y.ts === lastUndo.ts);
+    if(m) m.undone = true;
+    lastUndo = null;
+    save(); saveCoach(); render();
+    toast("Changes undone");
+  }
+  else if(act === "cancelCheckin"){
+    const c = state.checkins.find(q => q.id === el.dataset.id);
+    if(!c || !confirm("Cancel this check-in?")) return;
+    cancelCheckin(c); save(); render(); toast("Check-in cancelled");
+  }
+  else if(act === "filter"){ ui.filter = el.dataset.id; ui.project = null; render(); }
+  else if(act === "toggleTable"){ showTables[el.dataset.id] = !showTables[el.dataset.id]; render(); }
+  else if(act === "openProject"){ ui.project = el.dataset.id; render(); window.scrollTo(0, 0); }
+  else if(act === "backProjects"){ ui.project = null; render(); }
+  else if(act === "toggleSec"){ const k = el.dataset.key; ui.open[k] = !ui.open[k]; saveUi(); render(); }
+  else if(act === "addTask") addFromRow(el.dataset.sec);
+  else if(act === "addSec"){
+    const p = state.projects.find(q => q.id === el.dataset.id);
+    const name = prompt("Section name:");
+    if(!p || !name || !name.trim()) return;
+    const s = { id:newId("s"), name:name.trim(), tasks:[] };
+    p.sections.push(s);
+    ui.open[p.id + "/" + s.id] = true; saveUi();
+    save(); render();
+  }
+  else if(act === "renameSec"){
+    const [pid, sid] = el.dataset.sec.split("|");
+    const s = (state.projects.find(q => q.id === pid) || { sections:[] }).sections.find(q => q.id === sid);
+    const name = s && prompt("Rename section:", s.name);
+    if(!name || !name.trim()) return;
+    s.name = name.trim(); save(); render();
+  }
+  else if(act === "delSec"){
+    const [pid, sid] = el.dataset.sec.split("|");
+    const p = state.projects.find(q => q.id === pid);
+    const s = p && p.sections.find(q => q.id === sid);
+    if(!s || !confirm(`Remove "${s.name}" and its ${s.tasks.length} tasks?`)) return;
+    s.tasks.forEach(t => removeFocus(t.id));
+    p.sections.splice(p.sections.indexOf(s), 1);
+    save(); render();
+  }
+  else if(act === "addProject") addProject();
+  else if(act === "renameProject"){
+    const p = state.projects.find(q => q.id === el.dataset.id);
+    const title = p && prompt("Rename project:", p.title);
+    if(!title || !title.trim()) return;
+    p.title = title.trim();
+    const emoji = prompt("Emoji for this project:", p.emoji);
+    if(emoji && emoji.trim()) p.emoji = emoji.trim().slice(0, 4);
+    save(); render();
+  }
+  else if(act === "delProject"){
+    const p = state.projects.find(q => q.id === el.dataset.id);
+    if(!p || state.projects.length === 1 || !confirm(`Delete "${p.title}" and everything in it?`)) return;
+    p.sections.forEach(s => s.tasks.forEach(t => removeFocus(t.id)));
+    state.projects.splice(state.projects.indexOf(p), 1);
+    ui.project = null;
+    save(); render();
+  }
+});
+document.addEventListener("input", (e) => {
+  if(e.target.id === "searchBox"){ ui.q = e.target.value; clearTimeout(render._s); render._s = setTimeout(render, 120); }
+});
+document.addEventListener("change", (e) => {
+  if(e.target.id === "projFilter"){ ui.projFilter = e.target.value; render(); }
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Enter" && e.target.matches && e.target.matches("[data-add]")) addFromRow(e.target.dataset.add);
+});
+function addFromRow(key){
+  const inp = document.querySelector(`[data-add="${CSS.escape(key)}"]`);
+  const text = inp && inp.value.trim();
   if(!text) return;
-  const group = state.data.find(g => g.id === groupId);
-  if(group && group.subs[subIdx]){
-    group.subs[subIdx].items.push(text);
-    saveState();
-    closeSheet();
-    if(currentGroupId === groupId) renderSection(groupId);
-    else showView(groupId);
-  }
-});
+  const [pid, sid] = key.split("|");
+  const p = state.projects.find(q => q.id === pid);
+  const s = p && p.sections.find(q => q.id === sid);
+  if(!s) return;
+  s.tasks.push({ id:newId("t"), text, done:false, doneAt:null, priority:"normal", due:null, createdAt:Date.now(), minutes:0 });
+  save(); render();
+  const again = document.querySelector(`[data-add="${CSS.escape(key)}"]`);
+  if(again) again.focus();
+}
+function addProject(){
+  const title = prompt("Project name:");
+  if(!title || !title.trim()) return;
+  const emoji = (prompt("Pick an emoji for it:", "📌") || "📌").trim().slice(0, 4) || "📌";
+  const id = "p" + Date.now().toString(36);
+  state.projects.push({ id, emoji, title:title.trim(), sections:[{ id:newId("s"), name:"General", tasks:[] }] });
+  save();
+  ui.tab = "tasks"; ui.project = id;
+  closeDrawer();
+  render();
+}
 
-// ---------- drawer menu ----------
-const drawer = document.getElementById("drawer");
-document.getElementById("menuBtn").addEventListener("click", () => drawer.classList.add("show"));
-document.getElementById("drawerClose").addEventListener("click", () => drawer.classList.remove("show"));
-document.getElementById("menuReset").addEventListener("click", () => {
-  if(confirm("Uncheck everything? Tasks themselves stay.")){
-    state.checked = {};
-    saveState();
-    if(currentGroupId===null) renderDashboard(); else renderSection(currentGroupId);
+// ===================================================================
+// menu, backup, theme
+// ===================================================================
+$("#menuBtn").addEventListener("click", () => { $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
+$("#drawerClose").addEventListener("click", closeDrawer);
+$("#mAddProject").addEventListener("click", addProject);
+$("#mTalk").addEventListener("click", () => { closeDrawer(); talkSheet(); });
+$("#mClearChat").addEventListener("click", () => {
+  if(!confirm("Clear the coach conversation? Your tasks stay.")) return;
+  coach.messages = []; lastUndo = null; saveCoach(); closeDrawer(); render();
+});
+$("#mExport").addEventListener("click", async () => {
+  const data = JSON.stringify(state, null, 2), filename = "jkb-ops-backup-" + dayStr() + ".json";
+  let downloads = null;
+  if(runtime){ try{ downloads = await runtime.use("downloads"); }catch(e){} }
+  if(downloads){ try{ await downloads.save({ filename, data }); }catch(e){} }
+  else{
+    const url = URL.createObjectURL(new Blob([data], { type:"application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
   }
-  drawer.classList.remove("show");
 });
-document.getElementById("menuAddGroup").addEventListener("click", () => {
-  const name = prompt("New project name:");
-  if(!name){ drawer.classList.remove("show"); return; }
-  const id = "custom_"+Date.now();
-  state.data.push({ id, emoji:"📌", title:name, subs:[{name:"General", items:[]}] });
-  saveState();
-  renderTabbar();
-  showView(id);
-  drawer.classList.remove("show");
-});
-document.getElementById("menuExport").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "jkb-checklist-backup.json"; a.click();
-  URL.revokeObjectURL(url);
-  drawer.classList.remove("show");
-});
-document.getElementById("menuImport").addEventListener("click", () => document.getElementById("importFile").click());
-document.getElementById("importFile").addEventListener("change", (e) => {
+$("#mImport").addEventListener("click", () => $("#importFile").click());
+$("#importFile").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
+  const r = new FileReader();
+  r.onload = () => {
     try{
-      const parsed = JSON.parse(ev.target.result);
-      if(parsed && parsed.data){
-        state = parsed;
-        saveState();
-        showView(null);
-        alert("Backup imported.");
-      } else alert("Not a valid backup file.");
+      const parsed = JSON.parse(r.result);
+      if(parsed && parsed.v === 2 && Array.isArray(parsed.projects)) state = parsed;
+      else if(parsed && Array.isArray(parsed.data)) fromOld(parsed);
+      else return alert("Not a valid backup file.");
+      normalize(); save(); closeDrawer(); go("today"); toast("Backup imported");
     }catch(err){ alert("Couldn't read that file."); }
-    drawer.classList.remove("show");
   };
-  reader.readAsText(file);
+  r.readAsText(file);
+});
+function applyTheme(mode){ if(mode) document.documentElement.dataset.theme = mode; else delete document.documentElement.dataset.theme; }
+applyTheme(lsGet(LS_THEME));
+$("#themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  const next = cur === "dark" ? "light" : "dark";
+  applyTheme(next); lsSet(LS_THEME, next);
 });
 
-renderTabbar();
-renderDashboard();
+// ===================================================================
+// start
+// ===================================================================
+loadLocal();
+render();
+connectCloud();
+getSample().then(() => { if(ui.tab === "coach") render(); });
 </script>
 </body>
 </html>
