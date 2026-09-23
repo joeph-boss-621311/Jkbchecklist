@@ -3,7 +3,7 @@
 Your checklist, managed by Claude. It plans your day, updates tasks when you tell it what happened, times your focus, and calls you out when you're dodging the important stuff.
 
 **App:** https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8 (private to your Claude account)
-**JKB Voice:** https://joeph-boss-621311.github.io/Jkbchecklist/voice.html (needs GitHub Pages on)
+**JKB Voice:** https://checklist.jkbglobal.site/voice.html (needs GitHub Pages on)
 
 ## Screens
 
