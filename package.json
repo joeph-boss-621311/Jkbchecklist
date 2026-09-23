@@ -1,0 +1,28 @@
+{
+  "name": "jkb-checklist",
+  "version": "1.0.0",
+  "description": "JKB Ops checklist — web app, CLI and MCP connector sharing one task file",
+  "main": "shared.js",
+  "scripts": {
+    "start": "node server.js",
+    "mcp": "node mcp.js",
+    "test": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeph-boss-621311/jkbchecklist.git"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/joeph-boss-621311/jkbchecklist/issues"
+  },
+  "homepage": "https://github.com/joeph-boss-621311/jkbchecklist#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "bin": {
+    "jkb": "cli.js"
+  },
+  "private": true
+}

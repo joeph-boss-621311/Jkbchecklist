@@ -229,13 +229,23 @@
   .drawer-item:hover{ color:var(--gold); }
   #importFile{ display:none; }
 
+  .sync{ font-family:'Inter',sans-serif; font-weight:600; font-size:0.62rem; color:var(--text-dim); margin-left:8px; letter-spacing:0.3px; vertical-align:middle; }
+  .sync.live{ color:var(--gold); }
+  .toast{
+    position:fixed; left:50%; bottom:140px; transform:translateX(-50%); z-index:80;
+    background:var(--card-2); color:var(--text); border:1px solid var(--line); border-radius:12px;
+    padding:10px 14px; font-size:0.82rem; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+    max-width:calc(100% - 32px);
+  }
+  .toast.show{ opacity:1; }
+
   ::-webkit-scrollbar{ width:0; height:0; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="brand">JKB<span class="dot">.</span></div>
+  <div class="brand">JKB<span class="dot">.</span><span class="sync" id="syncBadge">LOCAL</span></div>
   <div class="top-actions">
     <button class="icon-btn" id="themeToggle">☀</button>
     <button class="icon-btn plain" id="menuBtn">☰</button>
@@ -289,6 +299,8 @@
   <button class="sheet-submit" id="sheetSubmit">Add task</button>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <!-- Menu drawer -->
 <div class="drawer" id="drawer">
   <button class="drawer-close" id="drawerClose">✕</button>
@@ -301,68 +313,106 @@
   <div class="drawer-item" id="menuAddGroup">Add new project <span>+</span></div>
 </div>
 
+<script src="shared.js"></script>
 <script>
-const DEFAULT_DATA = [
-  { id:"jkb", emoji:"🚀", title:"JKB Global", subs:[
-    { name:"Brand & Website", items:["Review every page","Fix bugs","Improve loading speed","Improve mobile responsiveness","Update portfolio","Add recent projects","Improve service descriptions","Strengthen CTAs","Add client inquiry form","Connect analytics"]},
-    { name:"Content System", items:["Redesign poster templates","Create 10 reusable templates","Design carousel templates","Create video templates","Add branded music","Create intro/outro animations"]},
-    { name:"AI Automation", items:["Build Anything + Cloud Code workflow","Auto-generate posters","Auto-generate captions","Auto-generate hashtags","Auto-generate videos","Auto-post to social media","Auto-save generated content","Test automation","Remove workflow errors"]},
-    { name:"Posting Strategy", items:["Hourly posts","Hourly videos","Weekly content calendar","Monthly campaign calendar"]},
-    { name:"Content Pillars", items:["AI","Websites","Branding","Automation","Business tips","Client projects","Tutorials","Behind the scenes","Success stories","Development updates"]},
-    { name:"Marketing", items:["AI content generator","AI trend finder","AI caption generator","AI comment assistant","AI reply assistant"]},
-    { name:"Advertising", items:["Research Meta Ads","Research Instagram Ads","Research Google Ads","Research TikTok Ads","Create audiences","Design creatives","Write 10 ad copies","Create landing pages","Install Meta Pixel","Install Google Analytics","Install Microsoft Clarity","Launch first test campaign","Optimize weekly"]},
-    { name:"Lead Generation", items:["Improve contact page","Add WhatsApp CTA","Build email list","Add newsletter","Offer free consultation","Build downloadable resources"]},
-    { name:"Social Proof", items:["Post completed projects","Post testimonials","Share client wins","Show before/after work","Build in public"]},
-    { name:"Analytics", items:["Track followers","Track reach","Track website visitors","Track inquiries","Track conversions","Weekly review"]},
-  ]},
-  { id:"safegate", emoji:"🛡", title:"SafeGate", subs:[
-    { name:"Website", items:["Test every page","Fix every bug","Test buyer flow","Test seller flow","Test escrow flow","Test registration","Test login","Test email notifications","Test mobile responsiveness","Improve speed","Improve UI/UX"]},
-    { name:"Trust Building", items:["Improve FAQ","Explain escrow process clearly","Add trust badges","Add security information","Add privacy policy","Improve Terms of Service","Add testimonials (when available)","Add case studies"]},
-    { name:"SEO", items:["Check indexed pages","Add sitemap","Improve metadata","Improve internal linking","Research Nigerian escrow keywords","Publish SEO blog posts"]},
-    { name:"AI Automation", items:["Automated poster creation","Automated captions","Automated hashtags","Automated videos","Automated posting","Automated content calendar"]},
-    { name:"Content — Educational", items:["WhatsApp scams","Instagram scams","Facebook Marketplace scams","Telegram scams","Online buying tips","Escrow education"]},
-    { name:"Content — Product", items:["Feature videos","Walkthrough videos","Product updates","Behind the scenes","User tutorials"]},
-    { name:"Advertising Research", items:["Research Meta Ads","Research Google Search Ads","Research TikTok Ads","Research YouTube Ads","Study competitors","Research best-performing escrow ads","Build customer personas"]},
-    { name:"Advertising Assets", items:["Landing pages","Video ads","Image ads","Carousel ads","10 ad copies","Install Meta Pixel","Install Google Analytics","Install Microsoft Clarity","Set conversion tracking"]},
-    { name:"Growth", items:["Referral program","Email marketing","Affiliate program","Partnership strategy","Influencer outreach","Campus ambassador program"]},
-    { name:"Analytics", items:["Track users","Track transactions","Track conversions","Track abandoned signups","Weekly growth report"]},
-  ]},
-  { id:"cvg", emoji:"💻", title:"CVG", subs:[
-    { name:"Core", items:["Make CVG fully usable","Fix bugs","Improve UI","Test on mobile","Connect to JKB Global","Start posting about CVG"]},
-  ]},
-  { id:"ceo", emoji:"📈", title:"Weekly CEO Routine", subs:[
-    { name:"Routine", items:["Review analytics","Review AI workflows","Review content performance","Improve one workflow","Improve one landing page","Launch one new feature","Publish at least one case study","Plan next week's content","Follow up with leads","Reach out to potential clients"]},
-  ]},
-];
-
-const STORAGE_KEY = "jkb_checklist_state_v3";
+const STORAGE_KEY = "jkb_checklist_state_v4";
+const LEGACY_KEY = "jkb_checklist_state_v3";
+const OPEN_KEY = "jkb_checklist_open";
 const THEME_KEY = "jkb_checklist_theme";
+const POLL_MS = 4000;
 
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return { data: JSON.parse(JSON.stringify(DEFAULT_DATA)), checked: {}, open: {} };
+function readLocal(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
 }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-let state = loadState();
-if(!state.data || !state.data.length) state.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+function writeLocal(key, val){
+  try{ localStorage.setItem(key, val); }catch(e){}
+}
 
+function loadLocalState(){
+  for(const key of [STORAGE_KEY, LEGACY_KEY]){
+    const raw = readLocal(key);
+    if(!raw) continue;
+    try{ return JKB.normalize(JSON.parse(raw)); }catch(e){}
+  }
+  return JKB.defaultState();
+}
+
+let state = loadLocalState();
+let openSections = {};
+try{ openSections = JSON.parse(readLocal(OPEN_KEY) || "{}"); }catch(e){}
+let serverMode = false;
 let currentGroupId = null; // null = dashboard
 
-function groupStats(group){
-  let done=0, total=0;
-  group.subs.forEach((sub, si) => sub.items.forEach((_, ii) => {
-    total++;
-    if(state.checked[group.id+"::"+si+"::"+ii]) done++;
-  }));
-  return { done, total };
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 }
-function overallStats(){
-  let done=0, total=0;
-  state.data.forEach(g => { const s = groupStats(g); done += s.done; total += s.total; });
-  return { done, total };
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+function setSyncBadge(){
+  const b = document.getElementById("syncBadge");
+  b.textContent = serverMode ? "● SYNCED" : "LOCAL";
+  b.classList.toggle("live", serverMode);
+  b.title = serverMode ? "Shared with Claude via the local server" : "Saved in this browser only";
+}
+
+function render(){
+  renderTabbar();
+  if(currentGroupId===null || !state.projects.some(p => p.id===currentGroupId)){
+    currentGroupId = null;
+    document.getElementById("view-home").classList.add("active");
+    document.getElementById("view-section").classList.remove("active");
+    renderDashboard();
+  } else renderSection(currentGroupId);
+}
+
+// Every change goes through here: applied locally right away, then sent to the server.
+async function dispatch(op){
+  try{ JKB.applyOp(state, op); }
+  catch(e){ toast(e.message); return; }
+  writeLocal(STORAGE_KEY, JSON.stringify(state));
+  render();
+  if(!serverMode) return;
+  try{
+    const r = await fetch("api/op", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(op) });
+    const body = await r.json();
+    if(!r.ok) throw new Error(body.error || "Save failed");
+    state = body.state;
+  }catch(e){
+    toast("Couldn't save to server: " + e.message);
+    await pull(true);
+    return;
+  }
+  writeLocal(STORAGE_KEY, JSON.stringify(state));
+  render();
+}
+
+function isEditing(){
+  const a = document.activeElement;
+  return a && (a.tagName==="INPUT" || a.tagName==="SELECT") && a.value;
+}
+
+// Picks up changes Claude made from the CLI or MCP connector.
+async function pull(force){
+  try{
+    const r = await fetch("api/state", { cache:"no-store" });
+    if(!r.ok) return false;
+    const fresh = await r.json();
+    if(force || fresh.rev !== state.rev){
+      if(!force && isEditing()) return true;
+      state = fresh;
+      writeLocal(STORAGE_KEY, JSON.stringify(state));
+      render();
+    }
+    return true;
+  }catch(e){ return false; }
 }
 
 const CIRC = 2 * Math.PI * 32;
@@ -376,10 +426,10 @@ function renderTabbar(){
   homeBtn.addEventListener("click", () => showView(null));
   bar.appendChild(homeBtn);
 
-  state.data.forEach(g => {
+  state.projects.forEach(g => {
     const b = document.createElement("button");
     b.className = "tab-btn" + (currentGroupId===g.id ? " active" : "");
-    b.innerHTML = `<div class="ic">${g.emoji}</div><div>${g.title.split(" ")[0]}</div>`;
+    b.innerHTML = `<div class="ic">${esc(g.emoji)}</div><div>${esc(g.title.split(" ")[0])}</div>`;
     b.addEventListener("click", () => showView(g.id));
     bar.appendChild(b);
   });
@@ -389,14 +439,12 @@ function showView(groupId){
   currentGroupId = groupId;
   document.getElementById("view-home").classList.toggle("active", groupId===null);
   document.getElementById("view-section").classList.toggle("active", groupId!==null);
-  renderTabbar();
-  if(groupId===null){ renderDashboard(); }
-  else{ renderSection(groupId); }
+  render();
   window.scrollTo(0,0);
 }
 
 function renderDashboard(){
-  const o = overallStats();
+  const o = JKB.stats(state);
   const pct = o.total ? Math.round(o.done/o.total*100) : 0;
   document.getElementById("heroCount").textContent = o.done + " / " + o.total;
   document.getElementById("heroPct").textContent = pct + "%";
@@ -405,21 +453,21 @@ function renderDashboard(){
 
   const grid = document.getElementById("sectionGrid");
   grid.innerHTML = "";
-  state.data.forEach(g => {
-    const s = groupStats(g);
+  state.projects.forEach(g => {
+    const s = JKB.projectStats(g);
     const gp = s.total ? Math.round(s.done/s.total*100) : 0;
     const card = document.createElement("div");
     card.className = "sec-card";
     card.innerHTML = `
       <div class="row">
-        <div class="emoji">${g.emoji}</div>
+        <div class="emoji">${esc(g.emoji)}</div>
         <svg width="34" height="34" viewBox="0 0 76 76">
           <circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="9"/>
           <circle cx="38" cy="38" r="32" fill="none" stroke="var(--gold)" stroke-width="9"
             stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC - (gp/100)*CIRC}" transform="rotate(-90 38 38)"/>
         </svg>
       </div>
-      <div class="title">${g.title}</div>
+      <div class="title">${esc(g.title)}</div>
       <div class="count">${s.done}/${s.total} · ${gp}%</div>
     `;
     card.addEventListener("click", () => showView(g.id));
@@ -428,32 +476,30 @@ function renderDashboard(){
 }
 
 function renderSection(groupId){
-  const group = state.data.find(g => g.id === groupId);
+  const group = state.projects.find(g => g.id === groupId);
   if(!group) return;
   document.getElementById("secEmoji").textContent = group.emoji;
   document.getElementById("secTitle").textContent = group.title;
-  const s = groupStats(group);
+  const s = JKB.projectStats(group);
   document.getElementById("secBreadcrumb").textContent = s.done + " of " + s.total + " tasks complete";
 
   const body = document.getElementById("secBody");
   body.innerHTML = "";
 
-  group.subs.forEach((sub, subIdx) => {
-    let done=0;
-    sub.items.forEach((_, ii) => { if(state.checked[group.id+"::"+subIdx+"::"+ii]) done++; });
-    const total = sub.items.length;
+  group.sections.forEach(sub => {
+    const { done, total } = JKB.sectionStats(sub);
     const pct = total ? (done/total*100) : 0;
 
     const card = document.createElement("div");
-    card.className = "sub-card" + (state.open[group.id+"::"+subIdx] ? " open" : "");
+    card.className = "sub-card" + (openSections[sub.id] ? " open" : "");
 
     const head = document.createElement("div");
     head.className = "sub-head";
-    head.innerHTML = `<div class="name">${sub.name}</div><div class="meta"><div class="frac">${done}/${total}</div><div class="chev">▸</div></div>`;
+    head.innerHTML = `<div class="name">${esc(sub.name)}</div><div class="meta"><div class="frac">${done}/${total}</div><div class="chev">▸</div></div>`;
     head.addEventListener("click", () => {
-      const key = group.id+"::"+subIdx;
-      state.open[key] = !state.open[key];
-      saveState(); renderSection(groupId);
+      openSections[sub.id] = !openSections[sub.id];
+      writeLocal(OPEN_KEY, JSON.stringify(openSections));
+      card.classList.toggle("open", !!openSections[sub.id]);
     });
 
     const progress = document.createElement("div");
@@ -470,23 +516,18 @@ function renderSection(groupId){
       sbody.appendChild(e);
     }
 
-    sub.items.forEach((itemName, itemIdx) => {
-      const key = group.id+"::"+subIdx+"::"+itemIdx;
-      const isDone = !!state.checked[key];
+    sub.tasks.forEach(task => {
       const taskEl = document.createElement("div");
-      taskEl.className = "task" + (isDone ? " done" : "");
+      taskEl.className = "task" + (task.done ? " done" : "");
 
       const check = document.createElement("div");
-      check.className = "check" + (isDone ? " done" : "");
+      check.className = "check" + (task.done ? " done" : "");
       check.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#1a1305" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      check.addEventListener("click", () => {
-        state.checked[key] = !isDone;
-        saveState(); renderSection(groupId);
-      });
+      check.addEventListener("click", () => dispatch({ type:"setDone", taskId: task.id, done: !task.done }));
 
       const label = document.createElement("div");
       label.className = "task-label";
-      label.textContent = itemName;
+      label.textContent = task.text;
       label.addEventListener("click", () => check.click());
 
       const actions = document.createElement("div");
@@ -498,16 +539,22 @@ function renderSection(groupId){
         e.stopPropagation();
         const input = document.createElement("input");
         input.className = "task-edit";
-        input.value = itemName;
+        input.value = task.text;
         taskEl.replaceChild(input, label);
         actions.style.display = "none";
         input.focus(); input.select();
+        let finished = false;
         const commit = () => {
+          if(finished) return;
+          finished = true;
           const val = input.value.trim();
-          if(val) sub.items[itemIdx] = val;
-          saveState(); renderSection(groupId);
+          if(val && val !== task.text) dispatch({ type:"editTask", taskId: task.id, text: val });
+          else render();
         };
-        input.addEventListener("keydown", ev => { if(ev.key==="Enter") commit(); if(ev.key==="Escape") renderSection(groupId); });
+        input.addEventListener("keydown", ev => {
+          if(ev.key==="Enter") commit();
+          if(ev.key==="Escape"){ finished = true; render(); }
+        });
         input.addEventListener("blur", commit);
       });
       const delBtn = document.createElement("span");
@@ -515,9 +562,7 @@ function renderSection(groupId){
       delBtn.textContent = "Delete";
       delBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        sub.items.splice(itemIdx,1);
-        delete state.checked[key];
-        saveState(); renderSection(groupId);
+        dispatch({ type:"deleteTask", taskId: task.id });
       });
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
@@ -537,9 +582,8 @@ function renderSection(groupId){
     const addFn = () => {
       const val = input.value.trim();
       if(!val) return;
-      sub.items.push(val);
       input.value = "";
-      saveState(); renderSection(groupId);
+      dispatch({ type:"addTask", id: newId(), project: group.id, section: sub.id, text: val });
     };
     btn.addEventListener("click", addFn);
     input.addEventListener("keydown", e => { if(e.key==="Enter") addFn(); });
@@ -553,8 +597,7 @@ function renderSection(groupId){
     delSub.textContent = "remove this section ✕";
     delSub.addEventListener("click", () => {
       if(confirm('Remove "'+sub.name+'" and its tasks?')){
-        group.subs.splice(subIdx,1);
-        saveState(); renderSection(groupId);
+        dispatch({ type:"removeSection", project: group.id, section: sub.id });
       }
     });
     delRow.appendChild(delSub);
@@ -567,23 +610,29 @@ function renderSection(groupId){
   });
 }
 
+// The browser picks ids for new items so the server stores the same ones.
+function newId(){
+  return Math.random().toString(36).slice(2, 8).padEnd(6, "0");
+}
+
 document.getElementById("addSubBtn").addEventListener("click", () => {
-  const group = state.data.find(g => g.id === currentGroupId);
+  const group = state.projects.find(g => g.id === currentGroupId);
   if(!group) return;
   const name = prompt("New section name:");
   if(!name) return;
-  group.subs.push({ name, items: [] });
-  state.open[group.id+"::"+(group.subs.length-1)] = true;
-  saveState(); renderSection(currentGroupId);
+  const id = newId();
+  openSections[id] = true;
+  writeLocal(OPEN_KEY, JSON.stringify(openSections));
+  dispatch({ type:"addSection", id, project: group.id, name });
 });
 
 // ---------- theme ----------
 function applyTheme(mode){
   document.body.classList.toggle("light", mode==="light");
   document.getElementById("themeToggle").textContent = mode==="light" ? "☾" : "☀";
-  localStorage.setItem(THEME_KEY, mode);
+  writeLocal(THEME_KEY, mode);
 }
-let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
+let currentTheme = readLocal(THEME_KEY) || "dark";
 applyTheme(currentTheme);
 document.getElementById("themeToggle").addEventListener("click", () => {
   currentTheme = currentTheme==="dark" ? "light" : "dark";
@@ -596,7 +645,7 @@ const addSheet = document.getElementById("addSheet");
 function openSheet(){
   const groupSel = document.getElementById("sheetGroup");
   groupSel.innerHTML = "";
-  state.data.forEach(g => {
+  state.projects.forEach(g => {
     const o = document.createElement("option");
     o.value = g.id; o.textContent = g.emoji + " " + g.title;
     groupSel.appendChild(o);
@@ -611,12 +660,12 @@ function openSheet(){
 function populateSubSelect(){
   const groupSel = document.getElementById("sheetGroup");
   const subSel = document.getElementById("sheetSub");
-  const group = state.data.find(g => g.id === groupSel.value);
+  const group = state.projects.find(g => g.id === groupSel.value);
   subSel.innerHTML = "";
   if(group){
-    group.subs.forEach((s, i) => {
+    group.sections.forEach(s => {
       const o = document.createElement("option");
-      o.value = i; o.textContent = s.name;
+      o.value = s.id; o.textContent = s.name;
       subSel.appendChild(o);
     });
   }
@@ -629,17 +678,13 @@ document.getElementById("fabBtn").addEventListener("click", openSheet);
 sheetOverlay.addEventListener("click", closeSheet);
 document.getElementById("sheetSubmit").addEventListener("click", () => {
   const groupId = document.getElementById("sheetGroup").value;
-  const subIdx = parseInt(document.getElementById("sheetSub").value, 10);
+  const sectionId = document.getElementById("sheetSub").value;
   const text = document.getElementById("sheetTaskInput").value.trim();
-  if(!text) return;
-  const group = state.data.find(g => g.id === groupId);
-  if(group && group.subs[subIdx]){
-    group.subs[subIdx].items.push(text);
-    saveState();
-    closeSheet();
-    if(currentGroupId === groupId) renderSection(groupId);
-    else showView(groupId);
-  }
+  if(!text || !sectionId) return;
+  document.getElementById("sheetTaskInput").value = "";
+  closeSheet();
+  currentGroupId = groupId;
+  dispatch({ type:"addTask", id: newId(), project: groupId, section: sectionId, text });
 });
 
 // ---------- drawer menu ----------
@@ -647,22 +692,19 @@ const drawer = document.getElementById("drawer");
 document.getElementById("menuBtn").addEventListener("click", () => drawer.classList.add("show"));
 document.getElementById("drawerClose").addEventListener("click", () => drawer.classList.remove("show"));
 document.getElementById("menuReset").addEventListener("click", () => {
-  if(confirm("Uncheck everything? Tasks themselves stay.")){
-    state.checked = {};
-    saveState();
-    if(currentGroupId===null) renderDashboard(); else renderSection(currentGroupId);
-  }
+  if(confirm("Uncheck everything? Tasks themselves stay.")) dispatch({ type:"resetChecks" });
   drawer.classList.remove("show");
 });
 document.getElementById("menuAddGroup").addEventListener("click", () => {
   const name = prompt("New project name:");
-  if(!name){ drawer.classList.remove("show"); return; }
-  const id = "custom_"+Date.now();
-  state.data.push({ id, emoji:"📌", title:name, subs:[{name:"General", items:[]}] });
-  saveState();
-  renderTabbar();
-  showView(id);
   drawer.classList.remove("show");
+  if(!name) return;
+  const id = "p_" + newId(), sectionId = newId();
+  currentGroupId = id;
+  openSections[sectionId] = true;
+  writeLocal(OPEN_KEY, JSON.stringify(openSections));
+  dispatch({ type:"addProject", id, sectionId, title: name });
+  window.scrollTo(0,0);
 });
 document.getElementById("menuExport").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
@@ -677,23 +719,46 @@ document.getElementById("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = (ev) => {
-    try{
-      const parsed = JSON.parse(ev.target.result);
-      if(parsed && parsed.data){
-        state = parsed;
-        saveState();
-        showView(null);
-        alert("Backup imported.");
-      } else alert("Not a valid backup file.");
-    }catch(err){ alert("Couldn't read that file."); }
+  reader.onload = async (ev) => {
     drawer.classList.remove("show");
+    try{
+      const parsed = JKB.normalize(JSON.parse(ev.target.result));
+      currentGroupId = null;
+      await dispatch({ type:"importState", state: parsed });
+      alert("Backup imported.");
+    }catch(err){ alert("Couldn't read that file: " + err.message); }
+    e.target.value = "";
   };
   reader.readAsText(file);
 });
 
-renderTabbar();
-renderDashboard();
+// ---------- boot ----------
+(async function boot(){
+  render();
+  if(location.protocol.startsWith("http")){
+    const hadLocal = !!(readLocal(STORAGE_KEY) || readLocal(LEGACY_KEY));
+    let fresh = null;
+    try{
+      const r = await fetch("api/state", { cache:"no-store" });
+      if(r.ok) fresh = await r.json();
+    }catch(e){}
+    serverMode = !!fresh;
+    if(serverMode){
+      if(fresh.rev === 0 && hadLocal){
+        // First run against the server: carry over progress saved in this browser.
+        await dispatch({ type:"importState", state });
+        toast("Moved your browser checklist to the shared file");
+      } else {
+        state = fresh;
+        writeLocal(STORAGE_KEY, JSON.stringify(state));
+        render();
+      }
+      setInterval(() => { if(!document.hidden) pull(false); }, POLL_MS);
+      document.addEventListener("visibilitychange", () => { if(!document.hidden) pull(false); });
+    }
+  }
+  setSyncBadge();
+})();
 </script>
 </body>
 </html>

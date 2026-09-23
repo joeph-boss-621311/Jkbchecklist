@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jkb-checklist": {
+      "command": "node",
+      "args": ["mcp.js"]
+    }
+  }
+}
