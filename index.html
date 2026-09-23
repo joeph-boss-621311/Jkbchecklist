@@ -326,6 +326,22 @@ function streak(){
   return n;
 }
 
+// check-ins Claude will run on a schedule (picked up by the JKB scheduler routine)
+function upcomingCheckins(){
+  return (state.checkins || []).filter(c => (c.status === "pending" || c.status === "scheduled") && new Date(c.at).getTime() > Date.now() - 3600000)
+    .sort((a, b) => a.at.localeCompare(b.at));
+}
+function cancelCheckin(c){
+  // never scheduled yet → just drop it; scheduled → the scheduler deletes the routine, then removes it
+  if(c.status === "pending") state.checkins.splice(state.checkins.indexOf(c), 1);
+  else c.status = "cancel";
+}
+function fmtWhen(iso){
+  const d = new Date(iso);
+  const day = dayStr(d) === dayStr() ? "today" : dayStr(d) === addDays(dayStr(), 1) ? "tomorrow" : d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric" });
+  return day + " " + d.toLocaleTimeString(undefined, { hour:"numeric", minute:"2-digit" });
+}
+
 // ---------- saving: this device + cloud (claude.ai) ----------
 const runtime = window.claude && typeof window.claude.use === "function" ? window.claude : null;
 let stateRef = null, coachRef = null, lastStateSave = 0, lastCoachSave = 0;
@@ -446,6 +462,11 @@ function renderToday(){
     </div>
     <div class="label">Today's focus</div>
     <div class="card">${focus.length ? focus.map(x => taskRow(x, { showWhere:true })).join("") : `<div class="empty">No focus set yet — hit “Plan my day”.</div>`}</div>
+    <div class="label">Check-ins</div>
+    <div class="card">
+      ${upcomingCheckins().map(c => `<div class="task"><div class="t-main"><div class="t-text">⏰ ${esc(fmtWhen(c.at))}</div><div class="t-meta"><span>${esc(c.about)}</span>${c.status === "pending" ? `<span class="chip">queued</span>` : ""}</div></div><button class="link-btn" data-act="cancelCheckin" data-id="${esc(c.id)}" aria-label="Cancel">✕</button></div>`).join("")}
+      <div class="task"><div class="t-main"><div class="t-text">Daily · 8:00 AM plan &amp; 8:00 PM review</div><div class="t-meta"><span>Ask Coach for extra check-ins anytime</span></div></div></div>
+    </div>
     ${overdue.length ? `<div class="label">Overdue</div><div class="card">${overdue.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
     ${soon.length ? `<div class="label">Due soon</div><div class="card">${soon.slice(0, 6).map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
   `;
@@ -518,6 +539,7 @@ const CHIPS = [
   ["Plan my day", "Plan my day."],
   ["What's next?", "What should I work on right now?"],
   ["Check in", "Check in: "],
+  ["Check on me at…", "Check on me at "],
   ["Review my week", "Review my week — what did I get done, what am I avoiding, and what should change next week?"],
 ];
 function render(){
@@ -553,7 +575,11 @@ Action shapes:
 {"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null"}   (include only fields that change)
 {"type":"delete","id":"t12"}
 {"type":"focus","ids":["t12","t40"],"note":"one or two sentences for today"}
-Use "actions":[] when nothing should change. Only use ids from the task list.`;
+{"type":"checkin","at":"YYYY-MM-DDTHH:MM","about":"what to check on"}   (his local time)
+{"type":"cancel_checkin","id":"c5"}
+Use "actions":[] when nothing should change. Only use ids from the task list.
+
+Check-ins: you already ping his phone every day at 8am (plan) and 8pm (review). When he asks you to check on him — or when a deadline or a slipping task deserves it — schedule extra check-ins with "checkin". The scheduler picks new ones up every 2 hours between 9am and 7pm, so set them at least 2 hours out and tell him when you'll ping. Cancel or move them when he asks (moving = cancel + new).`;
 
 function buildContext(){
   const today = dayStr(), now = new Date();
@@ -571,6 +597,7 @@ function buildContext(){
 NOW: ${now.toLocaleDateString("en-US", { weekday:"long" })} ${today}, ${now.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" })}
 Streak: ${streak()} day(s). Tasks completed per day, last 7 days: ${week}
 Today's focus: ${focus}
+Upcoming check-ins: ${upcomingCheckins().map(c => `${c.id} at ${fmtWhen(c.at)} — ${c.about}`).join("; ") || "none besides the daily 8am/8pm"}
 
 Projects:
 ${state.projects.map(p => `${p.id} = ${p.emoji} ${p.title} [sections: ${p.sections.map(s => s.name).join(" | ")}]`).join("\n")}
@@ -614,6 +641,20 @@ function applyActions(actions){
       case "delete":
         if(x){ x.s.tasks.splice(x.s.tasks.indexOf(x.t), 1); removeFocus(x.t.id); changes.push("🗑 Deleted: " + x.t.text); }
         break;
+      case "checkin": {
+        const when = typeof a.at === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(a.at) ? new Date(a.at.slice(0, 16)) : null;
+        if(!when || isNaN(when) || when.getTime() < Date.now()) break;
+        if(!Array.isArray(state.checkins)) state.checkins = [];
+        const c = { id:newId("c"), at:when.toISOString(), about:String(a.about || "Check in").trim().slice(0, 140), status:"pending", createdAt:Date.now() };
+        state.checkins.push(c);
+        changes.push("⏰ Check-in " + fmtWhen(c.at) + ": " + c.about);
+        break;
+      }
+      case "cancel_checkin": {
+        const c = (state.checkins || []).find(q => q.id === String(a.id));
+        if(c && c.status !== "cancel" && c.status !== "done"){ cancelCheckin(c); changes.push("✕ Cancelled check-in: " + c.about); }
+        break;
+      }
       case "focus": {
         const ids = (Array.isArray(a.ids) ? a.ids : []).map(String).filter(id => findTask(id));
         if(ids.length){
@@ -731,7 +772,7 @@ $("#chips").addEventListener("click", (e) => {
   const b = e.target.closest("[data-q]");
   if(!b) return;
   const q = b.dataset.q;
-  if(q.endsWith(": ")){ $("#input").value = q; $("#input").focus(); autoGrow(); }
+  if(q.endsWith(": ") || q.endsWith(" at ")){ $("#input").value = q; $("#input").focus(); autoGrow(); }
   else askCoach(q);
 });
 
@@ -827,6 +868,11 @@ document.addEventListener("click", (e) => {
     lastUndo = null;
     save(); saveCoach(); render();
     toast("Changes undone");
+  }
+  else if(act === "cancelCheckin"){
+    const c = (state.checkins || []).find(q => q.id === el.dataset.id);
+    if(!c || !confirm("Cancel this check-in?")) return;
+    cancelCheckin(c); save(); render(); toast("Check-in cancelled");
   }
   else if(act === "openProject"){ ui.project = el.dataset.id; render(); window.scrollTo(0, 0); }
   else if(act === "backProjects"){ ui.project = null; render(); }
