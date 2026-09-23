@@ -280,11 +280,14 @@
   .chips::-webkit-scrollbar{ display:none; }
   .qchip{ flex-shrink:0; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:7px 12px; font-size:0.76rem; cursor:pointer; }
   .compose-row{ display:flex; gap:8px; align-items:flex-end; }
-  .compose-row textarea{ flex:1; min-height:46px; max-height:140px; background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:16px; padding:12px 13px; font-size:16px; resize:none; }
-  .compose-row textarea:focus{ outline:none; border-color:var(--gold); }
+  .compose-box{ flex:1; min-width:0; display:flex; align-items:flex-end; gap:2px; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:5px 6px; }
+  .compose-box:focus-within{ border-color:var(--gold); }
+  .compose-box textarea{ flex:1; min-width:0; min-height:36px; max-height:140px; background:transparent; border:none; color:var(--text); padding:8px 6px; font-size:16px; resize:none; }
+  .compose-box textarea:focus{ outline:none; }
+  .icon-inline{ width:36px; height:36px; border-radius:50%; border:none; background:transparent; color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .icon-inline:hover, .icon-inline:active{ background:var(--card-2); color:var(--gold); }
+  .icon-inline .ico{ width:19px; height:19px; }
   .round{ width:46px; height:46px; border-radius:50%; border:none; background:var(--grad); color:var(--on-gold); font-size:1.05rem; cursor:pointer; flex-shrink:0; }
-  .round.alt{ background:var(--card); color:var(--gold); border:1.5px solid var(--gold); }
-  .round.live{ background:var(--danger); color:#fff; border-color:var(--danger); }
   .round:disabled{ opacity:0.5; }
   .compose-hint{ font-size:0.72rem; color:var(--text-dim); margin-top:6px; min-height:1em; }
 
@@ -412,9 +415,10 @@
     <div class="chips" id="chips"></div>
     <div class="img-preview" id="imgPreview" hidden></div>
     <div class="compose-row">
-      <button class="round alt" id="attachBtn" aria-label="Attach a photo"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button class="round alt" id="micBtn" aria-label="Dictate"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <textarea id="input" rows="1" placeholder="Tell Atlas what you did or need to do…"></textarea>
+      <div class="compose-box">
+        <button class="icon-inline" id="attachBtn" aria-label="Attach a photo"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <textarea id="input" rows="1" placeholder="Tell Atlas what you did or need to do…"></textarea>
+      </div>
       <button class="round" id="sendBtn" aria-label="Send"><svg class="ico" viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg></button>
     </div>
     <input type="file" id="imgInput" accept="image/*" hidden>
@@ -1174,7 +1178,6 @@ let pendingImage = null, pendingImageUrl = null, imagesAvailable = false;
 // ---------- read a message aloud (the device's own voice — free, no key, no network) ----------
 const ICO_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z" fill="currentColor" stroke="none"/></svg>';
 const ICO_STOP = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></svg>';
-const ICO_MIC = '<svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 const SPARK = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/></svg>';
 const HEADPHONES = '<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;flex-shrink:0"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg>';
 const STOPWATCH_ICO = '<svg class="ico" viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;flex-shrink:0"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M10 2h4"/></svg>';
@@ -1617,57 +1620,10 @@ function talkSheet(){
     <div class="btn-row"><a class="btn" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none" data-act="closeSheet">Start voice chat ↗</a></div>`);
 }
 
-// ===================================================================
-// dictation in the composer (works where the browser allows the mic)
-// ===================================================================
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, listening = false, micBlocked = false;
-function micAllowed(){
-  if(!SR) return false;
-  const policy = document.permissionsPolicy || document.featurePolicy;
-  if(policy && typeof policy.allowsFeature === "function" && !policy.allowsFeature("microphone")) return false;
-  return true;
-}
-function keyboardDictation(){
-  micBlocked = true;
-  $("#micBtn").classList.remove("live");
-  $("#hint").innerHTML = `Press the <b>mic key on your keyboard</b> to dictate — or <a href="#" data-act="talk">talk live</a> on JKB Voice.`;
-  $("#input").focus();
-}
-function startRec(){
-  rec = new SR();
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.lang = navigator.language || "en-US";
-  rec.onresult = (e) => {
-    let interim = "";
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      const r = e.results[i];
-      if(r.isFinal){ const c = r[0].transcript.trim(); if(c){ const inp = $("#input"); inp.value = (inp.value.trim() ? inp.value.trim() + " " : "") + c + "."; autoGrow(); } }
-      else interim += r[0].transcript;
-    }
-    $("#hint").textContent = interim ? "… " + interim : "Listening — tap the mic to stop.";
-  };
-  rec.onerror = (e) => { if(["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)){ listening = false; keyboardDictation(); } };
-  rec.onend = () => {
-    if(listening){ try{ rec.start(); }catch(err){ listening = false; } }
-    if(!listening){ $("#micBtn").classList.remove("live"); $("#micBtn").innerHTML = ICO_MIC; if(!micBlocked) $("#hint").textContent = ""; }
-  };
-  listening = true;
-  rec.start();
-  $("#micBtn").classList.add("live");
-  $("#micBtn").innerHTML = ICO_STOP;
-  $("#hint").textContent = "Listening — tap the mic to stop.";
-}
-function stopRec(){ listening = false; if(rec){ try{ rec.stop(); }catch(e){} } }
-$("#micBtn").addEventListener("click", () => {
-  if(micBlocked || !micAllowed()) return keyboardDictation();
-  listening ? stopRec() : startRec();
-});
 function autoGrow(){ const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; }
 $("#input").addEventListener("input", autoGrow);
 $("#input").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey && !("ontouchstart" in window)){ e.preventDefault(); send(); } });
-function send(){ stopRec(); const v = $("#input").value; const img = pendingImage; $("#input").value = ""; autoGrow(); if(!micBlocked) $("#hint").textContent = ""; clearPendingImage(); askCoach(v, img); }
+function send(){ const v = $("#input").value; const img = pendingImage; $("#input").value = ""; autoGrow(); $("#hint").textContent = ""; clearPendingImage(); askCoach(v, img); }
 $("#sendBtn").addEventListener("click", send);
 $("#chips").addEventListener("click", (e) => {
   const b = e.target.closest("[data-q]");
