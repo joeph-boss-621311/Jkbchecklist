@@ -69,3 +69,37 @@ test("status reports overdue and bad input is rejected", () => {
   assert.throws(() => T.addTask(s, { project: "jkb", text: "x", due: "next friday" }), /Due date/);
   assert.throws(() => T.validate({ data: [] }), /v:2/);
 });
+
+test("tags are normalized, deduped and capped on add and edit", () => {
+  const s = fixture();
+  const r = T.addTask(s, { project: "jkb", section: "seo", text: "Talk to designer", tags: ["Client", "#Client", " URGENT ", "a", "b", "c", "d", "e", "f", "g"] });
+  assert.deepStrictEqual(r.added.tags, ["client", "urgent", "a", "b", "c", "d", "e", "f"]);
+  const r2 = T.editTask(s, r.added.id, { tags: ["client", "safegate"] });
+  assert.deepStrictEqual(r2.task.tags, ["client", "safegate"]);
+  assert.ok(r2.changed.includes("tags"));
+  const r3 = T.editTask(s, r.added.id, { tags: ["client", "safegate"] });
+  assert.ok(!r3.changed.includes("tags"), "re-setting the same tags is a no-op");
+});
+
+test("search matches tags too", () => {
+  const s = fixture();
+  const { added } = T.addTask(s, { project: "jkb", section: "seo", text: "Chase invoice", tags: ["billing"] });
+  assert.deepStrictEqual(T.search(s, "billing").map(t => t.id), [added.id]);
+});
+
+test("a recurring task's tags carry over to its next occurrence", () => {
+  const s = fixture();
+  const { added } = T.addTask(s, { project: "ceo", section: "routine", text: "Gym", repeat: "daily", tags: ["health"] });
+  const r = T.setDone(s, added.id, true);
+  assert.deepStrictEqual(r.next_occurrence.tags, ["health"]);
+});
+
+test("list() and status() put high priority first, done tasks last, otherwise stable", () => {
+  const s = fixture();
+  const sec = s.projects[0].sections[0]; // Brand & Website: t3 (normal, open), t4 (normal, done)
+  T.addTask(s, { project: "jkb", section: "brand", text: "Urgent fix", priority: "high" });
+  T.addTask(s, { project: "jkb", section: "brand", text: "Someday idea", priority: "low" });
+  const ids = T.list(s, { project: "jkb", section: "brand" })[0].sections[0].tasks.map(t => t.id);
+  // open tasks (high, then the original normal one, then low) before the done one
+  assert.deepStrictEqual(ids, [sec.tasks[2].id, "t3", sec.tasks[3].id, "t4"]);
+});

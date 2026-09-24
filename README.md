@@ -8,10 +8,10 @@ Your checklist, managed by Claude. It plans your day, updates tasks when you tel
 ## Screens
 
 - **Today**: Claude's note, focus ring, streak, focus time, overdue / due today / coming up, check-ins.
-- **Atlas** (the coach): chat with it. It marks tasks done, adds tasks (with due dates, repeats and steps), plans your day, and schedules check-ins. Every change has **Undo**. You can attach a photo (screenshot, handwritten note, whiteboard, receipt) and it reads it. Tap 🎙 to read one of its replies aloud with your device's own voice, or 🎧 to hear it in Atlas's ElevenLabs voice on JKB Voice.
-- **Tasks**: search, filters (Today, This week, Overdue, High, Recurring, No date, Done), project filter, and projects → sections.
+- **Atlas** (the coach): chat with it. It marks tasks done, adds tasks (with due dates, repeats, tags and steps), reorganizes the checklist on its own initiative — new projects, new sections, tags — to keep it matching what you're actually working toward, plans your day, and schedules check-ins. Every change has **Undo**. You can attach a photo (screenshot, handwritten note, whiteboard, receipt) and it reads it. Tap 🎙 to read one of its replies aloud with your device's own voice, or 🎧 to hear it in Atlas's ElevenLabs voice on JKB Voice.
+- **Tasks**: search, filters (Today, This week, Overdue, High, Recurring, No date, Done), project filter, tag filter, and projects → sections. Every list puts open high-priority tasks first, then normal, then low, with done tasks at the bottom.
 - **Progress**: tasks done per day (14 days), focus time per day, best/current streak, neglected projects, the tasks you've spent the most time on.
-- **Task sheet**: priority, due date, repeat (daily / weekdays / weekly / monthly), steps, "Break it down with Claude", and a 15/25/50-minute focus timer.
+- **Task sheet**: priority, due date, repeat (daily / weekdays / weekly / monthly), tags, steps, "Break it down with Claude", and a 15/25/50-minute focus timer.
 
 ## Daily check-ins (Claude routines)
 

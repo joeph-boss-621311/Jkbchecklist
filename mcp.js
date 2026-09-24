@@ -48,15 +48,17 @@ tool("list_tasks", "List tasks with their ids. Filter by project and/or section 
   open_only: z.boolean().optional().describe("Only tasks that are not done"),
 }, ({ project, section, open_only }) => ({ projects: T.list(store.load(), { project, section, openOnly: !!open_only }) }));
 
-tool("search_tasks", "Find tasks whose text (or steps) contains the query.", {
+tool("search_tasks", "Find tasks whose text, steps or tags contain the query.", {
   query: z.string().describe("Text to search for"),
 }, ({ query }) => ({ tasks: T.search(store.load(), query) }));
+
+const tags = z.array(z.string()).optional().describe("Freeform labels, e.g. ['client','safegate']. Lowercased, deduped, max 8.");
 
 tool("add_task", "Add a task. An unknown or missing section puts it in the project's Inbox, like the app does.", {
   project: z.string().describe("Project id, name or prefix"),
   section: z.string().optional().describe("Section name or prefix"),
   text: z.string().describe("The task, short and verb-first"),
-  priority, due, repeat,
+  priority, due, repeat, tags,
   steps: z.array(z.string()).optional().describe("Optional sub-steps"),
   focus: z.boolean().optional().describe("Also add it to today's focus"),
 }, a => store.apply(`add "${a.text}"`, s => T.addTask(s, a)), { writes: true });
@@ -66,10 +68,11 @@ tool("set_task_done", "Mark a task done or not done. Completing a recurring task
   done: z.boolean().optional().describe("Default true"),
 }, ({ task_id, done }) => store.apply(`${done === false ? "undo" : "done"} ${task_id}`, s => T.setDone(s, task_id, done !== false)), { writes: true });
 
-tool("edit_task", "Change a task: text, priority, due date, repeat, today's focus, extra steps, or move it to another project/section.", {
+tool("edit_task", "Change a task: text, priority, due date, repeat, tags, today's focus, extra steps, or move it to another project/section.", {
   task_id: z.string(),
   text: z.string().optional(),
   priority, due, repeat,
+  tags: z.array(z.string()).optional().describe("Replaces the task's tags entirely — pass the full set you want it to have, not just new ones."),
   focus: z.boolean().optional().describe("true adds to today's focus, false removes"),
   add_steps: z.array(z.string()).optional(),
   project: z.string().optional().describe("Move to this project"),
