@@ -1567,7 +1567,9 @@ async function callAtlas(turns, { modelTier, image, imageType } = {}){
   return data;
 }
 function atlasErrorText(e){
-  return /not signed in/i.test(String(e && e.message)) ? "Signed out — reload the page to sign back in."
+  const msg = String((e && e.message) || e || "");
+  return /not signed in/i.test(msg) ? "Signed out — reload the page to sign back in."
+    : msg && msg !== "[object Object]" ? "Atlas error: " + msg.slice(0, 120)
     : "Couldn't reach Atlas. Try again.";
 }
 

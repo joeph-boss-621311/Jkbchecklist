@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
     });
 
     const model = modelTier === "default"
-      ? (Deno.env.get("XAI_MODEL_HEAVY") || "grok-4.1")
-      : (Deno.env.get("XAI_MODEL") || "grok-4.1-fast");
+      ? (Deno.env.get("XAI_MODEL_HEAVY") || "grok-4-1")
+      : (Deno.env.get("XAI_MODEL") || "grok-4-1-fast");
 
     const grokRes = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
