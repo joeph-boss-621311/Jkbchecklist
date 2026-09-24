@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=Geist:wght@400;500;600;700&family=Unbounded:wght@500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   /* ===== Looks: gold (default) · clean · bold — each with dark + light. =====
      Components only ever read these tokens. --gold is "the accent" in every look. */
@@ -446,6 +447,19 @@
   <button class="d-item" id="mImport">Import backup (.json) <span><svg class="ico" viewBox="0 0 24 24"><path d="M12 20V9M7 13l5-5 5 5M5 20h14"/></svg></span></button>
   <button class="d-item" id="mClearChat">Clear chat with Atlas <span><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
   <input type="file" id="importFile" accept="application/json">
+  <h4>Account</h4>
+  <button class="d-item" id="mSignOut">Sign out <span><svg class="ico" viewBox="0 0 24 24"><path d="M9 6H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3M16 7l4 5-4 5M20 12H9"/></svg></span></button>
+</div>
+
+<div class="dlg-back" id="authGate" style="z-index:200" hidden>
+  <div class="dlg" style="max-width:340px">
+    <h4 class="sora" style="font-size:1.3rem;margin-bottom:2px">JKB<span style="color:var(--gold)">.</span> Ops</h4>
+    <p>Sign in to reach your checklist and Atlas.</p>
+    <input type="email" id="authEmail" placeholder="Email" autocomplete="username" style="margin-bottom:10px">
+    <input type="password" id="authPass" placeholder="Password" autocomplete="current-password">
+    <div id="authErr" style="color:var(--danger);font-size:0.82rem;margin-top:10px;min-height:1em"></div>
+    <div class="btn-row" style="margin-top:14px"><button class="btn" id="authGo" style="width:100%">Sign in</button></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -771,14 +785,15 @@ function bestStreak(){
 function focusMinutesOn(day){ return state.sessions.filter(s => dayStr(new Date(s.end)) === day).reduce((a, s) => a + s.min, 0); }
 
 // ===================================================================
-// saving: this device + the claude.ai cloud database
+// saving: this device + Supabase
 // ===================================================================
-const runtime = window.claude && typeof window.claude.use === "function" ? window.claude : null;
-let stateRef = null, coachRef = null, lastStateSave = 0, lastCoachSave = 0;
+const SUPABASE_URL = "https://nbgmegpqxzvgvtqqlvko.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_JTjhzlocGXAOGAeKM30YzA_c4Q2Gjcr";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let authUser = null, lastStateSave = 0, lastCoachSave = 0;
 const writers = { state:{ busy:false, dirty:false }, coach:{ busy:false, dirty:false } };
 function queueWrite(which){
-  const ref = which === "state" ? stateRef : coachRef;
-  if(!ref) return;
+  if(!authUser) return;
   const w = writers[which];
   w.dirty = true;
   if(w.busy) return;
@@ -786,7 +801,9 @@ function queueWrite(which){
   setTimeout(async () => {
     while(w.dirty){
       w.dirty = false;
-      try{ await ref.set(clone(which === "state" ? state : coach)); }catch(e){}
+      const col = which === "state" ? "state" : "coach", at = which === "state" ? "state_saved_at" : "coach_saved_at";
+      const payload = which === "state" ? clone(state) : clone(coach);
+      try{ await sb.from("app_state").upsert({ user_id:authUser.id, [col]:payload, [at]:payload.savedAt }); }catch(e){}
     }
     w.busy = false;
   }, 500);
@@ -800,53 +817,40 @@ function mergeMessages(a, b){
   return [...seen.values()].sort((x, y) => x.ts - y.ts).slice(-40);
 }
 
-async function connectCloud(){
-  if(!runtime) return;
-  let db = null;
-  try{ db = await runtime.use("db"); }catch(e){}
-  if(!db) return;
-  const sRef = db.doc("app/state"), cRef = db.doc("app/coach");
-  try{
-    const snap = await sRef.get();
-    const cloud = snap.exists ? snap.data() : null;
-    if(cloud && cloud.v === 2 && Array.isArray(cloud.projects)){
-      if((cloud.savedAt || 0) >= (state.savedAt || 0)){ state = clone(cloud); normalize(); lastStateSave = state.savedAt || 0; lsSet(LS_STATE, JSON.stringify(state)); }
-      stateRef = sRef;
-      if((state.savedAt || 0) > (cloud.savedAt || 0)) save();
-    } else {
-      try{
-        const old = await db.doc("checklist/main").get();
-        if(old.exists && typeof old.data().state === "string"){
-          const parsed = JSON.parse(old.data().state);
-          if(parsed && parsed.data && parsed.data.length && !lsGet(LS_STATE)) fromOld(parsed);
-        }
-      }catch(e){}
-      normalize();
-      stateRef = sRef;
-      save();
+function applyCloudRow(row){
+  if(!row) return;
+  const cloud = row.state;
+  if(cloud && cloud.v === 2 && Array.isArray(cloud.projects) && (row.state_saved_at || 0) > lastStateSave){
+    state = clone(cloud); normalize(); lastStateSave = row.state_saved_at || 0; lsSet(LS_STATE, JSON.stringify(state)); render();
+  }
+  if(row.coach && Array.isArray(row.coach.messages)){
+    const merged = mergeMessages(coach.messages, row.coach.messages);
+    if(JSON.stringify(merged) !== JSON.stringify(coach.messages)){
+      coach.messages = merged; lastCoachSave = Math.max(lastCoachSave, row.coach_saved_at || 0); lsSet(LS_COACH, JSON.stringify(coach));
+      if(ui.tab === "coach" || ui.tab === "today") render();
     }
-    const cs = await cRef.get();
-    coachRef = cRef;
-    if(cs.exists && Array.isArray(cs.data().messages)){
-      const merged = mergeMessages(coach.messages, cs.data().messages);
-      const changed = JSON.stringify(merged) !== JSON.stringify(cs.data().messages);
+  }
+}
+
+async function connectCloud(){
+  if(!authUser) return;
+  try{
+    const { data: row } = await sb.from("app_state").select("state,state_saved_at,coach,coach_saved_at").eq("user_id", authUser.id).maybeSingle();
+    if(row && row.state && row.state.v === 2 && Array.isArray(row.state.projects)){
+      if((row.state_saved_at || 0) >= (state.savedAt || 0)){ state = clone(row.state); normalize(); lastStateSave = state.savedAt || 0; lsSet(LS_STATE, JSON.stringify(state)); }
+      if((state.savedAt || 0) > (row.state_saved_at || 0)) save();
+    } else { normalize(); save(); }
+    if(row && row.coach && Array.isArray(row.coach.messages)){
+      const merged = mergeMessages(coach.messages, row.coach.messages);
+      const changed = JSON.stringify(merged) !== JSON.stringify(row.coach.messages);
       coach.messages = merged;
-      lastCoachSave = Math.max(lastCoachSave, cs.data().savedAt || 0);
+      lastCoachSave = Math.max(lastCoachSave, row.coach_saved_at || 0);
       if(changed) saveCoach(); else lsSet(LS_COACH, JSON.stringify(coach));
     } else if(coach.messages.length) saveCoach();
     render();
-    sRef.onSnapshot(s => {
-      if(!s.exists || s.metadata.hasPendingWrites) return;
-      const d = s.data();
-      if(d.v === 2 && Array.isArray(d.projects) && (d.savedAt || 0) > lastStateSave){ state = clone(d); normalize(); lastStateSave = d.savedAt || 0; lsSet(LS_STATE, JSON.stringify(state)); render(); }
-    }, () => {});
-    cRef.onSnapshot(s => {
-      if(!s.exists || s.metadata.hasPendingWrites) return;
-      const d = s.data();
-      if(!Array.isArray(d.messages)) return;
-      const merged = mergeMessages(coach.messages, d.messages);
-      if(JSON.stringify(merged) !== JSON.stringify(coach.messages)){ coach.messages = merged; lastCoachSave = Math.max(lastCoachSave, d.savedAt || 0); lsSet(LS_COACH, JSON.stringify(coach)); if(ui.tab === "coach" || ui.tab === "today") render(); }
-    }, () => {});
+    sb.channel("app_state_" + authUser.id)
+      .on("postgres_changes", { event:"UPDATE", schema:"public", table:"app_state", filter:"user_id=eq." + authUser.id }, payload => applyCloudRow(payload.new))
+      .subscribe();
   }catch(e){}
 }
 
@@ -1167,13 +1171,13 @@ function renderStats(){
     </div>`).join("")}</div>
     ${topTasks.length ? `<div class="label">Most focus time</div><div class="card">${topTasks.map(x => taskRow(x, { showWhere:true })).join("")}</div>` : ""}
     <div class="empty" style="text-align:left;padding:14px 4px 6px;font-size:0.76rem">XP: 10 per task (20 if high priority) · 3 per step · 1 per focused minute · 5 per streak day.</div>
-    <button class="btn" style="width:100%;margin-top:6px" data-act="ask" data-q="Review my week — what did I get done, what am I avoiding, and what should change next week?">${SPARK} Ask Claude for a weekly review</button>
+    <button class="btn" style="width:100%;margin-top:6px" data-act="ask" data-q="Review my week — what did I get done, what am I avoiding, and what should change next week?">${SPARK} Ask Atlas for a weekly review</button>
   </div>`;
 }
 
 // ---------- Coach ----------
-let thinking = false, currentCtl = null, lastUndo = null, sampleFn = null, sampleReady = false;
-let pendingImage = null, pendingImageUrl = null, imagesAvailable = false;
+let thinking = false, currentCtl = null, lastUndo = null;
+let pendingImage = null, pendingImageUrl = null;
 
 // ---------- read a message aloud (the device's own voice — free, no key, no network) ----------
 const ICO_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8V4z" fill="currentColor" stroke="none"/></svg>';
@@ -1206,16 +1210,6 @@ function speakMessage(ts, text){
 }
 
 // ---------- photo attachments: Atlas can look at a screenshot, note or whiteboard ----------
-// (routed through Claude's own `sample` capability, not a page fetch — the artifact sandbox
-// blocks the page from calling any outside API directly, which is also why the ElevenLabs
-// voice below runs on the separate JKB Voice page instead of in here.)
-async function checkImageCaps(){
-  const sample = await getSample();
-  if(!sample) return false;
-  try{ const caps = await sample.limits(); imagesAvailable = !!caps.images; }
-  catch(e){ imagesAvailable = false; }
-  return imagesAvailable;
-}
 function downscaleImage(file, maxDim = 160, quality = 0.55){
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -1252,10 +1246,7 @@ function renderImagePreview(){
   box.innerHTML = `<img src="${pendingImageUrl}" alt=""><span>${esc(pendingImage.name || "Photo")}</span><button type="button" id="imgRemove" aria-label="Remove photo">✕</button>`;
   $("#imgRemove").onclick = clearPendingImage;
 }
-$("#attachBtn").addEventListener("click", async () => {
-  if(!(await checkImageCaps())){ toast("Photos aren't available in this view."); return; }
-  $("#imgInput").click();
-});
+$("#attachBtn").addEventListener("click", () => $("#imgInput").click());
 $("#imgInput").addEventListener("change", (e) => {
   const f = e.target.files[0];
   e.target.value = "";
@@ -1283,7 +1274,7 @@ function renderCoach(){
   }).join("");
   const intro = coach.messages.length ? "" : `<div class="msg assistant"><div class="who">${SPARK} Atlas</div>Hey Joseph, I'm Atlas. I run your checklist now. Tell me what you finished, what's new, or ask me to plan your day. I'll update everything and keep you honest.</div>`;
   const think = thinking ? `<div class="msg assistant thinking"><span class="dots"><span></span><span></span><span></span></span>Thinking… <button class="undo" data-act="stop" style="margin:0">Stop</button></div>` : "";
-  const off = sampleReady && !sampleFn ? `<div class="msg assistant"><div class="who">${SPARK} Atlas</div>Atlas runs when this page is open on claude.ai. Your checklist still works here.</div>` : "";
+  const off = "";
   return `<div class="view-in"><div class="coach-top"><div><div class="eyebrow">Your accountability partner</div><div class="h1"><span class="accent">Atlas</span></div></div>
     <button class="btn sm ghost" data-act="talk" style="margin-bottom:18px">${HEADPHONES} Talk live</button></div>
     <div class="chat" id="chat">${intro}${msgs}${think}${off}</div></div>`;
@@ -1568,26 +1559,22 @@ function applyActions(actions){
   return changes;
 }
 
-async function getSample(){
-  if(sampleReady) return sampleFn;
-  if(runtime){ try{ sampleFn = await runtime.use("sample"); }catch(e){ sampleFn = null; } }
-  sampleReady = true;
-  return sampleFn;
+// Atlas runs on Grok (xAI) via a Supabase Edge Function that holds the API key.
+async function callAtlas(turns, { modelTier, image, imageType } = {}){
+  const { data, error } = await sb.functions.invoke("atlas-chat", { body: { turns, modelTier, image, imageType } });
+  if(error) throw error;
+  if(data && data.error) throw new Error(data.error);
+  return data;
 }
-function sampleErrorText(e){
-  const code = e && e.code;
-  return code === "not_granted" ? "Claude access was declined — reload the page to allow it."
-    : code === "rate_limited" ? "You've hit a usage limit. Try again in a bit."
-    : code === "invalid_json" ? "Claude's reply came back garbled. Try again."
-    : "Couldn't reach Claude. Try again.";
+function atlasErrorText(e){
+  return /not signed in/i.test(String(e && e.message)) ? "Signed out — reload the page to sign back in."
+    : "Couldn't reach Atlas. Try again.";
 }
 
 const HEAVY = /plan my day|review my week|plan my week|voice session|break .* into steps/i;
 async function askCoach(text, image){
   text = String(text || "").trim();
   if((!text && !image) || thinking) return;
-  const sample = await getSample();
-  if(!sample){ render(); toast("Open this page on claude.ai to talk to Atlas."); if(image) setPendingImage(image); return; }
   const ts = Date.now();
   const thumb = image ? await downscaleImage(image) : null;
   coach.messages.push({ role:"user", content: text || "Photo", ts, img: thumb || undefined });
@@ -1598,12 +1585,10 @@ async function askCoach(text, image){
 
   const history = coach.messages.slice(-12).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content || "…" }));
   const turns = [{ role:"user", content: buildContext() }, ...history];
-  const ctl = new AbortController();
-  currentCtl = ctl;
   try{
-    const opts = { modelTier: HEAVY.test(text) ? "default" : "quick", cache:false, signal:ctl.signal };
-    if(image) opts.images = image;
-    const res = await sample.json(turns, opts);
+    const opts = { modelTier: HEAVY.test(text) ? "default" : "quick" };
+    if(thumb){ opts.image = thumb.split(",")[1]; opts.imageType = "image/jpeg"; }
+    const res = await callAtlas(turns, opts);
     const before = JSON.stringify(state);
     const changes = applyActions(res && Array.isArray(res.actions) ? res.actions : []);
     const msg = { role:"assistant", content: String((res && res.reply) || "").trim() || "Done.", ts:Date.now(), changes };
@@ -1615,10 +1600,9 @@ async function askCoach(text, image){
     saveCoach();
     $("#input").value = text; autoGrow();
     if(image) setPendingImage(image);
-    if(!e || e.code !== "cancelled") toast(e && e.code === "image_rejected" ? "That photo didn't work — try a different one." : e && e.code === "images_unavailable" ? "Photos aren't available in this view." : sampleErrorText(e));
+    toast(atlasErrorText(e));
   }finally{
     thinking = false;
-    currentCtl = null;
     render();
   }
 }
@@ -1626,20 +1610,20 @@ async function askCoach(text, image){
 // "Break it down" straight from the task sheet
 async function breakDown(id, btn){
   const x = findTask(id);
-  const sample = await getSample();
-  if(!x || !sample){ toast("Open this page on claude.ai to use Claude."); return; }
-  btn.disabled = true; btn.textContent = "Claude is thinking…";
+  if(!x) return;
+  btn.disabled = true; btn.textContent = "Atlas is thinking…";
   try{
-    const res = await sample.json(`Break this task into 3-7 concrete, verb-first steps a busy founder can tick off. Task: "${x.t.text}" (project: ${x.p.title} / ${x.s.name}).${x.t.subtasks && x.t.subtasks.length ? " Existing steps: " + x.t.subtasks.map(z => z.text).join("; ") + ". Only add missing ones." : ""}
-Reply with only JSON: {"steps":["...","..."]}`, { modelTier:"quick" });
+    const prompt = `Break this task into 3-7 concrete, verb-first steps a busy founder can tick off. Task: "${x.t.text}" (project: ${x.p.title} / ${x.s.name}).${x.t.subtasks && x.t.subtasks.length ? " Existing steps: " + x.t.subtasks.map(z => z.text).join("; ") + ". Only add missing ones." : ""}
+Reply with only JSON: {"steps":["...","..."]}`;
+    const res = await callAtlas([{ role:"user", content: prompt }], { modelTier:"quick" });
     const steps = (res && Array.isArray(res.steps) ? res.steps : []).map(z => String(z).trim()).filter(Boolean).slice(0, 10);
     if(steps.length){
       const added = steps.map(z => ({ id:newId("u"), text:z, done:false }));
       x.t.subtasks = (x.t.subtasks || []).concat(added);
       if(draft && draft.id === id) draft.subtasks = draft.subtasks.concat(clone(added)); // keep unsaved edits in the open sheet
       save(); taskSheet(id, { keepFocus:true }); render();
-    } else toast("Claude didn't come up with steps. Try again.");
-  }catch(e){ toast(sampleErrorText(e)); btn.disabled = false; btn.innerHTML = SPARK + " Break it down with Claude"; }
+    } else toast("Atlas didn't come up with steps. Try again.");
+  }catch(e){ toast(atlasErrorText(e)); btn.disabled = false; btn.innerHTML = SPARK + " Break it down with Atlas"; }
 }
 
 // ===================================================================
@@ -1725,7 +1709,7 @@ function taskSheet(id, preset = {}){
     <div class="f-label">Steps ${d.subtasks.length ? `(${d.subtasks.filter(z => z.done).length}/${d.subtasks.length})` : ""}</div>
     <div>${subs}</div>
     <div class="add-row"><input id="fSub" placeholder="Add a step…"><button data-act="subAdd" aria-label="Add step">+</button></div>
-    ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">${SPARK} Break it down with Claude</button>` : ""}
+    ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">${SPARK} Break it down with Atlas</button>` : ""}
     <div class="f-label">Tags</div>
     <div class="filters" style="padding:0 0 4px">${d.tags.map((tag, i) => `<span class="fchip on" data-act="tagDel" data-i="${i}">#${esc(tag)} ✕</span>`).join("") || `<span class="empty" style="padding:2px 2px 4px">No tags yet.</span>`}</div>
     <div class="add-row"><input id="fTag" placeholder="Add a tag…"><button data-act="tagAdd" aria-label="Add tag">+</button></div>
@@ -1945,15 +1929,10 @@ $("#mClearChat").addEventListener("click", async () => {
   if(!(await confirmBox("Clear the chat with Atlas?", "Your tasks stay exactly as they are.", "Clear chat"))) return;
   coach.messages = []; lastUndo = null; saveCoach(); closeDrawer(); render();
 });
-$("#mExport").addEventListener("click", async () => {
+$("#mExport").addEventListener("click", () => {
   const data = JSON.stringify(state, null, 2), filename = "jkb-ops-backup-" + dayStr() + ".json";
-  let downloads = null;
-  if(runtime){ try{ downloads = await runtime.use("downloads"); }catch(e){} }
-  if(downloads){ try{ await downloads.save({ filename, data }); }catch(e){} }
-  else{
-    const url = URL.createObjectURL(new Blob([data], { type:"application/json" }));
-    const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
-  }
+  const url = URL.createObjectURL(new Blob([data], { type:"application/json" }));
+  const a = document.createElement("a"); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
 });
 $("#mImport").addEventListener("click", () => $("#importFile").click());
 $("#importFile").addEventListener("change", (e) => {
@@ -1993,12 +1972,39 @@ $("#settingsBtn").addEventListener("click", settingsSheet);
 $("#lvlBtn").addEventListener("click", () => go("stats"));
 
 // ===================================================================
-// start
+// start — sign in, then load
 // ===================================================================
-loadLocal();
-render();
-connectCloud();
-getSample().then(() => { checkImageCaps(); if(ui.tab === "coach") render(); });
+function showAuthGate(msg){ $("#authGate").hidden = false; if(msg) $("#authErr").textContent = msg; }
+function hideAuthGate(){ $("#authGate").hidden = true; $("#authErr").textContent = ""; }
+async function enterApp(){
+  hideAuthGate();
+  loadLocal();
+  render();
+  connectCloud();
+}
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  authUser = session ? session.user : null;
+  if(!authUser){ showAuthGate(); return; }
+  enterApp();
+}
+$("#authGo").addEventListener("click", async () => {
+  const email = $("#authEmail").value.trim(), pass = $("#authPass").value;
+  if(!email || !pass){ $("#authErr").textContent = "Enter your email and password."; return; }
+  $("#authGo").disabled = true; $("#authGo").textContent = "Signing in…";
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+  $("#authGo").disabled = false; $("#authGo").textContent = "Sign in";
+  if(error){ $("#authErr").textContent = error.message; return; }
+  authUser = data.user;
+  enterApp();
+});
+$("#authPass").addEventListener("keydown", (e) => { if(e.key === "Enter") $("#authGo").click(); });
+$("#mSignOut").addEventListener("click", async () => {
+  closeDrawer();
+  await sb.auth.signOut();
+  location.reload();
+});
+boot();
 </script>
 </body>
 </html>
