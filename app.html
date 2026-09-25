@@ -541,7 +541,7 @@ function md(s){ return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^[
 // Task: { id, text, done, doneAt, priority, due, createdAt, repeat, subtasks:[{id,text,done}], minutes }
 let state = null;
 let coach = { messages: [], savedAt: 0 };
-let ui = { tab:"today", project:null, open:{}, filter:"all", q:"", projFilter:"", tagFilter:"" };
+let ui = { tab:"today", project:null, open:{}, filter:"all", q:"", projFilter:"", tagFilter:"", tasksView:"projects" };
 try{ const u = JSON.parse(lsGet(LS_UI) || "{}"); ui.open = u.open || {}; }catch(e){}
 const saveUi = () => lsSet(LS_UI, JSON.stringify({ open: ui.open }));
 
@@ -601,6 +601,12 @@ function sortForDisplay(tasks){
     (PRIORITY_RANK[a.t.priority] ?? 1) - (PRIORITY_RANK[b.t.priority] ?? 1) ||
     a.i - b.i
   ).map(x => x.t);
+}
+// Same ordering, for {t,p,s} pairs (the schedule view spans projects, so it can't sort raw tasks alone).
+function sortWrapped(items){
+  return items.map((x, i) => ({ x, i })).sort((a, b) =>
+    (PRIORITY_RANK[a.x.t.priority] ?? 1) - (PRIORITY_RANK[b.x.t.priority] ?? 1) || a.i - b.i
+  ).map(o => o.x);
 }
 function repeatLabel(r){ return { daily:"Daily", weekdays:"Weekdays", weekly:"Weekly", monthly:"Monthly" }[r] || ""; }
 function nextDue(from, r){
@@ -1054,6 +1060,11 @@ function renderTasks(){
       ${list.length > shown.length ? `<div class="empty">Showing first ${shown.length}. Narrow it down with search.</div>` : ""}
     </div>`;
   }
+  const viewToggle = `<div class="seg" style="margin:14px 0 4px">
+    <button class="${ui.tasksView !== "schedule" ? "on" : ""}" data-act="tasksView" data-v="projects">By project</button>
+    <button class="${ui.tasksView === "schedule" ? "on" : ""}" data-act="tasksView" data-v="schedule">Schedule</button>
+  </div>`;
+  if(ui.tasksView === "schedule") return `<div class="view-in">${head}${viewToggle}${renderSchedule()}</div>`;
   const cards = state.projects.map(p => {
     const ts = p.sections.flatMap(s => s.tasks);
     const d = ts.filter(t => t.done).length;
@@ -1064,10 +1075,35 @@ function renderTasks(){
       <div class="c">${d}/${ts.length} done${hi ? ` · <span style="color:var(--danger)">${hi} high</span>` : ""}</div><div class="bar"><div style="width:${pct}%"></div></div>
     </button>`;
   }).join("");
-  return `<div class="view-in">${head}
+  return `<div class="view-in">${head}${viewToggle}
     <div class="label">Projects</div>
     <div class="grid">${cards}</div>
     <div style="margin-top:12px"><button class="dashed" data-act="addProject">+ New project</button></div></div>`;
+}
+// Schedule view: the same open tasks, laid out as a day-by-day agenda instead of by project.
+function renderSchedule(){
+  const today = dayStr();
+  const open = allTasks().filter(x => !x.t.done);
+  const overdue = sortWrapped(open.filter(x => x.t.due && daysBetween(today, x.t.due) < 0));
+  const noDate = sortWrapped(open.filter(x => !x.t.due));
+  const dated = open.filter(x => x.t.due && daysBetween(today, x.t.due) >= 0);
+  const byDay = {};
+  dated.forEach(x => (byDay[x.t.due] = byDay[x.t.due] || []).push(x));
+  const days = Object.keys(byDay).sort();
+  const dayLabel = (d) => {
+    const diff = daysBetween(today, d);
+    if(diff === 0) return "Today";
+    if(diff === 1) return "Tomorrow";
+    return parseDay(d).toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
+  };
+  const rows = (items) => items.map(x => taskRow(x, { showWhere:true, play:true })).join("");
+  const day = (label, items, danger) => `<div class="label"${danger ? ' style="color:var(--danger)"' : ""}>${esc(label)}<span class="count">${items.length}</span></div><div class="card">${rows(items)}</div>`;
+  return [
+    overdue.length ? day("Overdue", overdue, true) : "",
+    days.map(d => day(dayLabel(d), sortWrapped(byDay[d]))).join(""),
+    !days.length && !overdue.length ? `<div class="empty"><b>Nothing scheduled</b>Give a task a due date to see it here.</div>` : "",
+    noDate.length ? day("No due date", noDate.slice(0, 40)) : "",
+  ].join("");
 }
 function renderProject(p){
   const secs = p.sections.map(s => {
@@ -1836,6 +1872,7 @@ document.addEventListener("click", async (e) => {
     cancelCheckin(c); save(); render(); toast("Check-in cancelled");
   }
   else if(act === "filter"){ ui.filter = el.dataset.id; ui.project = null; render(); }
+  else if(act === "tasksView"){ ui.tasksView = el.dataset.v; render(); }
   else if(act === "tagFilter"){ ui.tagFilter = ui.tagFilter === el.dataset.tag ? "" : el.dataset.tag; ui.project = null; render(); }
   else if(act === "filterTag"){ ui.tab = "tasks"; ui.project = null; ui.filter = "all"; ui.q = ""; ui.tagFilter = el.dataset.tag; render(); window.scrollTo(0, 0); }
   else if(act === "toggleTable"){ showTables[el.dataset.id] = !showTables[el.dataset.id]; render(); }
