@@ -1743,7 +1743,18 @@ function applyActions(actions){
 async function callAtlas(turns, { modelTier, image, imageType } = {}){
   const googleTok = await getGoogleToken();
   const { data, error } = await sb.functions.invoke("atlas-chat", { body: { turns, modelTier, image, imageType, googleToken: googleTok } });
-  if(error) throw error;
+  if(error){
+    // The Supabase client's error.message is a generic "non-2xx status code" —
+    // the real reason (auth, Grok, rate limit) is in the function's JSON body.
+    let detail = null;
+    if(error.context && typeof error.context.json === "function"){
+      try{
+        const body = await error.context.clone().json();
+        if(body && (body.error || body.detail)) detail = String(body.error || "") + (body.detail ? " — " + String(body.detail).slice(0,200) : "");
+      }catch(_){ /* body wasn't JSON — fall through to generic error */ }
+    }
+    throw detail ? new Error(detail) : error;
+  }
   if(data && data.error) throw new Error(data.error);
   return data;
 }
