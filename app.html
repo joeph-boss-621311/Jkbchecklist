@@ -193,8 +193,9 @@
   .chip.due{ background:var(--gold-soft); color:var(--gold); }
   .chip.over{ background:var(--danger-soft); color:var(--danger); }
   .chip.ok{ background:var(--ok-soft); color:var(--ok); }
-  .chip.tag{ border:1px solid var(--line); background:transparent; cursor:pointer; }
-  .chip.tag:hover{ border-color:var(--gold); color:var(--gold); }
+  .tags-row{ display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+  .chip.tag{ background:var(--card-2); color:var(--text-dim); cursor:pointer; font-weight:600; padding:2px 9px; }
+  .chip.tag:hover, .chip.tag.on{ background:var(--gold-soft); color:var(--gold); }
   .play{ width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card-2); cursor:pointer; flex-shrink:0; font-size:0.72rem; color:var(--gold); }
   .empty{ color:var(--text-dim); font-size:0.86rem; padding:18px 6px; text-align:center; line-height:1.5; }
   .empty b{ color:var(--text); display:block; font-size:0.95rem; margin-bottom:2px; }
@@ -1033,13 +1034,14 @@ function taskRow(x, opts = {}){
   if(t.repeat) chips.push(`<span class="chip">↻ ${repeatLabel(t.repeat)}</span>`);
   if(t.subtasks && t.subtasks.length){ const d = t.subtasks.filter(z => z.done).length; chips.push(`<span class="chip${d === t.subtasks.length ? " ok" : ""}">☰ ${d}/${t.subtasks.length}</span>`); }
   if(t.minutes) chips.push(`<span class="chip">${STOPWATCH_ICO} ${fmtMin(t.minutes)}</span>`);
-  (t.tags || []).forEach(tag => chips.push(`<span class="chip tag" data-act="filterTag" data-tag="${esc(tag)}">#${esc(tag)}</span>`));
   const where = opts.showWhere ? `<span>${esc(p.title)} · ${esc(s.name)}</span>` : "";
   const meta = where || chips.length ? `<div class="t-meta">${where}${chips.join("")}</div>` : "";
+  const tags = (t.tags || []).length
+    ? `<div class="tags-row">${t.tags.map(tag => `<span class="chip tag" data-act="filterTag" data-tag="${esc(tag)}">#${esc(tag)}</span>`).join("")}</div>` : "";
   const play = opts.play && !t.done ? `<button class="play" data-act="quickTimer" data-id="${t.id}" aria-label="Start focus timer">▶</button>` : "";
   return `<div class="task${t.done ? " done" : ""}">
     <button class="check${t.done ? " done" : ""}" data-act="toggle" data-id="${t.id}" aria-label="${t.done ? "Mark not done" : "Mark done"}">${CHECK_SVG}</button>
-    <div class="t-main" data-act="edit" data-id="${t.id}"><div class="t-text">${esc(t.text)}</div>${meta}</div>${play}
+    <div class="t-main" data-act="edit" data-id="${t.id}"><div class="t-text">${esc(t.text)}</div>${meta}${tags}</div>${play}
   </div>`;
 }
 function ringSvg(frac, size = 86, stroke = 9){
@@ -1202,10 +1204,16 @@ function renderSchedule(){
   ].join("");
 }
 function renderProject(p){
+  const projectTags = [...new Set(p.sections.flatMap(s => s.tasks.flatMap(t => t.tags || [])))].sort();
+  const active = ui.tagFilter;
+  const tagBar = projectTags.length
+    ? `<div class="filters">${projectTags.map(tag => `<button class="fchip${active === tag ? " on" : ""}" data-act="tagFilter" data-tag="${esc(tag)}">#${esc(tag)}</button>`).join("")}</div>` : "";
   const secs = p.sections.map(s => {
+    const visible = active ? s.tasks.filter(t => (t.tags || []).includes(active)) : s.tasks;
     const d = s.tasks.filter(t => t.done).length;
     const key = p.id + "/" + s.id;
-    const tasks = sortForDisplay(s.tasks).map(t => taskRow({ t, p, s }, { play:true })).join("") || `<div class="empty">No tasks yet.</div>`;
+    const tasks = sortForDisplay(visible).map(t => taskRow({ t, p, s }, { play:true })).join("")
+      || `<div class="empty">${active ? "No #" + esc(active) + " tasks here." : "No tasks yet."}</div>`;
     return `<div class="sec${ui.open[key] ? " open" : ""}">
       <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${d}/${s.tasks.length}<span class="chev">▸</span></span></button>
       <div class="sec-body">
@@ -1219,6 +1227,7 @@ function renderProject(p){
   return `<div class="view-in"><button class="back" data-act="backProjects">← All projects</button>
     <div class="h1" style="margin-bottom:6px;display:flex;align-items:center;gap:10px">${projectIcon(p, true)} <span class="accent">${esc(p.title)}</span></div>
     <div class="eyebrow" style="margin-bottom:14px">${d} of ${ts.length} done</div>
+    ${tagBar}
     ${secs}
     <button class="dashed" data-act="addSec" data-id="${esc(p.id)}">+ Add section</button>
     <div style="display:flex;justify-content:space-between;margin-top:10px"><button class="link-btn" data-act="renameProject" data-id="${esc(p.id)}">rename project</button><button class="link-btn" data-act="delProject" data-id="${esc(p.id)}">delete project ✕</button></div></div>`;
@@ -1972,8 +1981,8 @@ document.addEventListener("click", async (e) => {
   }
   else if(act === "filter"){ ui.filter = el.dataset.id; ui.project = null; render(); }
   else if(act === "tasksView"){ ui.tasksView = el.dataset.v; render(); }
-  else if(act === "tagFilter"){ ui.tagFilter = ui.tagFilter === el.dataset.tag ? "" : el.dataset.tag; ui.project = null; render(); }
-  else if(act === "filterTag"){ ui.tab = "tasks"; ui.project = null; ui.filter = "all"; ui.q = ""; ui.tagFilter = el.dataset.tag; render(); window.scrollTo(0, 0); }
+  else if(act === "tagFilter"){ ui.tagFilter = ui.tagFilter === el.dataset.tag ? "" : el.dataset.tag; render(); }
+  else if(act === "filterTag"){ ui.tab = "tasks"; ui.filter = "all"; ui.q = ""; ui.tagFilter = el.dataset.tag; render(); window.scrollTo(0, 0); }
   else if(act === "toggleTable"){ showTables[el.dataset.id] = !showTables[el.dataset.id]; render(); }
   else if(act === "openProject"){ ui.project = el.dataset.id; render(); window.scrollTo(0, 0); }
   else if(act === "backProjects"){ ui.project = null; render(); }
