@@ -1241,7 +1241,11 @@ function renderProject(p){
   const active = ui.tagFilter;
   const tagBar = projectTags.length
     ? `<div class="filters">${projectTags.map(tag => `<button class="fchip${active === tag ? " on" : ""}" data-act="tagFilter" data-tag="${esc(tag)}">#${esc(tag)}</button>`).join("")}</div>` : "";
-  const secs = p.sections.map(s => {
+  // Sections with real tasks surface first — empty ones (nothing added yet) sink to the bottom.
+  const orderedSections = p.sections.map((s, i) => ({ s, i })).sort((a, b) =>
+    (a.s.tasks.length ? 0 : 1) - (b.s.tasks.length ? 0 : 1) || a.i - b.i
+  ).map(x => x.s);
+  const secs = orderedSections.map(s => {
     const visible = active ? s.tasks.filter(t => (t.tags || []).includes(active)) : s.tasks;
     const sDone = s.tasks.filter(t => t.done).length;
     const sPct = s.tasks.length ? Math.round(sDone / s.tasks.length * 100) : 0;
