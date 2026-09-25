@@ -210,16 +210,17 @@
   .fchip{ flex-shrink:0; background:var(--card); border:1px solid var(--line); color:var(--text-2); border-radius:20px; padding:7px 13px; font-size:0.78rem; cursor:pointer; font-weight:600; }
   .fchip.on{ background:var(--grad); color:var(--on-gold); border-color:transparent; }
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .p-card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; cursor:pointer; text-align:left; box-shadow:var(--shadow); }
+  .p-card{ --ah:42; background:var(--card); border:1px solid var(--line); border-left:3px solid hsl(var(--ah) 60% 55%); border-radius:14px; padding:14px; cursor:pointer; text-align:left; box-shadow:var(--shadow); }
   .p-card:active{ transform:scale(0.98); }
   .p-mono{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:var(--gold-soft); color:var(--gold); font-family:var(--font-display); font-weight:800; font-size:0.95rem; flex-shrink:0; }
   .p-mono.lg{ width:44px; height:44px; font-size:1.15rem; border-radius:12px; }
-  .p-card .n{ font-weight:700; font-size:0.9rem; margin-top:8px; }
+  .p-ring{ --pct:0; width:46px; height:46px; border-radius:50%; padding:3px; flex-shrink:0; box-sizing:border-box; display:flex; align-items:center; justify-content:center; background:conic-gradient(hsl(var(--ah) 65% 55%) calc(var(--pct) * 1%), var(--card-2) 0); }
+  .p-ring.lg{ width:56px; height:56px; }
+  .p-ring .p-mono{ background:var(--card); width:100%; height:100%; margin:0; border-radius:50%; }
+  .p-card .n{ font-weight:700; font-size:0.9rem; margin-top:10px; }
   .p-card .c{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
-  .bar{ height:5px; background:var(--card-2); border-radius:5px; margin-top:10px; overflow:hidden; }
-  .bar > div{ height:100%; background:var(--grad); border-radius:5px; }
   .back{ background:none; border:none; color:var(--text-dim); font-size:0.85rem; cursor:pointer; padding:4px 0 8px; }
-  .sec{ background:var(--card); border:1px solid var(--line); border-radius:18px; margin-bottom:12px; overflow:hidden; }
+  .sec{ --ah:42; background:var(--card); border:1px solid var(--line); border-left:3px solid hsl(var(--ah) 60% 55%); border-radius:14px; margin-bottom:10px; overflow:hidden; }
   .sec-head{ padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; width:100%; background:none; border:none; text-align:left; }
   .sec-head .n{ font-weight:700; font-size:0.9rem; }
   .sec-head .f{ color:var(--gold); font-size:0.75rem; font-weight:700; display:flex; gap:8px; align-items:center; }
@@ -227,6 +228,8 @@
   .sec.open .chev{ transform:rotate(90deg); }
   .sec-body{ padding:0 14px 12px; display:none; }
   .sec.open .sec-body{ display:block; }
+  .ring-dot{ --pct:0; display:inline-block; width:18px; height:18px; border-radius:50%; position:relative; flex-shrink:0; background:conic-gradient(hsl(var(--ah) 65% 55%) calc(var(--pct) * 1%), var(--card-2) 0); }
+  .ring-dot::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--card); }
   .add-row{ display:flex; gap:8px; padding:10px 0 2px; }
   .add-row input{ flex:1; background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:12px; font-size:16px; min-width:0; }
   .add-row input:focus{ outline:none; border-color:var(--gold); }
@@ -1024,7 +1027,13 @@ function monogram(title){
   const s = (w[0]?.[0] || "?") + (w.length > 1 ? w[1][0] : "");
   return s.toUpperCase();
 }
-function projectIcon(p, big){ return `<div class="p-mono${big ? " lg" : ""}">${esc(monogram(p.title))}</div>`; }
+function hueFor(id){ let h = 0; for(let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360; return h; }
+function projectIcon(p, opts = {}){
+  const big = opts === true || opts.big;
+  const mono = `<div class="p-mono${big ? " lg" : ""}">${esc(monogram(p.title))}</div>`;
+  if(opts.pct == null) return mono;
+  return `<div class="p-ring${big ? " lg" : ""}" style="--pct:${opts.pct}">${mono}</div>`;
+}
 
 function taskRow(x, opts = {}){
   const { t, p, s } = x;
@@ -1168,9 +1177,9 @@ function renderTasks(){
     const d = ts.filter(t => t.done).length;
     const pct = ts.length ? Math.round(d / ts.length * 100) : 0;
     const hi = ts.filter(t => !t.done && t.priority === "high").length;
-    return `<button class="p-card" data-act="openProject" data-id="${esc(p.id)}">
-      ${projectIcon(p)}<div class="n">${esc(p.title)}</div>
-      <div class="c">${d}/${ts.length} done${hi ? ` · <span style="color:var(--danger)">${hi} high</span>` : ""}</div><div class="bar"><div style="width:${pct}%"></div></div>
+    return `<button class="p-card" data-act="openProject" data-id="${esc(p.id)}" style="--ah:${hueFor(p.id)}">
+      ${projectIcon(p, { pct })}<div class="n">${esc(p.title)}</div>
+      <div class="c">${d}/${ts.length} done${hi ? ` · <span style="color:var(--danger)">${hi} high</span>` : ""}</div>
     </button>`;
   }).join("");
   return `<div class="view-in">${head}${viewToggle}
@@ -1204,18 +1213,22 @@ function renderSchedule(){
   ].join("");
 }
 function renderProject(p){
+  const ah = hueFor(p.id);
+  const ts = p.sections.flatMap(s => s.tasks), d = ts.filter(t => t.done).length;
+  const pct = ts.length ? Math.round(d / ts.length * 100) : 0;
   const projectTags = [...new Set(p.sections.flatMap(s => s.tasks.flatMap(t => t.tags || [])))].sort();
   const active = ui.tagFilter;
   const tagBar = projectTags.length
     ? `<div class="filters">${projectTags.map(tag => `<button class="fchip${active === tag ? " on" : ""}" data-act="tagFilter" data-tag="${esc(tag)}">#${esc(tag)}</button>`).join("")}</div>` : "";
   const secs = p.sections.map(s => {
     const visible = active ? s.tasks.filter(t => (t.tags || []).includes(active)) : s.tasks;
-    const d = s.tasks.filter(t => t.done).length;
+    const sDone = s.tasks.filter(t => t.done).length;
+    const sPct = s.tasks.length ? Math.round(sDone / s.tasks.length * 100) : 0;
     const key = p.id + "/" + s.id;
     const tasks = sortForDisplay(visible).map(t => taskRow({ t, p, s }, { play:true })).join("")
       || `<div class="empty">${active ? "No #" + esc(active) + " tasks here." : "No tasks yet."}</div>`;
-    return `<div class="sec${ui.open[key] ? " open" : ""}">
-      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${d}/${s.tasks.length}<span class="chev">▸</span></span></button>
+    return `<div class="sec${ui.open[key] ? " open" : ""}" style="--ah:${ah}">
+      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f"><span class="ring-dot" style="--pct:${sPct}"></span>${sDone}/${s.tasks.length}<span class="chev">▸</span></span></button>
       <div class="sec-body">
         ${tasks}
         <div class="add-row"><input placeholder="Add task…" data-add="${esc(p.id)}|${esc(s.id)}"><button data-act="addTask" data-sec="${esc(p.id)}|${esc(s.id)}" aria-label="Add">+</button></div>
@@ -1223,9 +1236,8 @@ function renderProject(p){
       </div>
     </div>`;
   }).join("");
-  const ts = p.sections.flatMap(s => s.tasks), d = ts.filter(t => t.done).length;
   return `<div class="view-in"><button class="back" data-act="backProjects">← All projects</button>
-    <div class="h1" style="margin-bottom:6px;display:flex;align-items:center;gap:10px">${projectIcon(p, true)} <span class="accent">${esc(p.title)}</span></div>
+    <div class="h1" style="margin-bottom:6px;display:flex;align-items:center;gap:10px;--ah:${ah}">${projectIcon(p, { big:true, pct })} <span class="accent">${esc(p.title)}</span></div>
     <div class="eyebrow" style="margin-bottom:14px">${d} of ${ts.length} done</div>
     ${tagBar}
     ${secs}
