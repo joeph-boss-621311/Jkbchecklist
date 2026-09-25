@@ -1621,8 +1621,7 @@ function applyActions(actions){
       case "add_project": {
         const title = String(a.title || "").trim();
         if(!title) break;
-        const id = "p" + Date.now().toString(36) + Math.floor(Math.random() * 36).toString(36);
-        const p = { id, emoji:String(a.emoji || "").trim().slice(0, 4) || monogram(title), title, sections:[{ id:newId("s"), name:"General", tasks:[] }] };
+        const p = { id:newId("p"), emoji:String(a.emoji || "").trim().slice(0, 4) || monogram(title), title, sections:[{ id:newId("s"), name:"General", tasks:[] }] };
         state.projects.push(p);
         changes.push("New project: " + p.emoji + " " + p.title);
         break;
@@ -2068,8 +2067,7 @@ async function addProject(){
   closeDrawer();
   const title = await askText("New project", "", "e.g. Kopa Store");
   if(!title || !title.trim()) return;
-  const id = "p" + Date.now().toString(36);
-  state.projects.push({ id, emoji: monogram(title), title:title.trim(), sections:[{ id:newId("s"), name:"General", tasks:[] }] });
+  state.projects.push({ id:newId("p"), emoji: monogram(title), title:title.trim(), sections:[{ id:newId("s"), name:"General", tasks:[] }] });
   save();
   ui.tab = "tasks"; ui.project = id;
   closeDrawer();
