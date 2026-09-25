@@ -230,6 +230,9 @@
   .sec.open .sec-body{ display:block; }
   .ring-dot{ --pct:0; display:inline-block; width:18px; height:18px; border-radius:50%; position:relative; flex-shrink:0; background:conic-gradient(hsl(var(--ah) 65% 55%) calc(var(--pct) * 1%), var(--card-2) 0); }
   .ring-dot::after{ content:""; position:absolute; inset:3px; border-radius:50%; background:var(--card); }
+  .sec-empty-tag{ font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-dim); background:var(--card-2); padding:2px 8px; border-radius:20px; }
+  .sec.no-tasks{ opacity:0.6; }
+  .sec.no-tasks.open{ opacity:1; }
   .add-row{ display:flex; gap:8px; padding:10px 0 2px; }
   .add-row input{ flex:1; background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:10px 12px; border-radius:12px; font-size:16px; min-width:0; }
   .add-row input:focus{ outline:none; border-color:var(--gold); }
@@ -330,6 +333,19 @@
   .seg{ display:flex; gap:6px; flex-wrap:wrap; }
   .seg button{ flex:1; min-width:64px; padding:10px 8px; border-radius:12px; border:1px solid var(--line); background:var(--card); font-size:0.8rem; font-weight:600; cursor:pointer; }
   .seg button.on{ background:var(--grad); border-color:transparent; color:var(--on-gold); }
+  .seg.priority button[data-v="high"].on{ background:var(--danger); color:#fff; }
+  .seg.priority button[data-v="low"].on{ background:var(--card-2); color:var(--text); border-color:var(--line); }
+  /* grouped field card — related inputs live in one rounded block with dividers, iOS-settings style */
+  .field-card{ background:var(--card-2); border-radius:16px; overflow:hidden; margin:8px 0 16px; }
+  .field-row{ padding:10px 14px; position:relative; }
+  .field-row + .field-row{ border-top:1px solid var(--line); }
+  .field-row .f-label{ margin:0 0 3px; }
+  .field-card input, .field-card select{ background:none; border:none; padding:0; font-size:16px; color:var(--text); width:100%; }
+  .field-card input:focus, .field-card select:focus{ outline:none; }
+  .field-row.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:0; }
+  .field-row.two-col > div{ padding:10px 14px; }
+  .field-row.two-col > div:first-child{ border-right:1px solid var(--line); }
+  .card-label{ font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; margin:18px 0 6px; }
   .toggle-row{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:0.88rem; }
   .toggle-row input{ width:20px; height:20px; accent-color:var(--gold); }
   .sub-row{ display:flex; align-items:center; gap:10px; padding:8px 0; }
@@ -1227,8 +1243,9 @@ function renderProject(p){
     const key = p.id + "/" + s.id;
     const tasks = sortForDisplay(visible).map(t => taskRow({ t, p, s }, { play:true })).join("")
       || `<div class="empty">${active ? "No #" + esc(active) + " tasks here." : "No tasks yet."}</div>`;
-    return `<div class="sec${ui.open[key] ? " open" : ""}" style="--ah:${ah}">
-      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f"><span class="ring-dot" style="--pct:${sPct}"></span>${sDone}/${s.tasks.length}<span class="chev">▸</span></span></button>
+    const countLabel = s.tasks.length ? `<span class="ring-dot" style="--pct:${sPct}"></span>${sDone}/${s.tasks.length}` : `<span class="sec-empty-tag">Empty</span>`;
+    return `<div class="sec${ui.open[key] ? " open" : ""}${s.tasks.length ? "" : " no-tasks"}" style="--ah:${ah}">
+      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${countLabel}<span class="chev">▸</span></span></button>
       <div class="sec-body">
         ${tasks}
         <div class="add-row"><input placeholder="Add task…" data-add="${esc(p.id)}|${esc(s.id)}"><button data-act="addTask" data-sec="${esc(p.id)}|${esc(s.id)}" aria-label="Add">+</button></div>
@@ -1853,25 +1870,28 @@ function taskSheet(id, preset = {}){
   const subs = d.subtasks.map((st, i) => `<div class="sub-row${st.done ? " done" : ""}"><button class="check${st.done ? " done" : ""}" data-act="subToggle" data-i="${i}" aria-label="Toggle step">${CHECK_SVG}</button><span>${esc(st.text)}</span><button class="x" data-act="subDel" data-i="${i}" aria-label="Remove step">✕</button></div>`).join("");
   openSheet(`
     <h3>${x ? "Edit task" : "New task"}</h3>
-    <div class="f-label">Task</div><input id="fText" value="${esc(d.text)}" placeholder="What needs doing?">
-    <div class="f-label">Priority</div>${seg("priority", [["high", "High"], ["normal", "Normal"], ["low", "Low"]])}
-    <div class="two">
-      <div><div class="f-label">Due</div><input id="fDue" type="date" value="${esc(d.due)}"></div>
-      <div><div class="f-label">Repeat</div><select id="fRepeat">${[["", "Never"], ...REPEATS.map(r => [r, repeatLabel(r)])].map(([v, l]) => `<option value="${v}"${(d.repeat || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></div>
+    <input id="fText" value="${esc(d.text)}" placeholder="What needs doing?" style="font-size:1.05rem;font-weight:600;padding:14px">
+    <div class="card-label">Priority</div>
+    ${seg("priority", [["high", "High"], ["normal", "Normal"], ["low", "Low"]]).replace('class="seg"', 'class="seg priority"')}
+    <div class="field-card">
+      <div class="field-row two-col">
+        <div><div class="f-label">Due</div><input id="fDue" type="date" value="${esc(d.due)}"></div>
+        <div><div class="f-label">Repeat</div><select id="fRepeat">${[["", "Never"], ...REPEATS.map(r => [r, repeatLabel(r)])].map(([v, l]) => `<option value="${v}"${(d.repeat || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></div>
+      </div>
+      <div class="field-row two-col">
+        <div><div class="f-label">Project</div><select id="fProj">${projectOptions(d.pid)}</select></div>
+        <div><div class="f-label">Section</div><select id="fSec">${sectionOptions(d.pid, d.sid)}</select></div>
+      </div>
     </div>
-    <div class="two">
-      <div><div class="f-label">Project</div><select id="fProj">${projectOptions(d.pid)}</select></div>
-      <div><div class="f-label">Section</div><select id="fSec">${sectionOptions(d.pid, d.sid)}</select></div>
-    </div>
-    <div class="f-label">Steps ${d.subtasks.length ? `(${d.subtasks.filter(z => z.done).length}/${d.subtasks.length})` : ""}</div>
+    <div class="card-label">Steps ${d.subtasks.length ? `· ${d.subtasks.filter(z => z.done).length}/${d.subtasks.length}` : ""}</div>
     <div>${subs}</div>
     <div class="add-row"><input id="fSub" placeholder="Add a step…"><button data-act="subAdd" aria-label="Add step">+</button></div>
     ${x ? `<button class="btn soft sm" style="margin-top:8px" data-act="breakDown" data-id="${esc(x.t.id)}">${SPARK} Break it down with Atlas</button>` : ""}
-    <div class="f-label">Tags</div>
+    <div class="card-label">Tags</div>
     <div class="filters" style="padding:0 0 4px">${d.tags.map((tag, i) => `<span class="fchip on" data-act="tagDel" data-i="${i}">#${esc(tag)} ✕</span>`).join("") || `<span class="empty" style="padding:2px 2px 4px">No tags yet.</span>`}</div>
     <div class="add-row"><input id="fTag" placeholder="Add a tag…"><button data-act="tagAdd" aria-label="Add tag">+</button></div>
     <label class="toggle-row"><input type="checkbox" id="fFocus"${d.focus ? " checked" : ""}> In today's focus</label>
-    ${x && !x.t.done ? `<div class="f-label">Focus timer</div><div class="seg">${[15, 25, 50].map(m => `<button type="button" data-act="startTimer" data-id="${esc(x.t.id)}" data-min="${m}">▶ ${m} min</button>`).join("")}</div>` : ""}
+    ${x && !x.t.done ? `<div class="card-label">Focus timer</div><div class="seg">${[15, 25, 50].map(m => `<button type="button" data-act="startTimer" data-id="${esc(x.t.id)}" data-min="${m}">▶ ${m} min</button>`).join("")}</div>` : ""}
     <div class="btn-row" style="margin-top:20px">
       ${x ? `<button class="btn danger" data-act="delTask">Delete</button>` : ""}
       <button class="btn" data-act="saveTask">${x ? "Save" : "Add task"}</button>
