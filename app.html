@@ -442,7 +442,10 @@
   <button class="d-item" id="mTalk">Talk live with Atlas <span><svg class="ico" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg></span></button>
   <a class="d-item" href="https://checklist.jkbglobal.site/voice.html" target="_blank" rel="noopener">Open JKB Voice <span><svg class="ico" viewBox="0 0 24 24"><path d="M9 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M14 4h6v6M20 4l-9 9"/></svg></span></a>
   <h4>Connections</h4>
-  <button class="d-item" id="mGoogle">Google (Calendar &amp; Gmail) <span id="googleStatus">Not connected</span></button>
+  <button class="d-item" id="mGoogle">
+    <span>Google<br><span style="font-size:0.72rem;color:var(--text-dim);font-weight:400">Calendar &amp; Gmail</span></span>
+    <span id="googleStatus" style="color:var(--text-dim);font-size:0.78rem;white-space:nowrap">Not connected</span>
+  </button>
   <h4>Projects</h4>
   <button class="d-item" id="mAddProject">New project <span>+</span></button>
   <h4>Data</h4>
@@ -2008,7 +2011,11 @@ async function addProject(){
 // ===================================================================
 // menu, backup, theme
 // ===================================================================
-function refreshGoogleStatus(){ $("#googleStatus").textContent = googleConnected() ? "Connected ✓" : "Not connected"; }
+function refreshGoogleStatus(){
+  const on = googleConnected(), el = $("#googleStatus");
+  el.textContent = on ? "Connected ✓" : "Not connected";
+  el.style.color = on ? "var(--gold)" : "var(--text-dim)";
+}
 $("#menuBtn").addEventListener("click", () => { refreshGoogleStatus(); $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
 $("#mGoogle").addEventListener("click", () => {
   if(googleConnected()){
