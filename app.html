@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=Geist:wght@400;500;600;700&family=Unbounded:wght@500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* ===== Looks: gold (default) · clean · bold — each with dark + light. =====
      Components only ever read these tokens. --gold is "the accent" in every look. */
@@ -440,6 +441,8 @@
   <h4>Voice</h4>
   <button class="d-item" id="mTalk">Talk live with Atlas <span><svg class="ico" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg></span></button>
   <a class="d-item" href="https://checklist.jkbglobal.site/voice.html" target="_blank" rel="noopener">Open JKB Voice <span><svg class="ico" viewBox="0 0 24 24"><path d="M9 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3M14 4h6v6M20 4l-9 9"/></svg></span></a>
+  <h4>Connections</h4>
+  <button class="d-item" id="mGoogle">Google (Calendar &amp; Gmail) <span id="googleStatus">Not connected</span></button>
   <h4>Projects</h4>
   <button class="d-item" id="mAddProject">New project <span>+</span></button>
   <h4>Data</h4>
@@ -797,6 +800,49 @@ const SUPABASE_URL = "https://nbgmegpqxzvgvtqqlvko.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_JTjhzlocGXAOGAeKM30YzA_c4Q2Gjcr";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let authUser = null, lastStateSave = 0, lastCoachSave = 0;
+
+// ---------- Google: lets Atlas search Gmail and add Calendar events ----------
+const GOOGLE_CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com";
+const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly";
+const LS_GOOGLE = "jkb_v2_google_connected";
+let googleTokenClient = null, googleToken = null, googleTokenExpiry = 0;
+function googleReady(){ return GOOGLE_CLIENT_ID.indexOf("PASTE_") !== 0 && window.google && window.google.accounts; }
+function googleConnected(){ return lsGet(LS_GOOGLE) === "1"; }
+function initGoogleClient(){
+  if(googleTokenClient || !googleReady()) return;
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
+    callback: (resp) => {
+      if(resp.error){ toast("Google connection failed."); return; }
+      googleToken = resp.access_token;
+      googleTokenExpiry = Date.now() + (resp.expires_in || 3500) * 1000;
+      lsSet(LS_GOOGLE, "1");
+      toast("Google connected");
+      render();
+    },
+  });
+}
+function connectGoogle(){
+  if(!googleReady()){ toast("Google connection isn't set up yet."); return; }
+  initGoogleClient();
+  googleTokenClient.requestAccessToken({ prompt: "consent" });
+}
+function disconnectGoogle(){ lsDel(LS_GOOGLE); googleToken = null; googleTokenExpiry = 0; render(); }
+// Silent refresh: only prompts the user again if their Google session itself needs it.
+function getGoogleToken(){
+  if(!googleConnected() || !googleReady()) return Promise.resolve(null);
+  if(googleToken && Date.now() < googleTokenExpiry - 60000) return Promise.resolve(googleToken);
+  return new Promise((resolve) => {
+    initGoogleClient();
+    googleTokenClient.callback = (resp) => {
+      if(resp.error){ resolve(null); return; }
+      googleToken = resp.access_token;
+      googleTokenExpiry = Date.now() + (resp.expires_in || 3500) * 1000;
+      resolve(googleToken);
+    };
+    googleTokenClient.requestAccessToken({ prompt: "none" });
+  });
+}
 const writers = { state:{ busy:false, dirty:false }, coach:{ busy:false, dirty:false } };
 function queueWrite(which){
   if(!authUser) return;
@@ -1397,6 +1443,8 @@ const COACH_RULES = `Your name is Atlas. You are Joseph's accountability coach a
 
 How to talk: casual and direct, like a smart friend. No fluff. Keep replies under 80 words unless he asks for more. Use **bold** sparingly and "- " bullets for lists. Celebrate real wins in one line. If he's dodging high-priority or overdue work, call it out and push him. If he's vague, ask one sharp question. Never show task ids to him — refer to tasks by their text.
 
+Tools: when Google is connected you also have search_gmail and create_calendar_event. Use search_gmail when he asks what's in his inbox, mentions an email, or a task needs email context — turn what you find into checklist actions the normal way, don't just quote the inbox back at him. Use create_calendar_event for anything with a real date and time (meetings, calls, deadlines he wants blocked off) — confirm the time back to him in your reply. If a tool call fails because Google isn't connected, tell him once to connect it from the menu, then carry on with what you can do from the checklist alone.
+
 How to manage: you have standing permission to keep the checklist itself in shape, not just react line-by-line — create projects and sections, tag tasks, reprioritize, and reorganize whenever it helps the list actually match what he's working toward, even without him spelling out every change. Do what he tells you (mark done, add, update, delete). Write new tasks as short verb-first phrases and file them in the best project/section (create a new section if nothing fits well — don't default everything to Inbox). Delete only when he explicitly asks. Use tags freely (lowercase, short, e.g. "client", "safegate", "urgent") to group related work across projects — reuse tags already in the task list before inventing new ones. When planning a day, pick 3-5 focus tasks — one needle-mover plus quick wins, favouring overdue, high priority and due-soon work — and write a one or two sentence note for his Today screen. When a task is big or vague, break it into 3-7 concrete subtasks. Use "repeat" for habits and routines. Pasted voice-session transcripts: apply everything he said he did or decided, then summarise. He can attach a photo — read it closely and turn it into real structure, not just a flat task dump: a receipt becomes one task tagged "expense" with the amount and vendor in its text (e.g. "Pay: Jumia — ₦12,400") and today's date as due; a whiteboard or handwritten plan with a clear theme becomes its own project (add_project) with sections grouping related items (add_section) rather than everything loose in Inbox; a screenshot of a conversation or app becomes the concrete action items implied, not a transcription of what's on screen. Always say briefly what you saw before listing what you did.
 
 Reply with ONLY JSON:
@@ -1597,7 +1645,8 @@ function applyActions(actions){
 
 // Atlas runs on Grok (xAI) via a Supabase Edge Function that holds the API key.
 async function callAtlas(turns, { modelTier, image, imageType } = {}){
-  const { data, error } = await sb.functions.invoke("atlas-chat", { body: { turns, modelTier, image, imageType } });
+  const googleTok = await getGoogleToken();
+  const { data, error } = await sb.functions.invoke("atlas-chat", { body: { turns, modelTier, image, imageType, googleToken: googleTok } });
   if(error) throw error;
   if(data && data.error) throw new Error(data.error);
   return data;
@@ -1959,7 +2008,14 @@ async function addProject(){
 // ===================================================================
 // menu, backup, theme
 // ===================================================================
-$("#menuBtn").addEventListener("click", () => { $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
+function refreshGoogleStatus(){ $("#googleStatus").textContent = googleConnected() ? "Connected ✓" : "Not connected"; }
+$("#menuBtn").addEventListener("click", () => { refreshGoogleStatus(); $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
+$("#mGoogle").addEventListener("click", () => {
+  if(googleConnected()){
+    dialog({ title:"Disconnect Google?", body:"Atlas won't be able to read your email or add calendar events until you reconnect.", ok:"Disconnect", cancel:"Cancel" })
+      .then(yes => { if(yes){ disconnectGoogle(); refreshGoogleStatus(); } });
+  } else { connectGoogle(); setTimeout(refreshGoogleStatus, 800); }
+});
 $("#drawerClose").addEventListener("click", closeDrawer);
 $("#mAddProject").addEventListener("click", addProject);
 $("#mTalk").addEventListener("click", () => { closeDrawer(); talkSheet(); });
