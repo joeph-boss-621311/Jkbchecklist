@@ -2,7 +2,7 @@
   "name": "JKB Ops",
   "short_name": "JKB Ops",
   "description": "Joseph's operations checklist, run by Claude.",
-  "start_url": "./",
+  "start_url": "app.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0c0b09",

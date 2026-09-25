@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>JKB Ops</title>
+<meta name="theme-color" content="#0c0b09">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JKB Ops">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&family=Geist:wght@400;500;600;700&family=Unbounded:wght@500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -446,6 +453,10 @@
     <span>Google<br><span style="font-size:0.72rem;color:var(--text-dim);font-weight:400">Calendar &amp; Gmail</span></span>
     <span id="googleStatus" style="color:var(--text-dim);font-size:0.78rem;white-space:nowrap">Not connected</span>
   </button>
+  <button class="d-item" id="mNotify">
+    <span>Daily briefing<br><span style="font-size:0.72rem;color:var(--text-dim);font-weight:400">Morning &amp; evening push</span></span>
+    <span id="notifyStatus" style="color:var(--text-dim);font-size:0.78rem;white-space:nowrap">Off</span>
+  </button>
   <h4>Projects</h4>
   <button class="d-item" id="mAddProject">New project <span>+</span></button>
   <h4>Data</h4>
@@ -808,6 +819,7 @@ let authUser = null, lastStateSave = 0, lastCoachSave = 0;
 const GOOGLE_CLIENT_ID = "157882933911-cduagsqiq1tk4l6hn7nvsj239ej60mco.apps.googleusercontent.com";
 const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly";
 const LS_GOOGLE = "jkb_v2_google_connected";
+const LS_PUSH = "jkb_v2_push_enabled";
 let googleTokenClient = null, googleToken = null, googleTokenExpiry = 0;
 function googleReady(){ return GOOGLE_CLIENT_ID.indexOf("PASTE_") !== 0 && window.google && window.google.accounts; }
 function googleConnected(){ return lsGet(LS_GOOGLE) === "1"; }
@@ -846,6 +858,41 @@ function getGoogleToken(){
     googleTokenClient.requestAccessToken({ prompt: "none" });
   });
 }
+// ---------- Push notifications: Atlas's daily briefing pinging the phone ----------
+const VAPID_PUBLIC_KEY = "BJSd86dUEWLtMhgLttv-VxrPTpdG8j0ep2dgunnJTA-mYwnIVpto_MEGgR09KFMTfkce_TArDb1BJwCi5SBPVBQ";
+function urlBase64ToUint8Array(base64){
+  const padded = (base64 + "=".repeat((4 - base64.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(padded);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+function pushSupported(){ return "serviceWorker" in navigator && "PushManager" in window; }
+async function registerServiceWorker(){
+  if(!pushSupported()) return null;
+  try{ return await navigator.serviceWorker.register("sw.js"); }catch(e){ return null; }
+}
+function notificationsEnabled(){ return typeof Notification !== "undefined" && Notification.permission === "granted" && lsGet(LS_PUSH) === "1"; }
+async function enableNotifications(){
+  if(!pushSupported()){ toast("Push notifications aren't supported in this browser."); return; }
+  const perm = await Notification.requestPermission();
+  if(perm !== "granted"){ toast("Notifications need permission to work."); return; }
+  const reg = await registerServiceWorker();
+  if(!reg){ toast("Couldn't set up notifications."); return; }
+  try{
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    await sb.from("push_subscriptions").upsert({ user_id:authUser.id, endpoint:sub.endpoint, subscription:sub.toJSON() }, { onConflict:"endpoint" });
+    lsSet(LS_PUSH, "1");
+    toast("Daily briefing notifications on");
+  }catch(e){ toast("Couldn't enable notifications."); }
+}
+async function disableNotifications(){
+  lsDel(LS_PUSH);
+  try{
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if(sub){ await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); }
+  }catch(e){}
+}
+
 const writers = { state:{ busy:false, dirty:false }, coach:{ busy:false, dirty:false } };
 function queueWrite(which){
   if(!authUser) return;
@@ -2016,12 +2063,23 @@ function refreshGoogleStatus(){
   el.textContent = on ? "Connected ✓" : "Not connected";
   el.style.color = on ? "var(--gold)" : "var(--text-dim)";
 }
-$("#menuBtn").addEventListener("click", () => { refreshGoogleStatus(); $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
+function refreshNotifyStatus(){
+  const on = notificationsEnabled(), el = $("#notifyStatus");
+  el.textContent = on ? "On ✓" : "Off";
+  el.style.color = on ? "var(--gold)" : "var(--text-dim)";
+}
+$("#menuBtn").addEventListener("click", () => { refreshGoogleStatus(); refreshNotifyStatus(); $("#drawer").classList.add("show"); $("#overlay").classList.add("show"); });
 $("#mGoogle").addEventListener("click", () => {
   if(googleConnected()){
     dialog({ title:"Disconnect Google?", body:"Atlas won't be able to read your email or add calendar events until you reconnect.", ok:"Disconnect", cancel:"Cancel" })
       .then(yes => { if(yes){ disconnectGoogle(); refreshGoogleStatus(); } });
   } else { connectGoogle(); setTimeout(refreshGoogleStatus, 800); }
+});
+$("#mNotify").addEventListener("click", async () => {
+  if(notificationsEnabled()){
+    dialog({ title:"Turn off daily briefing?", body:"You'll stop getting the morning and evening push from Atlas.", ok:"Turn off", cancel:"Cancel" })
+      .then(async yes => { if(yes){ await disableNotifications(); refreshNotifyStatus(); } });
+  } else { await enableNotifications(); refreshNotifyStatus(); }
 });
 $("#drawerClose").addEventListener("click", closeDrawer);
 $("#mAddProject").addEventListener("click", addProject);
@@ -2083,6 +2141,7 @@ async function enterApp(){
   loadLocal();
   render();
   connectCloud();
+  registerServiceWorker();
 }
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();

@@ -36,3 +36,17 @@ your data):
 Once all five steps are done, tell Claude "supabase is set up" and the
 app.html rewrite (login screen + reading/writing this database instead of
 the claude.ai artifact) can go in.
+
+## Daily briefing (push notifications)
+
+`functions/daily-briefing/index.ts` runs on a schedule (see `cron.sql`),
+generates a short morning plan / evening review with Grok, drops it into
+Atlas's chat, and pushes a notification to every device that's turned it on
+(Settings menu → Daily briefing, in the app).
+
+Secrets it needs beyond the ones above: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`
+(generate with `npx web-push generate-vapid-keys` — the public key also goes
+into `VAPID_PUBLIC_KEY` in app.html) and `CRON_SECRET` (any random string —
+it's how the cron job proves it's really the cron job, not a stranger trying
+to burn your Grok credits). Run `cron.sql` once, with that same secret
+substituted in, to actually schedule it.
