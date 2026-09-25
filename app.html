@@ -221,8 +221,13 @@
   .p-card .c{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
   .back{ background:none; border:none; color:var(--text-dim); font-size:0.85rem; cursor:pointer; padding:4px 0 8px; }
   .sec{ --ah:42; background:var(--card); border:1px solid var(--line); border-left:3px solid hsl(var(--ah) 60% 55%); border-radius:14px; margin-bottom:10px; overflow:hidden; }
-  .sec-head{ padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; width:100%; background:none; border:none; text-align:left; }
-  .sec-head .n{ font-weight:700; font-size:0.9rem; }
+  .sec-head{ padding:12px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; width:100%; border:none; text-align:left;
+    background:linear-gradient(to right, hsl(var(--ah) 70% 50% / 0.1), transparent 60%); }
+  .sec.open .sec-head{ background:none; border-bottom:1px solid var(--line); }
+  .sec-icon{ width:26px; height:26px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:0.72rem;
+    background:hsl(var(--ah) 65% 55% / 0.18); color:hsl(var(--ah) 55% 45%); }
+  :root:not([data-theme="light"]) .sec-icon{ color:hsl(var(--ah) 75% 68%); }
+  .sec-head .n{ font-weight:700; font-size:0.9rem; flex:1; }
   .sec-head .f{ color:var(--gold); font-size:0.75rem; font-weight:700; display:flex; gap:8px; align-items:center; }
   .sec-head .chev{ color:var(--text-dim); transition:transform 0.2s; }
   .sec.open .chev{ transform:rotate(90deg); }
@@ -1245,7 +1250,7 @@ function renderProject(p){
       || `<div class="empty">${active ? "No #" + esc(active) + " tasks here." : "No tasks yet."}</div>`;
     const countLabel = s.tasks.length ? `<span class="ring-dot" style="--pct:${sPct}"></span>${sDone}/${s.tasks.length}` : `<span class="sec-empty-tag">Empty</span>`;
     return `<div class="sec${ui.open[key] ? " open" : ""}${s.tasks.length ? "" : " no-tasks"}" style="--ah:${ah}">
-      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="n">${esc(s.name)}</span><span class="f">${countLabel}<span class="chev">▸</span></span></button>
+      <button class="sec-head" data-act="toggleSec" data-key="${esc(key)}"><span class="sec-icon">${esc(s.name.trim()[0] || "?")}</span><span class="n">${esc(s.name)}</span><span class="f">${countLabel}<span class="chev">▸</span></span></button>
       <div class="sec-body">
         ${tasks}
         <div class="add-row"><input placeholder="Add task…" data-add="${esc(p.id)}|${esc(s.id)}"><button data-act="addTask" data-sec="${esc(p.id)}|${esc(s.id)}" aria-label="Add">+</button></div>
