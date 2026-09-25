@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>JKB Ops</title>
-<meta name="description" content="Joseph's operations checklist, run by Claude.">
+<meta name="description" content="Joseph's ops assistant — tasks, calendar, inbox and daily accountability, run by Atlas.">
 <meta name="theme-color" content="#0c0b09">
 <link rel="manifest" href="manifest.webmanifest">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -72,6 +73,17 @@
   .way b{ font-size:0.92rem; }
   .way span{ font-size:0.76rem; color:var(--text-dim); }
   .way .ic{ width:22px; height:22px; stroke:var(--gold); fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; margin-bottom:4px; }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
+  .way.static{ padding:12px 10px; border-radius:14px; }
+  .way.static b{ font-size:0.78rem; }
+  .way.static span{ font-size:0.68rem; }
+  .way.static .ic{ width:18px; height:18px; }
+  @media (max-width:380px){ .grid3{ grid-template-columns:1fr 1fr; } }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; }
+  .card.pad{ padding:16px 18px; }
+  .live-greet{ font-family:'Sora',system-ui,sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:6px; }
+  .live-stats{ display:flex; gap:16px; margin-top:10px; font-size:0.82rem; color:var(--text-2); }
+  .live-stats b{ display:block; font-family:'Sora',system-ui,sans-serif; font-size:1.15rem; color:var(--gold); }
 
   /* the day as the app runs it — a real schedule, so it's a timeline */
   .label{ font-size:0.7rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-dim); margin:0 0 10px; }
@@ -98,15 +110,24 @@
   </header>
 
   <section class="hero">
-    <div class="kicker">JKB Global · SafeGate · CVG</div>
-    <h1>You run the business. <em>Claude runs the list.</em></h1>
-    <p class="lede">Your checklist, run by Atlas, with daily check-ins built in. Say what you did, and it keeps score.</p>
+    <div class="kicker">JKB Global · SafeGate · CVG · every client project</div>
+    <h1>You run the business. <em>Atlas runs everything else.</em></h1>
+    <p class="lede">Not just a checklist — Atlas plans your day, reads your inbox, books your calendar, and checks in on you morning and night, all from one conversation.</p>
+  </section>
+
+  <section id="liveHero" hidden>
+    <div class="card pad" id="liveCard"></div>
   </section>
 
   <section>
-    <a class="primary" href="app.html">
+    <a class="primary" href="app.html" id="primaryCta">
       <span>Open my checklist<small>Today · Atlas · Tasks · Progress</small></span><span class="arrow" aria-hidden="true">→</span>
     </a>
+    <div class="grid3">
+      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><b>Calendar &amp; Gmail</b><span>Atlas reads and books for you</span></div>
+      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><b>Daily briefing</b><span>Real push, morning &amp; evening</span></div>
+      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg><b>Every project</b><span>Tags &amp; sections per client</span></div>
+    </div>
     <div class="ways">
       <a class="way" href="voice.html">
         <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12v1a2 2 0 0 0 2 2h1V10H5a2 2 0 0 0-2 2zM21 12v1a2 2 0 0 1-2 2h-1V10h1a2 2 0 0 1 2 2z"/><path d="M6 10a6 6 0 0 1 12 0M18 15v1a4 4 0 0 1-4 4h-2"/></svg>
@@ -122,8 +143,8 @@
   <section>
     <h2 class="label">How your day runs</h2>
     <ol class="day">
-      <li><time>8:00 AM</time><p>Claude picks your focus for the day and pings your phone.</p></li>
-      <li><time>All day</time><p>Tell Atlas what you finished, ask for a check-in, or run a focus timer.</p></li>
+      <li><time>8:00 AM</time><p>Atlas plans your focus, checks your calendar and inbox, and pings your phone.</p></li>
+      <li><time>All day</time><p>Tell Atlas what you finished, ask it to book something or check an email, or run a focus timer.</p></li>
       <li><time>8:00 PM</time><p>Evening review: your score, one win, and the thing you dodged.</p></li>
     </ol>
   </section>
@@ -137,10 +158,46 @@
     </ol>
   </details>
 
-  <footer>Your tasks live in your Claude account. This page just opens them.</footer>
+  <footer>Your tasks, calendar and inbox stay in your own accounts — this page and Atlas just work across them.</footer>
 </div>
 <script>
   document.getElementById("today").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", month:"short", day:"numeric" });
+
+  // If you're already signed in, skip the pitch and show today's real numbers.
+  (async () => {
+    try{
+      const sb = window.supabase.createClient(
+        "https://nbgmegpqxzvgvtqqlvko.supabase.co",
+        "sb_publishable_JTjhzlocGXAOGAeKM30YzA_c4Q2Gjcr",
+      );
+      const { data:{ session } } = await sb.auth.getSession();
+      if(!session) return;
+      const { data:row } = await sb.from("app_state").select("state").eq("user_id", session.user.id).maybeSingle();
+      const state = row && row.state;
+      if(!state || !Array.isArray(state.projects)) return;
+
+      const dayStr = (d = new Date()) => { const z = n => String(n).padStart(2,"0"); return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate()); };
+      const today = dayStr();
+      const all = [];
+      state.projects.forEach(p => p.sections.forEach(s => s.tasks.forEach(t => all.push(t))));
+      const open = all.filter(t => !t.done);
+      const overdue = open.filter(t => t.due && t.due < today).length;
+      const focusIds = state.today && state.today.date === today ? state.today.focus : [];
+      const focusLeft = focusIds.filter(id => { const t = all.find(x => x.id === id); return t && !t.done; }).length;
+      const doneToday = all.filter(t => t.doneAt && dayStr(new Date(t.doneAt)) === today).length;
+
+      document.getElementById("liveCard").innerHTML = `
+        <div class="live-greet">Welcome back — here's where things stand</div>
+        <div class="live-stats">
+          <div><b>${focusLeft || focusIds.length}</b>today's focus left</div>
+          <div><b>${doneToday}</b>done today</div>
+          <div><b style="${overdue ? "color:var(--gold-2)" : ""}">${overdue}</b>overdue</div>
+        </div>`;
+      document.getElementById("liveHero").hidden = false;
+      const cta = document.getElementById("primaryCta");
+      cta.querySelector("span").innerHTML = "Continue to my checklist<small>Signed in — pick up where you left off</small>";
+    }catch(e){ /* not signed in, or offline — the pitch below still works */ }
+  })();
 </script>
 </body>
 </html>
