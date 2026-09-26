@@ -305,8 +305,10 @@
   .icon-inline{ width:36px; height:36px; border-radius:50%; border:none; background:transparent; color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
   .icon-inline:hover, .icon-inline:active{ background:var(--card-2); color:var(--gold); }
   .icon-inline .ico{ width:19px; height:19px; }
-  .round{ width:46px; height:46px; border-radius:50%; border:none; background:var(--grad); color:var(--on-gold); font-size:1.05rem; cursor:pointer; flex-shrink:0; }
-  .round:disabled{ opacity:0.5; }
+  .round{ width:46px; height:46px; border-radius:50%; border:none; background:var(--grad); color:var(--on-gold); font-size:1.05rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px var(--glow); transition:transform 0.12s ease; }
+  .round:active{ transform:scale(0.92); }
+  .round:disabled{ opacity:0.5; box-shadow:none; }
+  .round .ico{ width:20px; height:20px; margin-left:-1px; }
   .compose-hint{ font-size:0.72rem; color:var(--text-dim); margin-top:6px; min-height:1em; }
 
   /* nav */
@@ -449,7 +451,7 @@
         <button class="icon-inline" id="attachBtn" aria-label="Attach a photo"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
         <textarea id="input" rows="1" placeholder="Tell Atlas what you did or need to do…"></textarea>
       </div>
-      <button class="round" id="sendBtn" aria-label="Send"><svg class="ico" viewBox="0 0 24 24"><path d="M4 12l16-8-6 8 6 8z"/></svg></button>
+      <button class="round" id="sendBtn" aria-label="Send"><svg class="ico" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
     </div>
     <input type="file" id="imgInput" accept="image/*" hidden>
     <div class="compose-hint" id="hint"></div>
