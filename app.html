@@ -313,9 +313,7 @@
   .compose-hint{ font-size:0.72rem; color:var(--text-dim); margin-top:6px; min-height:1em; }
 
   /* nav */
-  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 97%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); transition:transform 0.18s ease; }
-  body.kb-open .tabbar{ transform:translateY(100%); }
-  body.kb-open .composer{ transition:none; }
+  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 97%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
   .tabbar-in{ max-width:720px; margin:0 auto; display:flex; gap:4px; }
   .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; color:var(--text-dim); cursor:pointer; border-radius:14px; font-size:0.66rem; font-weight:700; background:none; border:none; }
   .tab .ic{ font-size:1.1rem; line-height:1; }
@@ -2210,23 +2208,6 @@ async function enterApp(){
   const sync = () => document.documentElement.style.setProperty("--topbar-h", topbar.offsetHeight + "px");
   new ResizeObserver(sync).observe(topbar);
   sync();
-})();
-
-// Glue the composer to the keyboard instead of leaving it floating above the tab bar —
-// iOS only resizes the visual viewport, not the layout one, so fixed-position elements
-// need to track it manually or the composer ends up detached from where you're typing.
-(function(){
-  const composer = $("#composer"), input = $("#input"), vv = window.visualViewport;
-  function sync(){
-    if(!vv) return;
-    const gap = Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop);
-    const open = gap > 60;
-    document.body.classList.toggle("kb-open", open);
-    composer.style.bottom = open ? gap + "px" : "";
-  }
-  if(vv){ vv.addEventListener("resize", sync); vv.addEventListener("scroll", sync); }
-  input.addEventListener("focus", () => setTimeout(sync, 60));
-  input.addEventListener("blur", () => { document.body.classList.remove("kb-open"); composer.style.bottom = ""; });
 })();
 
 async function boot(){
