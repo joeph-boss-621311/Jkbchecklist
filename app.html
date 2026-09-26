@@ -2226,7 +2226,7 @@ async function enterApp(){
     composer.style.bottom = kb > 100 ? kb + "px" : "";
   }
   if(vv) vv.addEventListener("resize", apply);
-  input.addEventListener("focus", () => { focused = true; setTimeout(apply, 60); });
+  input.addEventListener("focus", () => { focused = true; });
   input.addEventListener("blur", () => { focused = false; document.body.classList.remove("kb-open"); composer.style.bottom = ""; });
 })();
 
