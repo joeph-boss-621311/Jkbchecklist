@@ -58,9 +58,15 @@ Every task can now carry a "time" (set it in the task sheet, or tell Atlas
 checks every 5 minutes for tasks whose time has arrived and pushes one
 notification per task — completely separate from the daily briefing above.
 
+It also fills the gaps: for any hour between 10am and midnight with nothing
+explicitly timed, it picks one relevant open task (due today or overdue,
+favouring high priority) and nudges about that instead — so reminders keep
+coming roughly hourly even for tasks that never got a time set.
+
 To turn it on:
-1. Re-run `schema.sql` (it adds a `sent_reminders` table this function needs —
-   safe to re-run, everything in it is "if not exists").
+1. Re-run `schema.sql` (it adds `sent_reminders` and `hourly_nudges`, the two
+   tables this function needs — safe to re-run, everything in it is
+   "if not exists").
 2. Dashboard → **Edge Functions** → **Create a new function** → name it
    `task-reminders` → paste the contents of `functions/task-reminders/index.ts`
    → Deploy.

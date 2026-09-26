@@ -92,3 +92,21 @@ alter table sent_reminders enable row level security;
 drop policy if exists "select own reminders" on sent_reminders;
 create policy "select own reminders" on sent_reminders
   for select using (auth.uid() = user_id);
+
+-- One row per hour a fallback "nudge" notification already went out, so an
+-- hour with nothing explicitly timed doesn't get picked (and re-notified)
+-- more than once, and so the same untimed task isn't nudged twice in a day.
+create table if not exists hourly_nudges (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  day date not null,
+  hour int not null,
+  task_id text not null,
+  sent_at timestamptz not null default now(),
+  primary key (user_id, day, hour)
+);
+
+alter table hourly_nudges enable row level security;
+
+drop policy if exists "select own nudges" on hourly_nudges;
+create policy "select own nudges" on hourly_nudges
+  for select using (auth.uid() = user_id);
