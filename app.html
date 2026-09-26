@@ -314,6 +314,7 @@
 
   /* nav */
   .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 97%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  body.kb-open .tabbar{ display:none; }
   .tabbar-in{ max-width:720px; margin:0 auto; display:flex; gap:4px; }
   .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; color:var(--text-dim); cursor:pointer; border-radius:14px; font-size:0.66rem; font-weight:700; background:none; border:none; }
   .tab .ic{ font-size:1.1rem; line-height:1; }
@@ -2208,6 +2209,25 @@ async function enterApp(){
   const sync = () => document.documentElement.style.setProperty("--topbar-h", topbar.offsetHeight + "px");
   new ResizeObserver(sync).observe(topbar);
   sync();
+})();
+
+// iOS leaves a dead gap between the tab bar and the keyboard because a plain
+// position:fixed;bottom:0 element tracks the layout viewport, not the visual
+// one the keyboard shrinks. While the composer's textarea is focused, pin it
+// to the real visual-viewport bottom by measured pixels and hide the tab bar
+// (which has nothing above the keyboard to sit on) — same as any chat app.
+(function(){
+  const composer = $("#composer"), input = $("#input"), vv = window.visualViewport;
+  let focused = false;
+  function apply(){
+    if(!vv || !focused) return;
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.body.classList.toggle("kb-open", kb > 100);
+    composer.style.bottom = kb > 100 ? kb + "px" : "";
+  }
+  if(vv) vv.addEventListener("resize", apply);
+  input.addEventListener("focus", () => { focused = true; setTimeout(apply, 60); });
+  input.addEventListener("blur", () => { focused = false; document.body.classList.remove("kb-open"); composer.style.bottom = ""; });
 })();
 
 async function boot(){
