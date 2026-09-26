@@ -349,6 +349,9 @@
   .field-row.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:0; }
   .field-row.two-col > div{ padding:10px 14px; }
   .field-row.two-col > div:first-child{ border-right:1px solid var(--line); }
+  .field-row.three-col{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; padding:0; }
+  .field-row.three-col > div{ padding:10px 10px; min-width:0; }
+  .field-row.three-col > div + div{ border-left:1px solid var(--line); }
   .card-label{ font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; margin:18px 0 6px; }
   .toggle-row{ display:flex; align-items:center; gap:10px; margin-top:14px; font-size:0.88rem; }
   .toggle-row input{ width:20px; height:20px; accent-color:var(--gold); }
@@ -566,6 +569,12 @@ function fmtDue(due){
   if(diff < 7) return weekdayShort(due);
   return parseDay(due).toLocaleDateString(undefined, { month:"short", day:"numeric" });
 }
+function fmtTime(t){
+  if(!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const ap = h >= 12 ? "PM" : "AM", h12 = ((h + 11) % 12) + 1;
+  return h12 + ":" + String(m).padStart(2, "0") + " " + ap;
+}
 function fmtMin(m){ m = Math.round(m); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60 ? (m % 60) + "m" : "") : m + "m"; }
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2400); }
 function buzz(){ try{ navigator.vibrate && navigator.vibrate(30); }catch(e){} }
@@ -624,6 +633,7 @@ function allTasks(){ const out = []; state.projects.forEach(p => p.sections.forE
 function findTask(id){ return allTasks().find(x => x.t.id === id) || null; }
 function normPri(p){ return p === "high" || p === "low" ? p : "normal"; }
 function normDue(d){ return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null; }
+function normTime(t){ return typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null; }
 const REPEATS = ["daily", "weekdays", "weekly", "monthly"];
 function normRepeat(r){ return REPEATS.includes(r) ? r : null; }
 function normTags(tags){
@@ -645,6 +655,7 @@ function sortForDisplay(tasks){
 // Same ordering, for {t,p,s} pairs (the schedule view spans projects, so it can't sort raw tasks alone).
 function sortWrapped(items){
   return items.map((x, i) => ({ x, i })).sort((a, b) =>
+    (a.x.t.time || "99:99").localeCompare(b.x.t.time || "99:99") ||
     (PRIORITY_RANK[a.x.t.priority] ?? 1) - (PRIORITY_RANK[b.x.t.priority] ?? 1) || a.i - b.i
   ).map(o => o.x);
 }
@@ -681,7 +692,7 @@ function setDone(x, done){
   t.done = done;
   t.doneAt = done ? Date.now() : null;
   if(done && t.repeat){
-    const next = { id:newId("t"), text:t.text, done:false, doneAt:null, priority:t.priority, due:nextDue(t.due || dayStr(), t.repeat), createdAt:Date.now(), repeat:t.repeat,
+    const next = { id:newId("t"), text:t.text, done:false, doneAt:null, priority:t.priority, due:nextDue(t.due || dayStr(), t.repeat), time:t.time || null, createdAt:Date.now(), repeat:t.repeat,
       subtasks:(t.subtasks || []).map(st => ({ id:newId("u"), text:st.text, done:false })), tags:[...(t.tags || [])], minutes:0 };
     t.repeat = null;
     s.tasks.splice(s.tasks.indexOf(t) + 1, 0, next);
@@ -1058,7 +1069,8 @@ function taskRow(x, opts = {}){
   const { t, p, s } = x;
   const chips = [];
   if(t.priority === "high" && !t.done) chips.push(`<span class="chip high">High</span>`);
-  if(t.due && !t.done){ const over = daysBetween(dayStr(), t.due) < 0; chips.push(`<span class="chip ${over ? "over" : "due"}">${esc(fmtDue(t.due))}</span>`); }
+  if(t.due && !t.done){ const over = daysBetween(dayStr(), t.due) < 0; const label = fmtDue(t.due) + (t.time ? " · " + fmtTime(t.time) : ""); chips.push(`<span class="chip ${over ? "over" : "due"}">${esc(label)}</span>`); }
+  else if(t.time && !t.done){ chips.push(`<span class="chip due">${esc(fmtTime(t.time))}</span>`); }
   if(t.repeat) chips.push(`<span class="chip">↻ ${repeatLabel(t.repeat)}</span>`);
   if(t.subtasks && t.subtasks.length){ const d = t.subtasks.filter(z => z.done).length; chips.push(`<span class="chip${d === t.subtasks.length ? " ok" : ""}">☰ ${d}/${t.subtasks.length}</span>`); }
   if(t.minutes) chips.push(`<span class="chip">${STOPWATCH_ICO} ${fmtMin(t.minutes)}</span>`);
@@ -1092,7 +1104,7 @@ function renderToday(){
   const open = allTasks().filter(x => !x.t.done);
   const focusIds = new Set(focus.map(x => x.t.id));
   const overdue = open.filter(x => x.t.due && daysBetween(today, x.t.due) < 0 && !focusIds.has(x.t.id));
-  const dueToday = open.filter(x => x.t.due === today && !focusIds.has(x.t.id));
+  const dueToday = sortWrapped(open.filter(x => x.t.due === today && !focusIds.has(x.t.id)));
   const soon = open.filter(x => x.t.due && daysBetween(today, x.t.due) > 0 && daysBetween(today, x.t.due) <= 3 && !focusIds.has(x.t.id));
   const lastCoach = [...coach.messages].reverse().find(m => m.role === "assistant" && dayStr(new Date(m.ts)) === today);
 
@@ -1538,8 +1550,8 @@ Reply with ONLY JSON:
 Action shapes:
 {"type":"complete","id":"t12"}
 {"type":"reopen","id":"t12"}
-{"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"subtasks":["step", "..."],"focus":false}
-{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"project":"<project id>","section":"<section name>"}   (include only fields that change; "tags" REPLACES the task's tags, so include its existing ones too if you're only adding one; "project"/"section" move the task, creating the section if it's new)
+{"type":"add","text":"...","project":"<project id>","section":"<section name>","priority":"high|normal|low","due":"YYYY-MM-DD or null","time":"HH:MM 24h or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"subtasks":["step", "..."],"focus":false}
+{"type":"update","id":"t12","text":"...","priority":"high|normal|low","due":"YYYY-MM-DD or null","time":"HH:MM 24h or null","repeat":"daily|weekdays|weekly|monthly or null","tags":["..."],"project":"<project id>","section":"<section name>"}   (include only fields that change; "tags" REPLACES the task's tags, so include its existing ones too if you're only adding one; "project"/"section" move the task, creating the section if it's new)
 {"type":"subtasks","id":"t12","items":["step one","step two"]}   (appends steps to a task)
 {"type":"delete","id":"t12"}
 {"type":"add_project","title":"...","emoji":"one emoji or short initials"}
@@ -1553,10 +1565,12 @@ Action shapes:
 {"type":"cancel_checkin","id":"c5"}
 Use "actions":[] when nothing should change. Only use ids from the task list.
 
-Check-ins: you already ping his phone every day at 8am (plan) and 8pm (review). When he asks you to check on him — or when a deadline or a slipping task deserves it — schedule extra check-ins with "checkin". The scheduler picks new ones up every 2 hours between 9am and 7pm, so set them at least 2 hours out and tell him when you'll ping. Cancel or move them when he asks (moving = cancel + new).`;
+Check-ins: you already ping his phone every day at 8am (plan) and 8pm (review). When he asks you to check on him — or when a deadline or a slipping task deserves it — schedule extra check-ins with "checkin". The scheduler picks new ones up every 2 hours between 9am and 7pm, so set them at least 2 hours out and tell him when you'll ping. Cancel or move them when he asks (moving = cancel + new).
+
+Task times: every task can carry a "time" (HH:MM, 24-hour, his local time) alongside its due date — a real push notification fires at that exact time, on top of the 8am/8pm check-ins. Set one whenever he gives or implies a time ("call the supplier at 3", "do this before lunch" → pick a reasonable time). When he wants a batch of tasks spread across the day (e.g. "put times on all of today's tasks between 10am and midnight"), space them out realistically rather than clustering — leave gaps for actual work, don't just divide evenly by count. A repeating task's time carries over automatically to each new occurrence, so set it once.`;
 
 function taskLine({ t, p, s }){
-  const bits = [t.id, p.id + "/" + s.name, t.text, t.priority === "normal" ? "" : t.priority, t.due || "", t.repeat ? "repeats " + t.repeat : "",
+  const bits = [t.id, p.id + "/" + s.name, t.text, t.priority === "normal" ? "" : t.priority, t.due || "", t.time ? "at " + t.time : "", t.repeat ? "repeats " + t.repeat : "",
     t.tags && t.tags.length ? t.tags.map(x => "#" + x).join(" ") : "",
     t.subtasks && t.subtasks.length ? "steps " + t.subtasks.filter(z => z.done).length + "/" + t.subtasks.length : "", t.minutes ? t.minutes + "min focused" : "",
     t.done ? "DONE " + (t.doneAt ? dayStr(new Date(t.doneAt)) : "") : ""];
@@ -1604,13 +1618,13 @@ function applyActions(actions){
         if(!text) break;
         const p = state.projects.find(q => q.id === a.project) || state.projects[0];
         const s = getOrCreateSection(p, a.section);
-        const t = { id:newId("t"), text, done:false, doneAt:null, priority:normPri(a.priority), due:normDue(a.due), createdAt:Date.now(), repeat:normRepeat(a.repeat),
+        const t = { id:newId("t"), text, done:false, doneAt:null, priority:normPri(a.priority), due:normDue(a.due), time:normTime(a.time), createdAt:Date.now(), repeat:normRepeat(a.repeat),
           tags:normTags(a.tags),
           subtasks:(Array.isArray(a.subtasks) ? a.subtasks : []).map(z => String(z).trim()).filter(Boolean).slice(0, 12).map(z => ({ id:newId("u"), text:z, done:false })), minutes:0 };
         if(t.repeat && !t.due) t.due = dayStr();
         s.tasks.push(t);
         if(a.focus === true) addFocus(t.id);
-        changes.push("Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + ")" : "") + (t.repeat ? ", repeats " + repeatLabel(t.repeat) : "") + (t.tags.length ? " · " + t.tags.map(z => "#" + z).join(" ") : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
+        changes.push("Added: " + text + " → " + p.title + " / " + s.name + (t.due ? " (" + fmtDue(t.due) + (t.time ? " " + fmtTime(t.time) : "") + ")" : "") + (t.repeat ? ", repeats " + repeatLabel(t.repeat) : "") + (t.tags.length ? " · " + t.tags.map(z => "#" + z).join(" ") : "") + (t.subtasks.length ? " · " + t.subtasks.length + " steps" : ""));
         break;
       }
       case "update": {
@@ -1619,6 +1633,7 @@ function applyActions(actions){
         if(typeof a.text === "string" && a.text.trim() && a.text.trim() !== x.t.text){ x.t.text = a.text.trim(); bits.push("renamed"); }
         if(a.priority && normPri(a.priority) !== x.t.priority){ x.t.priority = normPri(a.priority); bits.push(x.t.priority + " priority"); }
         if("due" in a){ const d = normDue(a.due); if(d !== x.t.due){ x.t.due = d; bits.push(d ? "due " + fmtDue(d) : "no due date"); } }
+        if("time" in a){ const tm = normTime(a.time); if(tm !== (x.t.time || null)){ x.t.time = tm; bits.push(tm ? "time " + fmtTime(tm) : "time cleared"); } }
         if("repeat" in a){ const r = normRepeat(a.repeat); if(r !== (x.t.repeat || null)){ x.t.repeat = r; if(r && !x.t.due) x.t.due = dayStr(); bits.push(r ? "repeats " + r : "no repeat"); } }
         if("tags" in a){ const v = normTags(a.tags); if(JSON.stringify(v) !== JSON.stringify(x.t.tags || [])){ x.t.tags = v; bits.push(v.length ? "tags " + v.map(z => "#" + z).join(" ") : "tags cleared"); } }
         if(a.project || a.section){
@@ -1862,8 +1877,8 @@ let draft = null;
 function taskSheet(id, preset = {}){
   const x = id ? findTask(id) : null;
   if(!draft || draft.id !== (x ? x.t.id : null)){
-    const t = x ? x.t : { text:"", priority:"normal", due:null, repeat:null, subtasks:[], tags:[] };
-    draft = { id: x ? x.t.id : null, text:t.text, priority:t.priority || "normal", due:t.due || "", repeat:t.repeat || null,
+    const t = x ? x.t : { text:"", priority:"normal", due:null, time:null, repeat:null, subtasks:[], tags:[] };
+    draft = { id: x ? x.t.id : null, text:t.text, priority:t.priority || "normal", due:t.due || "", time:t.time || "", repeat:t.repeat || null,
       subtasks: clone(t.subtasks || []), tags: clone(t.tags || []), pid: x ? x.p.id : (preset.pid || ui.project || state.projects[0].id), sid: x ? x.s.id : preset.sid,
       focus: x ? todayFocus().some(f => f.t.id === x.t.id) : false };
   }
@@ -1876,8 +1891,9 @@ function taskSheet(id, preset = {}){
     <div class="card-label">Priority</div>
     ${seg("priority", [["high", "High"], ["normal", "Normal"], ["low", "Low"]]).replace('class="seg"', 'class="seg priority"')}
     <div class="field-card">
-      <div class="field-row two-col">
+      <div class="field-row three-col">
         <div><div class="f-label">Due</div><input id="fDue" type="date" value="${esc(d.due)}"></div>
+        <div><div class="f-label">Time</div><input id="fTime" type="time" value="${esc(d.time)}"></div>
         <div><div class="f-label">Repeat</div><select id="fRepeat">${[["", "Never"], ...REPEATS.map(r => [r, repeatLabel(r)])].map(([v, l]) => `<option value="${v}"${(d.repeat || "") === v ? " selected" : ""}>${l}</option>`).join("")}</select></div>
       </div>
       <div class="field-row two-col">
@@ -1898,8 +1914,8 @@ function taskSheet(id, preset = {}){
       ${x ? `<button class="btn danger" data-act="delTask">Delete</button>` : ""}
       <button class="btn" data-act="saveTask">${x ? "Save" : "Add task"}</button>
     </div>`);
-  const sync = () => { d.text = $("#fText").value; d.due = $("#fDue").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; };
-  ["#fText", "#fDue", "#fRepeat", "#fSec", "#fFocus"].forEach(s => $(s).addEventListener("input", sync));
+  const sync = () => { d.text = $("#fText").value; d.due = $("#fDue").value; d.time = $("#fTime").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; };
+  ["#fText", "#fDue", "#fTime", "#fRepeat", "#fSec", "#fFocus"].forEach(s => $(s).addEventListener("input", sync));
   $("#fProj").onchange = () => { $("#fSec").innerHTML = sectionOptions($("#fProj").value); sync(); };
   $("#fSub").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); sheetAct("subAdd"); } });
   $("#fTag").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); sheetAct("tagAdd"); } });
@@ -1908,7 +1924,7 @@ function taskSheet(id, preset = {}){
 async function sheetAct(act, el){
   const d = draft;
   if(!d) return;
-  const sync = () => { const f = $("#fText"); if(f){ d.text = f.value; d.due = $("#fDue").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; } };
+  const sync = () => { const f = $("#fText"); if(f){ d.text = f.value; d.due = $("#fDue").value; d.time = $("#fTime").value; d.repeat = $("#fRepeat").value || null; d.pid = $("#fProj").value; d.sid = $("#fSec").value; d.focus = $("#fFocus").checked; } };
   sync();
   if(act === "seg"){ d[el.dataset.field] = el.dataset.v; taskSheet(d.id, { keepFocus:true }); }
   else if(act === "subAdd"){ const v = $("#fSub").value.trim(); if(!v) return; d.subtasks.push({ id:"new" + Date.now(), text:v, done:false }); taskSheet(d.id, { keepFocus:true }); setTimeout(() => $("#fSub") && $("#fSub").focus(), 50); }
@@ -1934,6 +1950,7 @@ async function sheetAct(act, el){
     task.text = text;
     task.priority = normPri(d.priority);
     task.due = normDue(d.due);
+    task.time = normTime(d.time);
     task.repeat = normRepeat(d.repeat);
     if(task.repeat && !task.due) task.due = dayStr();
     task.subtasks = d.subtasks.map(st => ({ id: String(st.id).startsWith("new") ? newId("u") : st.id, text:st.text, done:!!st.done }));

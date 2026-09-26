@@ -9,11 +9,11 @@ const HELP = `jkb — JKB Ops checklist (edits the synced copy of the live app's
   jkb list [project] [section] [--open]       Tasks with their ids (--open hides done ones)
   jkb find <text>                             Search tasks
   jkb add <project> <section> <task...> [--priority high|normal|low] [--due YYYY-MM-DD|today|tomorrow]
-          [--repeat daily|weekdays|weekly|monthly] [--tags a,b,c] [--focus]
+          [--time HH:MM] [--repeat daily|weekdays|weekly|monthly] [--tags a,b,c] [--focus]
                                               Add a task (unknown section → Inbox)
   jkb done <id...>                            Mark tasks done (recurring ones get their next occurrence)
   jkb undo <id...>                            Mark tasks not done
-  jkb edit <id> [text...] [--priority p] [--due d|none] [--repeat r|none] [--tags a,b,c|none] [--focus|--unfocus]
+  jkb edit <id> [text...] [--priority p] [--due d|none] [--time HH:MM|none] [--repeat r|none] [--tags a,b,c|none] [--focus|--unfocus]
           [--project p] [--section s]
   jkb rm <id...>                              Delete tasks
   jkb project <title> [emoji]                 Add a project
@@ -28,7 +28,7 @@ Changes only reach the app after Claude pushes them — see: jkb sync`;
 // --flag value / --flag parsing that keeps free text intact
 function parse(argv) {
   const opts = {}, args = [];
-  const valued = new Set(["priority", "due", "repeat", "project", "section", "tags"]);
+  const valued = new Set(["priority", "due", "time", "repeat", "project", "section", "tags"]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a.startsWith("--")) {
@@ -41,7 +41,7 @@ function parse(argv) {
 }
 
 function line(t) {
-  const bits = [t.priority === "high" ? "high" : "", t.due ? "due " + t.due : "", t.repeat ? "↻ " + t.repeat : "", t.steps ? "steps " + t.steps : "",
+  const bits = [t.priority === "high" ? "high" : "", t.due ? "due " + t.due : "", t.time ? "at " + t.time : "", t.repeat ? "↻ " + t.repeat : "", t.steps ? "steps " + t.steps : "",
     t.tags && t.tags.length ? t.tags.map(x => "#" + x).join(" ") : ""].filter(Boolean);
   return `[${t.done ? "x" : " "}] ${t.id}  ${t.text}${bits.length ? "  (" + bits.join(", ") + ")" : ""}`;
 }
@@ -102,7 +102,7 @@ function main(argv) {
     case "add": {
       const [project, section, ...rest] = args;
       if (!project || !section || !rest.length) throw new Error("Usage: jkb add <project> <section> <task...>");
-      const r = store.apply(`add "${rest.join(" ")}"`, s => T.addTask(s, { project, section, text: rest.join(" "), priority: opts.priority, due: opts.due, repeat: opts.repeat, tags: opts.tags, focus: !!opts.focus }));
+      const r = store.apply(`add "${rest.join(" ")}"`, s => T.addTask(s, { project, section, text: rest.join(" "), priority: opts.priority, due: opts.due, time: opts.time, repeat: opts.repeat, tags: opts.tags, focus: !!opts.focus }));
       return changed(`Added ${r.added.id}: ${r.added.text}  → ${r.added.project} › ${r.added.section}`);
     }
     case "done": case "undo": {
@@ -118,7 +118,7 @@ function main(argv) {
       if (!id) throw new Error("Usage: jkb edit <id> [text...] [--priority p] [--due d] [--repeat r] [--tags a,b|none] [--focus|--unfocus] [--project p] [--section s]");
       const changes = {};
       if (rest.length) changes.text = rest.join(" ");
-      ["priority", "due", "repeat", "project", "section"].forEach(k => { if (opts[k] !== undefined) changes[k] = opts[k]; });
+      ["priority", "due", "time", "repeat", "project", "section"].forEach(k => { if (opts[k] !== undefined) changes[k] = opts[k]; });
       if (opts.tags !== undefined) changes.tags = opts.tags === "none" ? [] : opts.tags;
       if (opts.focus) changes.focus = true;
       if (opts.unfocus) changes.focus = false;

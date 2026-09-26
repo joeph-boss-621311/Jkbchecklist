@@ -94,6 +94,18 @@ test("a recurring task's tags carry over to its next occurrence", () => {
   assert.deepStrictEqual(r.next_occurrence.tags, ["health"]);
 });
 
+test("a task's time is validated and carries over to its next occurrence", () => {
+  const s = fixture();
+  const r = T.addTask(s, { project: "ceo", section: "routine", text: "Gym", repeat: "daily", time: "07:30" });
+  assert.strictEqual(r.added.time, "07:30");
+  assert.throws(() => T.addTask(s, { project: "jkb", text: "x", time: "7:30am" }), /Time must be/);
+  const done = T.setDone(s, r.added.id, true);
+  assert.strictEqual(done.next_occurrence.time, "07:30", "the reminder time carries to the next occurrence");
+  const e = T.editTask(s, r.added.id, { time: "none" });
+  assert.strictEqual(e.task.time, undefined, "clearing the time drops it from the view");
+  assert.ok(e.changed.includes("time"));
+});
+
 test("list() and status() put high priority first, done tasks last, otherwise stable", () => {
   const s = fixture();
   const sec = s.projects[0].sections[0]; // Brand & Website: t3 (normal, open), t4 (normal, done)

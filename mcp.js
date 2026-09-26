@@ -30,6 +30,7 @@ function tool(name, description, inputSchema, handler, { writes = false } = {}) 
 }
 
 const due = z.string().optional().describe('YYYY-MM-DD, "today", "tomorrow" or "none"');
+const time = z.string().optional().describe('HH:MM in 24-hour form, or "none" — fires a push notification at that time');
 const repeat = z.enum(["daily", "weekdays", "weekly", "monthly", "none"]).optional();
 const priority = z.enum(["high", "normal", "low"]).optional();
 
@@ -58,7 +59,7 @@ tool("add_task", "Add a task. An unknown or missing section puts it in the proje
   project: z.string().describe("Project id, name or prefix"),
   section: z.string().optional().describe("Section name or prefix"),
   text: z.string().describe("The task, short and verb-first"),
-  priority, due, repeat, tags,
+  priority, due, time, repeat, tags,
   steps: z.array(z.string()).optional().describe("Optional sub-steps"),
   focus: z.boolean().optional().describe("Also add it to today's focus"),
 }, a => store.apply(`add "${a.text}"`, s => T.addTask(s, a)), { writes: true });
@@ -68,10 +69,10 @@ tool("set_task_done", "Mark a task done or not done. Completing a recurring task
   done: z.boolean().optional().describe("Default true"),
 }, ({ task_id, done }) => store.apply(`${done === false ? "undo" : "done"} ${task_id}`, s => T.setDone(s, task_id, done !== false)), { writes: true });
 
-tool("edit_task", "Change a task: text, priority, due date, repeat, tags, today's focus, extra steps, or move it to another project/section.", {
+tool("edit_task", "Change a task: text, priority, due date, time, repeat, tags, today's focus, extra steps, or move it to another project/section.", {
   task_id: z.string(),
   text: z.string().optional(),
-  priority, due, repeat,
+  priority, due, time, repeat,
   tags: z.array(z.string()).optional().describe("Replaces the task's tags entirely — pass the full set you want it to have, not just new ones."),
   focus: z.boolean().optional().describe("true adds to today's focus, false removes"),
   add_steps: z.array(z.string()).optional(),

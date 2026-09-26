@@ -50,3 +50,27 @@ into `VAPID_PUBLIC_KEY` in app.html) and `CRON_SECRET` (any random string —
 it's how the cron job proves it's really the cron job, not a stranger trying
 to burn your Grok credits). Run `cron.sql` once, with that same secret
 substituted in, to actually schedule it.
+
+## Per-task reminders (a notification for each task's own time, not just 8am/8pm)
+
+Every task can now carry a "time" (set it in the task sheet, or tell Atlas
+"remind me at 3pm" / "add a time to that"). `functions/task-reminders/index.ts`
+checks every 5 minutes for tasks whose time has arrived and pushes one
+notification per task — completely separate from the daily briefing above.
+
+To turn it on:
+1. Re-run `schema.sql` (it adds a `sent_reminders` table this function needs —
+   safe to re-run, everything in it is "if not exists").
+2. Dashboard → **Edge Functions** → **Create a new function** → name it
+   `task-reminders` → paste the contents of `functions/task-reminders/index.ts`
+   → Deploy.
+3. It reuses `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `CRON_SECRET` and
+   `SUPABASE_SERVICE_ROLE_KEY` — nothing new to add if the daily briefing is
+   already set up.
+4. Run the new `atlas-task-reminders` block in `cron.sql` (same file as
+   before — it's been added at the bottom), with `<CRON_SECRET>` swapped for
+   your real one.
+
+Once that's running, notifications work the same way for a single task as
+they do for the morning/evening briefing — no extra setup per task, just set
+a time on it.

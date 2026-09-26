@@ -72,3 +72,23 @@ create policy "insert own subscriptions" on push_subscriptions
 drop policy if exists "delete own subscriptions" on push_subscriptions;
 create policy "delete own subscriptions" on push_subscriptions
   for delete using (auth.uid() = user_id);
+
+-- Tracks which per-task reminders (task-reminders function) already fired
+-- today, so the every-5-minutes cron doesn't push the same task twice. Kept
+-- separate from app_state on purpose: this is written by a service-role cron
+-- job on its own schedule, and a table with no version to conflict with is
+-- much safer for that than editing into the same jsonb blob the app itself
+-- reads and writes live.
+create table if not exists sent_reminders (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  task_id text not null,
+  day date not null,
+  sent_at timestamptz not null default now(),
+  primary key (user_id, task_id, day)
+);
+
+alter table sent_reminders enable row level security;
+
+drop policy if exists "select own reminders" on sent_reminders;
+create policy "select own reminders" on sent_reminders
+  for select using (auth.uid() = user_id);
