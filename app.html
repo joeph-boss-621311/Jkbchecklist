@@ -124,7 +124,7 @@
   .sora{ font-family:var(--font-display); }
 
   /* ---------- top ---------- */
-  .topbar{ position:sticky; top:0; z-index:30; background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:calc(12px + env(safe-area-inset-top)) 16px 10px; }
+  .topbar{ position:fixed; top:0; left:0; right:0; z-index:30; background:color-mix(in srgb, var(--bg) 97%, transparent); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:calc(12px + env(safe-area-inset-top)) 16px 10px; transform:translateZ(0); }
   .topbar-in{ max-width:720px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
   .brand{ font-family:var(--font-display); font-weight:800; font-size:1.15rem; letter-spacing:0.2px; }
   .brand .dot{ color:var(--gold); }
@@ -139,7 +139,7 @@
   .timer button{ width:34px; height:34px; border-radius:50%; border:none; background:rgba(0,0,0,0.14); color:inherit; cursor:pointer; font-size:0.85rem; }
   .timer.paused{ background:var(--card-2); color:var(--text); box-shadow:none; border:1px solid var(--line); }
 
-  main{ max-width:720px; margin:0 auto; padding:6px 16px 130px; }
+  main{ max-width:720px; margin:0 auto; padding:calc(var(--topbar-h, 64px) + 6px) 16px 130px; }
   .view-in{ animation:fadein 0.22s ease; }
   @keyframes fadein{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
   .eyebrow{ color:var(--text-dim); font-size:0.8rem; margin:6px 0 2px; }
@@ -313,7 +313,9 @@
   .compose-hint{ font-size:0.72rem; color:var(--text-dim); margin-top:6px; min-height:1em; }
 
   /* nav */
-  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; background:color-mix(in srgb, var(--surface) 97%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom)); transition:transform 0.18s ease; }
+  body.kb-open .tabbar{ transform:translateY(100%); }
+  body.kb-open .composer{ transition:none; }
   .tabbar-in{ max-width:720px; margin:0 auto; display:flex; gap:4px; }
   .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 2px; color:var(--text-dim); cursor:pointer; border-radius:14px; font-size:0.66rem; font-weight:700; background:none; border:none; }
   .tab .ic{ font-size:1.1rem; line-height:1; }
@@ -2202,6 +2204,31 @@ async function enterApp(){
   connectCloud();
   registerServiceWorker();
 }
+// Keep main's top padding matched to the fixed header's real height (it grows when the focus timer shows).
+(function(){
+  const topbar = $(".topbar");
+  const sync = () => document.documentElement.style.setProperty("--topbar-h", topbar.offsetHeight + "px");
+  new ResizeObserver(sync).observe(topbar);
+  sync();
+})();
+
+// Glue the composer to the keyboard instead of leaving it floating above the tab bar —
+// iOS only resizes the visual viewport, not the layout one, so fixed-position elements
+// need to track it manually or the composer ends up detached from where you're typing.
+(function(){
+  const composer = $("#composer"), input = $("#input"), vv = window.visualViewport;
+  function sync(){
+    if(!vv) return;
+    const gap = Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop);
+    const open = gap > 60;
+    document.body.classList.toggle("kb-open", open);
+    composer.style.bottom = open ? gap + "px" : "";
+  }
+  if(vv){ vv.addEventListener("resize", sync); vv.addEventListener("scroll", sync); }
+  input.addEventListener("focus", () => setTimeout(sync, 60));
+  input.addEventListener("blur", () => { document.body.classList.remove("kb-open"); composer.style.bottom = ""; });
+})();
+
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   authUser = session ? session.user : null;
