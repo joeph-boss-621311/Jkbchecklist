@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // MCP connector: gives Claude Code (or Claude Desktop) tools for the live JKB Ops checklist.
-// Tools edit the synced copy in .jkb/; Claude moves it to and from the app's cloud save with
-// its built-in ArtifactData tool (see get_sync_info and CLAUDE.md).
+// Tools read and write Joseph's real data in Supabase, signed in as him (see lib/store.js); every
+// write is compare-and-swap, so it never overwrites a change he just made in the app.
 const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { z } = require("zod");
@@ -13,16 +13,11 @@ const server = new McpServer({ name: "jkb-checklist", version: "2.0.0" });
 function out(value) {
   return { content: [{ type: "text", text: typeof value === "string" ? value : JSON.stringify(value, null, 2) }] };
 }
-// reads get a staleness warning; writes get the push reminder
 function tool(name, description, inputSchema, handler, { writes = false } = {}) {
   server.registerTool(name, { description, inputSchema }, async args => {
     try {
       const result = await handler(args || {});
-      const sync = store.sync();
-      const note = writes
-        ? { next_step: `Saved to the synced copy only. Push it so the app sees it: ${sync.push}`, unpushed_changes: sync.unpushed_changes }
-        : sync.stale ? { warning: `Synced copy is ${sync.pulled_minutes_ago === null ? "of unknown age" : sync.pulled_minutes_ago + " min old"}. Pull again before relying on it: ${sync.pull}` } : {};
-      return out({ ...result, ...note });
+      return out(writes ? { ...result, saved: "Saved to Joseph's live checklist; open apps update within seconds." } : result);
     } catch (e) {
       return { ...out("Error: " + e.message), isError: true };
     }
@@ -34,24 +29,21 @@ const time = z.string().optional().describe('HH:MM in 24-hour form, or "none" â€
 const repeat = z.enum(["daily", "weekdays", "weekly", "monthly", "none"]).optional();
 const priority = z.enum(["high", "normal", "low"]).optional();
 
-tool("get_sync_info", "Where the synced copy of the app's data lives, how old it is, unpushed changes, and the exact ArtifactData calls to pull and push. Call this first in a session.", {},
-  () => ({ ...store.sync(), pushed_hint: "After a successful push, call mark_pushed." }));
-
-tool("mark_pushed", "Clear the unpushed-changes list after you pushed the synced copy with ArtifactData.", {},
-  () => { store.markPushed(); return { ok: true }; });
+tool("get_login_info", "Whether this machine is signed in to Joseph's JKB Ops account (and as whom). If not, tell him to run `node cli.js login` (or the --email / --link phone sign-in) in this repo.", {},
+  () => store.whoami());
 
 tool("get_status", "Today's focus, overdue and due-soon tasks, streak, check-ins and progress per project.", {},
-  () => T.status(store.load()));
+  async () => T.status(await store.load()));
 
 tool("list_tasks", "List tasks with their ids. Filter by project and/or section (id, name or prefix).", {
   project: z.string().optional().describe("Project id, name or prefix, e.g. 'SafeGate' or 'safe'"),
   section: z.string().optional().describe("Section name or prefix within the project"),
   open_only: z.boolean().optional().describe("Only tasks that are not done"),
-}, ({ project, section, open_only }) => ({ projects: T.list(store.load(), { project, section, openOnly: !!open_only }) }));
+}, async ({ project, section, open_only }) => ({ projects: T.list(await store.load(), { project, section, openOnly: !!open_only }) }));
 
 tool("search_tasks", "Find tasks whose text, steps or tags contain the query.", {
   query: z.string().describe("Text to search for"),
-}, ({ query }) => ({ tasks: T.search(store.load(), query) }));
+}, async ({ query }) => ({ tasks: T.search(await store.load(), query) }));
 
 const tags = z.array(z.string()).optional().describe("Freeform labels, e.g. ['client','safegate']. Lowercased, deduped, max 8.");
 

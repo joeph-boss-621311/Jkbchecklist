@@ -1,9 +1,15 @@
 #!/usr/bin/env node
-// jkb — command-line access to the live JKB Ops checklist (via its synced copy in .jkb/).
+// jkb — command-line access to the live JKB Ops checklist (your Supabase data, signed in as you).
 const store = require("./lib/store");
 const T = require("./lib/tasks");
 
-const HELP = `jkb — JKB Ops checklist (edits the synced copy of the live app's data)
+const HELP = `jkb — JKB Ops checklist (reads and edits your live data, the same as the app)
+
+  jkb login                                   Sign in with your JKB Ops email and password
+  jkb login --email <you@example.com>         …or email yourself a one-time sign-in link (phone-friendly):
+  jkb login --link '<link from the email>'    paste the link here instead of tapping it
+  jkb whoami                                  Who you're signed in as
+  jkb logout                                  Sign out on this machine
 
   jkb status                                  Focus, overdue, due soon and progress per project
   jkb list [project] [section] [--open]       Tasks with their ids (--open hides done ones)
@@ -18,17 +24,16 @@ const HELP = `jkb — JKB Ops checklist (edits the synced copy of the live app's
   jkb rm <id...>                              Delete tasks
   jkb project <title> [emoji]                 Add a project
   jkb section <project> <name...>             Add a section
-  jkb sync                                    Where the synced copy is, how old it is, what's unpushed
-  jkb pushed                                  Clear the unpushed list after pushing
-  jkb json                                    Print the synced data as JSON
+  jkb json                                    Print your checklist data as JSON
 
 Projects and sections can be given by id, name or prefix ("safe" = SafeGate, "seo" = SEO).
-Changes only reach the app after Claude pushes them — see: jkb sync`;
+Changes save straight to your account; open apps update within seconds. A save never overwrites
+something you just changed in the app: it re-reads and applies on top instead.`;
 
 // --flag value / --flag parsing that keeps free text intact
 function parse(argv) {
   const opts = {}, args = [];
-  const valued = new Set(["priority", "due", "time", "repeat", "project", "section", "tags"]);
+  const valued = new Set(["priority", "due", "time", "repeat", "project", "section", "tags", "email", "link"]);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a.startsWith("--")) {
@@ -57,30 +62,56 @@ function printStatus(s) {
   s.projects.forEach(p => console.log(`  ${p.emoji} ${p.title} [${p.id}]: ${p.done}/${p.total}${p.high_priority_open ? ` · ${p.high_priority_open} high open` : ""}`));
 }
 
-function printSync() {
-  const s = store.sync();
-  console.log(`Synced copy: ${s.file}`);
-  console.log(s.pulled_minutes_ago === null ? "Never pulled." : `Pulled ${s.pulled_minutes_ago} min ago${s.stale ? " — stale, pull again before changing things" : ""}.`);
-  console.log(s.unpushed_changes.length ? `Unpushed changes:\n  - ${s.unpushed_changes.join("\n  - ")}` : "No unpushed changes.");
-  console.log(`\nPull: ${s.pull}\nPush: ${s.push}`);
+// Asks on the terminal; hide=true doesn't echo what's typed (for the password).
+function ask(question, hide) {
+  return new Promise(resolve => {
+    const rl = require("readline").createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    if (hide) rl._writeToOutput = s => { if (s.startsWith(question)) process.stdout.write(question); };
+    rl.question(question, answer => { rl.close(); if (hide) process.stdout.write("\n"); resolve(answer.trim()); });
+  });
 }
 
-// After every change, remind whoever is driving that the app hasn't seen it yet.
+async function login(opts) {
+  if (opts.link) {
+    const s = await store.loginWithLink(opts.link);
+    return console.log(`Signed in as ${s.email}.`);
+  }
+  if (opts.email) {
+    await store.sendLink(opts.email);
+    return console.log(`Sent a sign-in link to ${opts.email}. Don't tap it: long-press it, copy the link, then run:\n  jkb login --link '<the link>'`);
+  }
+  if (!process.stdin.isTTY) throw new Error("No terminal to type a password into. Use: jkb login --email you@example.com");
+  const email = await ask("Email: ");
+  const password = await ask("Password: ", true);
+  const s = await store.login(email, password);
+  console.log(`Signed in as ${s.email}.`);
+}
+
+// Saved straight to the live data; say so.
 function changed(msg) {
   if (msg) console.log(msg);
-  console.log("→ Not in the app yet. Push with ArtifactData (see: jkb sync).");
+  console.log("→ Saved. Open apps update within seconds.");
 }
 
-function main(argv) {
+async function main(argv) {
   const { opts, args } = parse(argv);
   const cmd = args.shift();
   switch (cmd) {
     case undefined: case "help": case "-h": case "--help":
       return console.log(HELP);
+    case "login":
+      return login(opts);
+    case "logout":
+      await store.logout();
+      return console.log("Signed out on this machine.");
+    case "whoami": {
+      const w = store.whoami();
+      return console.log(w.mode === "local file" ? `Using the local file ${w.file}` : w.signed_in_as ? `Signed in as ${w.signed_in_as} (${w.project})` : "Not signed in. Run: jkb login");
+    }
     case "status":
-      return printStatus(T.status(store.load()));
+      return printStatus(T.status(await store.load()));
     case "list": case "ls": {
-      const out = T.list(store.load(), { project: args[0], section: args[1], openOnly: !!opts.open });
+      const out = T.list(await store.load(), { project: args[0], section: args[1], openOnly: !!opts.open });
       out.forEach(p => {
         console.log(`\n${p.emoji} ${p.project} [${p.project_id}]`);
         p.sections.forEach(s => { console.log(`  ## ${s.section}`); s.tasks.forEach(t => console.log("    " + line(t))); });
@@ -88,29 +119,24 @@ function main(argv) {
       return;
     }
     case "find": {
-      const hits = T.search(store.load(), args.join(" "));
+      const hits = T.search(await store.load(), args.join(" "));
       if (!hits.length) return console.log("No matches.");
       return hits.forEach(t => console.log(line(t) + `   — ${t.project} › ${t.section}`));
     }
     case "json":
-      return console.log(JSON.stringify(store.load(), null, 2));
-    case "sync":
-      return printSync();
-    case "pushed":
-      store.markPushed();
-      return console.log("Marked as pushed.");
+      return console.log(JSON.stringify(await store.load(), null, 2));
     case "add": {
       const [project, section, ...rest] = args;
       if (!project || !section || !rest.length) throw new Error("Usage: jkb add <project> <section> <task...>");
-      const r = store.apply(`add "${rest.join(" ")}"`, s => T.addTask(s, { project, section, text: rest.join(" "), priority: opts.priority, due: opts.due, time: opts.time, repeat: opts.repeat, tags: opts.tags, focus: !!opts.focus }));
+      const r = await store.apply(`add "${rest.join(" ")}"`, s => T.addTask(s, { project, section, text: rest.join(" "), priority: opts.priority, due: opts.due, time: opts.time, repeat: opts.repeat, tags: opts.tags, focus: !!opts.focus }));
       return changed(`Added ${r.added.id}: ${r.added.text}  → ${r.added.project} › ${r.added.section}`);
     }
     case "done": case "undo": {
       if (!args.length) throw new Error(`Usage: jkb ${cmd} <id...>`);
-      args.forEach(id => {
-        const r = store.apply(`${cmd} ${id}`, s => T.setDone(s, id, cmd === "done"));
+      for (const id of args) {
+        const r = await store.apply(`${cmd} ${id}`, s => T.setDone(s, id, cmd === "done"));
         console.log(`${cmd === "done" ? "✔" : "○"} ${r.task.id}  ${r.task.text}${r.next_occurrence ? `  (next: ${r.next_occurrence.id}, due ${r.next_occurrence.due})` : ""}`);
-      });
+      }
       return changed("");
     }
     case "edit": {
@@ -123,22 +149,22 @@ function main(argv) {
       if (opts.focus) changes.focus = true;
       if (opts.unfocus) changes.focus = false;
       if (!Object.keys(changes).length) throw new Error("Nothing to change. Give new text or a --flag.");
-      const r = store.apply(`edit ${id}`, s => T.editTask(s, id, changes));
+      const r = await store.apply(`edit ${id}`, s => T.editTask(s, id, changes));
       return changed(r.changed.length ? `Updated ${r.task.id} (${r.changed.join(", ")}): ${r.task.text}` : "Nothing changed.");
     }
     case "rm": {
       if (!args.length) throw new Error("Usage: jkb rm <id...>");
-      args.forEach(id => { const r = store.apply(`delete ${id}`, s => T.deleteTask(s, id)); console.log(`Deleted ${r.deleted.id}: ${r.deleted.text}`); });
+      for (const id of args) { const r = await store.apply(`delete ${id}`, s => T.deleteTask(s, id)); console.log(`Deleted ${r.deleted.id}: ${r.deleted.text}`); }
       return changed("");
     }
     case "project": {
       const [title, emoji] = args;
-      const r = store.apply(`project "${title}"`, s => T.addProject(s, { title, emoji }));
+      const r = await store.apply(`project "${title}"`, s => T.addProject(s, { title, emoji }));
       return changed(`Added project ${r.added_project.emoji} ${r.added_project.title} [${r.added_project.id}]`);
     }
     case "section": {
       const [project, ...rest] = args;
-      const r = store.apply(`section "${rest.join(" ")}"`, s => T.addSection(s, { project, name: rest.join(" ") }));
+      const r = await store.apply(`section "${rest.join(" ")}"`, s => T.addSection(s, { project, name: rest.join(" ") }));
       return changed(`Added section ${r.added_section.name} to ${r.added_section.project}`);
     }
     default:
@@ -146,5 +172,4 @@ function main(argv) {
   }
 }
 
-try { main(process.argv.slice(2)); }
-catch (e) { console.error("Error: " + e.message); process.exit(1); }
+main(process.argv.slice(2)).catch(e => { console.error("Error: " + e.message); process.exit(1); });

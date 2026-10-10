@@ -2,7 +2,7 @@
 
 Your checklist, managed by Claude. It plans your day, updates tasks when you tell it what happened, times your focus, and calls you out when you're dodging the important stuff.
 
-**App:** https://claude.ai/artifact/1puenyhWtJ8GhNQZvAcqm8 (private to your Claude account)
+**App:** https://checklist.jkbglobal.site/app.html (sign in with your JKB Ops email and password)
 **JKB Voice:** https://checklist.jkbglobal.site/voice.html (needs GitHub Pages on)
 
 ## Screens
@@ -13,15 +13,16 @@ Your checklist, managed by Claude. It plans your day, updates tasks when you tel
 - **Progress**: tasks done per day (14 days), focus time per day, best/current streak, neglected projects, the tasks you've spent the most time on.
 - **Task sheet**: priority, due date, repeat (daily / weekdays / weekly / monthly), tags, steps, "Break it down with Claude", and a 15/25/50-minute focus timer.
 
-## Daily check-ins (Claude routines)
+## Daily check-ins and reminders (Supabase, automatic)
 
-- 8:00 AM WAT: morning plan + phone notification
+- 8:00 AM WAT: morning plan from Atlas + phone notification
 - 8:00 PM WAT: evening review + phone notification
-- Every 2 hours from 9 AM to 7 PM: silently books any extra check-ins you asked for in Atlas
+- Every task with a time gets a push notification at that time; in hours with nothing timed (10 AM to
+  midnight), one nudge about a relevant open task
 
 ## Live voice coach (ElevenLabs)
 
-claude.ai's Artifact sandbox blocks the app from making network calls to any outside API (a security rule of the platform, not a bug — it also silently blocks a raw `fetch()`, so voice has to happen off-platform). Live voice and text-to-speech both run on JKB Voice instead:
+Live voice and ElevenLabs text-to-speech run on JKB Voice (`voice.html`), a separate page:
 
 1. In the app, tap **🎧 Talk**. JKB Voice opens with a briefing of your tasks (passed in the link's `#` part, which never reaches a server).
 2. Talk. When you're done, tap **Copy for Atlas & open app**, then paste into Atlas. It applies what you said.
@@ -45,20 +46,11 @@ In the ElevenLabs dashboard, create a new Agent (blank template) and set:
 
 Then open JKB Voice, tap **Settings** and paste the Agent ID (`agent_…`). It's stored on that device only.
 
-## Claude Code on your laptop (CLI + MCP connector)
+## Claude Code (CLI + MCP connector)
 
-Claude Code on your computer can manage the same tasks as the live app: same data, same rules.
-
-```
- claude.ai cloud save (app/state) <── ArtifactData pull / push (Claude Code, signed in as you) ──> .jkb/app/state.json
-        ▲                                                                                              ▲
-  app · Atlas · check-ins                                                  jkb CLI (cli.js) · MCP connector (mcp.js)
-```
-
-Only Claude Code's built-in ArtifactData tool can reach the cloud save, so Claude pulls the
-checklist into `.jkb/`, the `jkb-checklist` tools edit it, and Claude pushes it back. The push is
-pinned to the version it pulled, so it never overwrites something you changed on your phone in
-the meantime. `CLAUDE.md` tells Claude this whole loop, so you just talk.
+Claude Code can read and edit your real tasks, the same data as the app, signed in as you. Every save
+checks that nothing changed since it read your list; if you just changed something on your phone, it
+re-reads and applies its change on top, so it never overwrites you. Open apps update within seconds.
 
 ### Setup
 
@@ -66,12 +58,17 @@ the meantime. `CLAUDE.md` tells Claude this whole loop, so you just talk.
 git clone https://github.com/joeph-boss-621311/Jkbchecklist.git
 cd Jkbchecklist
 npm install
-claude            # sign in with the same claude.ai account as the app; approve "jkb-checklist" when asked
+node cli.js login     # your JKB Ops email and password (stays on this machine, in .jkb/)
+claude                # approve "jkb-checklist" when asked
 ```
+
+No computer handy? Ask Claude to sign the tools in by email: it runs `node cli.js login --email <you>`,
+Supabase emails you a one-time sign-in link, and you **long-press and copy it** (don't tap it, tapping uses it
+up) and paste it to Claude, which finishes with `node cli.js login --link '<link>'`.
 
 Then ask things like:
 
-- "Pull my checklist and tell me what's next"
+- "What's next?"
 - "Mark SafeGate test every page done"
 - "Add 'Call Tunde about the invoice' to JKB, high priority, due Friday"
 - "Give me my weekly review"
@@ -86,20 +83,19 @@ claude mcp add --scope user jkb-checklist -- node /full/path/to/Jkbchecklist/mcp
 
 ```bash
 npm link                 # makes `jkb` available everywhere (or use: node cli.js ...)
+jkb login | whoami | logout
 jkb status               # focus, overdue, due soon, progress
 jkb list safe --open
 jkb find sitemap
-jkb add safegate seo "Submit sitemap to Google" --priority high --due tomorrow
+jkb add safegate seo "Submit sitemap to Google" --priority high --due tomorrow --time 15:00
 jkb done t2f
 jkb edit t2f --due none --focus
-jkb sync                 # how old the synced copy is, what's unpushed, the exact pull/push calls
 ```
 
-The CLI edits `.jkb/app/state.json`. Nothing reaches the app until Claude pushes, and `jkb sync`
-tells you what's waiting. Projects and sections work by id, name or prefix (`safe` = SafeGate).
+Projects and sections work by id, name or prefix (`safe` = SafeGate).
 
-MCP tools: `get_sync_info`, `get_status`, `list_tasks`, `search_tasks`, `add_task`,
-`set_task_done`, `edit_task`, `delete_task`, `add_project`, `add_section`, `mark_pushed`.
+MCP tools: `get_login_info`, `get_status`, `list_tasks`, `search_tasks`, `add_task`, `set_task_done`,
+`edit_task`, `delete_task`, `add_project`, `add_section`.
 
 ## Adding more connectors
 
@@ -117,7 +113,7 @@ Use single quotes around `${VAR}` in `claude mcp add` so the variable name is sa
 ## Development
 
 ```bash
-npm test     # lib/tasks.js unit tests + an end-to-end MCP test
+npm test     # lib/tasks.js unit tests, an end-to-end MCP test, and lib/store.js against a fake Supabase
 ```
 
 All checklist rules live in `lib/tasks.js` and mirror `app.html`. Change both together.

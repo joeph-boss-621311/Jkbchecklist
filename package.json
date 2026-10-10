@@ -1,7 +1,7 @@
 {
   "name": "jkb-checklist",
   "version": "2.0.0",
-  "description": "JKB Ops — CLI and MCP connector for the live claude.ai checklist app",
+  "description": "JKB Ops — CLI and MCP connector for the live checklist (Supabase), signed in as you",
   "private": true,
   "license": "UNLICENSED",
   "bin": {
