@@ -1559,7 +1559,7 @@ Action shapes:
 {"type":"delete_project","id":"<project id>"}   (deletes it and every task inside — confirm first unless he clearly already asked)
 {"type":"add_section","project":"<project id>","name":"..."}
 {"type":"update_section","project":"<project id>","id":"<section name>","name":"new name"}
-{"type":"delete_section","project":"<project id>","id":"<section name>"}   (its tasks move to that project's Inbox, not lost — confirm first unless he clearly already asked)
+{"type":"delete_section","project":"<project id>","id":"<section name>"}   (deletes the section AND its tasks, like his own Remove button — only when he asks; if it still has open tasks, confirm first unless he clearly said to delete them; his Undo button brings it all back)
 {"type":"focus","ids":["t12","t40"],"note":"one or two sentences for today"}
 {"type":"checkin","at":"YYYY-MM-DDTHH:MM","about":"what to check on"}   (his local time)
 {"type":"cancel_checkin","id":"c5"}
@@ -1693,17 +1693,15 @@ function applyActions(actions){
         break;
       }
       case "delete_section": {
+        // Same as the manual "Remove section": the section goes with its tasks (Undo brings both back).
         const p = state.projects.find(q => q.id === a.project);
         const i = p && p.sections.findIndex(q => q.id === a.id || q.name.toLowerCase() === String(a.id || "").toLowerCase());
         if(!p || i == null || i < 0) break;
         const s = p.sections[i];
-        if(p.sections.length < 2){ changes.push("Kept " + s.name + " — a project needs at least one section"); break; }
-        if(s.tasks.length){
-          const inbox = getOrCreateSection(p, "Inbox");
-          if(inbox !== s) s.tasks.forEach(t => inbox.tasks.push(t));
-        }
+        s.tasks.forEach(t => removeFocus(t.id));
         p.sections.splice(i, 1);
-        changes.push("Deleted section: " + s.name + " in " + p.title + (s.tasks.length ? " (" + s.tasks.length + " tasks moved to Inbox)" : ""));
+        const n = s.tasks.length;
+        changes.push("Deleted section: " + s.name + " in " + p.title + (n ? " and its " + n + (n === 1 ? " task" : " tasks") : ""));
         break;
       }
       case "subtasks": {
