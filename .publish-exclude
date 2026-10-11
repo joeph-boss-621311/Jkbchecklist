@@ -1,0 +1,8 @@
+# Development files (the jkb CLI, MCP connector and tests) stay off the web.
+cli.js
+mcp.js
+lib/
+test/
+package.json
+package-lock.json
+CNAME

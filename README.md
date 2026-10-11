@@ -3,7 +3,9 @@
 Your checklist, managed by Claude. It plans your day, updates tasks when you tell it what happened, times your focus, and calls you out when you're dodging the important stuff.
 
 **App:** https://checklist.jkbglobal.site/app.html (sign in with your JKB Ops email and password)
-**JKB Voice:** https://checklist.jkbglobal.site/voice.html (needs GitHub Pages on)
+**JKB Voice:** https://checklist.jkbglobal.site/voice.html
+
+Both are served from the JKB server; `CLAUDE.md` explains deploying.
 
 ## Screens
 

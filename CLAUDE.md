@@ -8,8 +8,11 @@ You're his co-founder-level operator here: call him "boss", be direct, get thing
 
 - `app.html` — the whole app: one HTML file, no build step, no framework. This is what he uses.
 - `index.html` — the landing page; `voice.html` — JKB Voice (live ElevenLabs voice coach).
-- Hosting: GitHub Pages from `main` at **checklist.jkbglobal.site** (the `CNAME` file). Pushing to `main`
-  deploys the app, so only push when boss says to go live.
+- Hosting: the JKB server (Caddy) at **https://checklist.jkbglobal.site**. This repo is the editing copy at
+  `Live Project/checklist`; deploy with `bash "Live Project/publish.sh" checklist` (`--dry-run` first,
+  `--rollback checklist` to undo), only when boss says to go live. `.publish-exclude` keeps the CLI, MCP
+  connector and tests off the web. GitHub `main` is the code backup; its Pages site only redirects to
+  checklist.jkbglobal.site (the `CNAME` file).
 - Backend: **Supabase project `nbgmegpqxzvgvtqqlvko`** (`https://nbgmegpqxzvgvtqqlvko.supabase.co`), set up as
   in `supabase/README.md`:
   - `app_state` — one row per user: `state` (the checklist) and `coach` (Atlas's chat log), each jsonb with its
