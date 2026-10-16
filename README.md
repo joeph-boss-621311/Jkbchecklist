@@ -4,8 +4,9 @@ Your checklist, managed by Claude. It plans your day, updates tasks when you tel
 
 **App:** https://checklist.jkbglobal.site/app.html (sign in with your JKB Ops email and password)
 **JKB Voice:** https://checklist.jkbglobal.site/voice.html
+**Landing page:** https://checklist.jkbglobal.site/
 
-Both are served from the JKB server; `CLAUDE.md` explains deploying.
+All three are served from the JKB server; `CLAUDE.md` explains deploying.
 
 ## Screens
 
@@ -13,7 +14,9 @@ Both are served from the JKB server; `CLAUDE.md` explains deploying.
 - **Atlas** (the coach): chat with it. It marks tasks done, adds tasks (with due dates, repeats, tags and steps), reorganizes the checklist on its own initiative — new projects, new sections, tags — to keep it matching what you're actually working toward, plans your day, and schedules check-ins. Every change has **Undo**. You can attach a photo (screenshot, handwritten note, whiteboard, receipt) and it reads it. Tap 🎙 to read one of its replies aloud with your device's own voice, or 🎧 to hear it in Atlas's ElevenLabs voice on JKB Voice.
 - **Tasks**: search, filters (Today, This week, Overdue, High, Recurring, No date, Done), project filter, tag filter, and projects → sections. Every list puts open high-priority tasks first, then normal, then low, with done tasks at the bottom.
 - **Progress**: tasks done per day (14 days), focus time per day, best/current streak, neglected projects, the tasks you've spent the most time on.
+- **Me**: notes about yourself (who you are, how you work, your taste, ground rules, what you're building, your setup). Atlas reads them as background while **Let Atlas read my profile** is on, and you can mark a note as inferred so Atlas treats it as a guess. Add notes by hand, or import them: paste an import link or its text, or pick a `.json` file, then tick what you want. Import only ever adds, shows a preview first, skips what you already have, and has **Undo last import**. **Export** saves your notes as a file. Atlas runs on Grok (xAI), so the profile text goes to xAI with each chat; switch the toggle off if you'd rather it didn't. Your notes live in your own account only, never in this repo.
 - **Task sheet**: priority, due date, repeat (daily / weekdays / weekly / monthly), tags, steps, "Break it down with Claude", and a 15/25/50-minute focus timer.
+- **Appearance** (the gear in the header): three looks, **Horizon** (amber and ember, the default), **Nebula** (violet and pink) and **Ion** (teal and cyan), each in dark and light. The landing page and JKB Voice follow your choice.
 
 ## Daily check-ins and reminders (Supabase, automatic)
 
@@ -119,3 +122,6 @@ npm test     # lib/tasks.js unit tests, an end-to-end MCP test, and lib/store.js
 ```
 
 All checklist rules live in `lib/tasks.js` and mirror `app.html`. Change both together.
+
+The pages themselves are checked in a real browser (Playwright, with a mocked Supabase and synthetic data) by
+scripts kept outside this repo; see `CLAUDE.md`.

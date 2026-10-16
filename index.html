@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>JKB Ops</title>
 <meta name="description" content="Joseph's ops assistant — tasks, calendar, inbox and daily accountability, run by Atlas.">
-<meta name="theme-color" content="#0c0b09">
+<meta name="theme-color" content="#05060c">
 <link rel="manifest" href="manifest.webmanifest">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -15,148 +15,251 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Figtree:wght@400;500;600;700;800&family=Syne:wght@600;700;800&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* dark-first: the brand lives on warm onyx; light mode keeps the gold legible */
-  :root{
-    color-scheme: dark;
-    --bg:#0c0b09; --card:#16140f; --card-2:#221f19; --line:#2c2921;
-    --gold:#d9ad33; --gold-2:#f0c968; --on-gold:#1a1305; --glow:rgba(217,173,51,0.22);
-    --grad:linear-gradient(135deg,#ecc65c,#c9971f);
-    --text:#f3efe6; --text-2:#cdc6b8; --text-dim:#8f887a;
-  }
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="dark"]){
-      color-scheme: light;
-      --bg:#f5f3ee; --card:#ffffff; --card-2:#efeade; --line:#e4ddcd;
-      --gold:#9a7412; --gold-2:#7a5b0c; --on-gold:#fffaf0; --glow:rgba(154,116,18,0.14);
-      --grad:linear-gradient(135deg,#b08618,#8a6508);
-      --text:#1d1a14; --text-2:#3e392e; --text-dim:#766f60;
-    }
-  }
-  :root[data-theme="light"]{
-    color-scheme: light;
-    --bg:#f5f3ee; --card:#ffffff; --card-2:#efeade; --line:#e4ddcd;
-    --gold:#9a7412; --gold-2:#7a5b0c; --on-gold:#fffaf0; --glow:rgba(154,116,18,0.14);
-    --grad:linear-gradient(135deg,#b08618,#8a6508);
-    --text:#1d1a14; --text-2:#3e392e; --text-dim:#766f60;
-  }
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; }
-  body{ background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,-apple-system,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
-    padding:calc(20px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)); }
-  .wrap{ max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:28px; }
-  a{ color:inherit; }
-  :focus-visible{ outline:2px solid var(--gold); outline-offset:3px; border-radius:8px; }
+/* ===== generated tokens: 3 looks x (dark, light). Components only read these. ===== */
+:root{color-scheme:dark;--radius:26px;--radius-sm:16px;--tabbar-h:74px;--ease:cubic-bezier(.2,.8,.2,1);--font-display:'Outfit',system-ui,sans-serif;--font-num:'Outfit',system-ui,sans-serif;--font-body:'Figtree',system-ui,-apple-system,sans-serif;--mark:conic-gradient(from 200deg,#ffe3a6,#ff8a3d 22%,#8a3114 48%,#ffb35c 72%,#ffe3a6);--bg:#05060c;--surface:#0e1019;--card:rgba(255,255,255,.06);--card-2:rgba(255,255,255,.095);--raise:rgba(255,255,255,.15);--glass-1:rgba(255,255,255,.085);--glass-2:rgba(255,255,255,.03);--glass:rgba(17,19,31,.80);--gold:#ffb347;--gold-2:#ffd9a0;--gold-soft:rgba(255,179,71,.15);--on-gold:#1d1003;--grad:linear-gradient(135deg,#ffd98a 0%,#ffa73d 48%,#ff6b3d 100%);--grad-text:linear-gradient(110deg,#fff1d0 0%,#ffc36b 45%,#ff8a4a 100%);--glow:rgba(255,138,60,.38);--chart:#ffa73d;--text:#f6f3ef;--text-2:#cfcac4;--text-dim:#b0abb6;--line:rgba(255,255,255,.10);--line-2:rgba(255,255,255,.19);--done:#7f7b86;--danger:#ff7b69;--danger-soft:rgba(255,123,105,.16);--ok:#6fe3a5;--ok-soft:rgba(111,227,165,.15);--shadow:0 18px 40px -14px rgba(0,0,0,.7);--hi:rgba(255,255,255,.14);--aura-1:rgba(255,140,50,.24);--aura-2:rgba(110,80,255,.15);--aura-3:rgba(255,80,60,.11);--dust:.5;--hole:#000000;--shadow-lg:0 30px 70px -26px rgba(0,0,0,.8);--scrim:rgba(3,4,10,.55);--on-danger:#2a0804;--ring-a:#ffd98a;--ring-b:#ff8a3d;}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#f3effa;--surface:#fbf9ff;--card:rgba(255,255,255,.62);--card-2:rgba(60,35,110,.07);--raise:rgba(60,35,110,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(251,248,255,.84);--gold:#a74603;--gold-2:#7a3200;--gold-soft:rgba(214,98,10,.12);--on-gold:#2b1100;--grad:linear-gradient(135deg,#ffc978 0%,#ff9f57 50%,#ff7a59 100%);--grad-text:linear-gradient(110deg,#c2540a,#a2290a);--glow:rgba(255,128,70,.35);--chart:#d9651a;--text:#1d1633;--text-2:#463d63;--text-dim:#6b6385;--line:rgba(60,35,110,.13);--line-2:rgba(60,35,110,.22);--done:#857fa0;--danger:#c0301c;--danger-soft:rgba(192,48,28,.10);--ok:#0e6e42;--ok-soft:rgba(23,128,79,.11);--shadow:0 16px 36px -18px rgba(70,40,130,.35);--hi:rgba(255,255,255,.95);--aura-1:rgba(255,176,120,.55);--aura-2:rgba(176,150,255,.42);--aura-3:rgba(255,196,220,.40);--dust:0;--hole:#1c1236;--shadow-lg:0 30px 70px -28px rgba(70,40,130,.5);--scrim:rgba(40,22,80,.32);--on-danger:#ffffff;--ring-a:#d4620f;--ring-b:#c4410f;}}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3effa;--surface:#fbf9ff;--card:rgba(255,255,255,.62);--card-2:rgba(60,35,110,.07);--raise:rgba(60,35,110,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(251,248,255,.84);--gold:#a74603;--gold-2:#7a3200;--gold-soft:rgba(214,98,10,.12);--on-gold:#2b1100;--grad:linear-gradient(135deg,#ffc978 0%,#ff9f57 50%,#ff7a59 100%);--grad-text:linear-gradient(110deg,#c2540a,#a2290a);--glow:rgba(255,128,70,.35);--chart:#d9651a;--text:#1d1633;--text-2:#463d63;--text-dim:#6b6385;--line:rgba(60,35,110,.13);--line-2:rgba(60,35,110,.22);--done:#857fa0;--danger:#c0301c;--danger-soft:rgba(192,48,28,.10);--ok:#0e6e42;--ok-soft:rgba(23,128,79,.11);--shadow:0 16px 36px -18px rgba(70,40,130,.35);--hi:rgba(255,255,255,.95);--aura-1:rgba(255,176,120,.55);--aura-2:rgba(176,150,255,.42);--aura-3:rgba(255,196,220,.40);--dust:0;--hole:#1c1236;--shadow-lg:0 30px 70px -28px rgba(70,40,130,.5);--scrim:rgba(40,22,80,.32);--on-danger:#ffffff;--ring-a:#d4620f;--ring-b:#c4410f;}
+:root[data-look="nebula"]{color-scheme:dark;--font-display:'Syne',system-ui,sans-serif;--font-num:'Figtree',system-ui,-apple-system,sans-serif;--font-body:'Figtree',system-ui,-apple-system,sans-serif;--mark:conic-gradient(from 200deg,#efe6ff,#9a74ff 24%,#3a1d86 50%,#ff7ac0 74%,#efe6ff);--bg:#070617;--surface:#100d29;--card:rgba(255,255,255,.06);--card-2:rgba(255,255,255,.095);--raise:rgba(255,255,255,.15);--glass-1:rgba(255,255,255,.085);--glass-2:rgba(255,255,255,.03);--glass:rgba(17,14,42,.80);--gold:#c4a6ff;--gold-2:#e9ddff;--gold-soft:rgba(168,130,255,.17);--on-gold:#150a35;--grad:linear-gradient(135deg,#c9b2ff 0%,#9a74ff 48%,#ff7ac0 100%);--grad-text:linear-gradient(110deg,#f1e9ff 0%,#c4a6ff 45%,#ff8cc8 100%);--glow:rgba(160,110,255,.42);--chart:#9a74ff;--text:#f5f2ff;--text-2:#cdc6e6;--text-dim:#a9a2c9;--line:rgba(255,255,255,.10);--line-2:rgba(255,255,255,.19);--done:#7f7a9a;--danger:#ff7b8e;--danger-soft:rgba(255,123,142,.16);--ok:#6fe3a5;--ok-soft:rgba(111,227,165,.15);--shadow:0 18px 40px -14px rgba(0,0,10,.72);--hi:rgba(255,255,255,.15);--aura-1:rgba(150,90,255,.27);--aura-2:rgba(255,80,170,.15);--aura-3:rgba(80,120,255,.13);--dust:.5;--hole:#000000;--shadow-lg:0 30px 70px -26px rgba(0,0,12,.82);--scrim:rgba(4,3,16,.58);--on-danger:#2a0610;--ring-a:#c9b2ff;--ring-b:#ff7ac0;}
+@media (prefers-color-scheme: light){:root[data-look="nebula"]:not([data-theme="dark"]){color-scheme:light;--bg:#eef0ff;--surface:#f9f9ff;--card:rgba(255,255,255,.62);--card-2:rgba(50,40,140,.07);--raise:rgba(50,40,140,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(248,248,255,.84);--gold:#5b34d6;--gold-2:#3b1fa0;--gold-soft:rgba(110,70,230,.11);--on-gold:#1a0b45;--grad:linear-gradient(135deg,#c3adff 0%,#a583ff 50%,#ff9ccc 100%);--grad-text:linear-gradient(110deg,#5b34d6,#a2278f);--glow:rgba(150,110,255,.38);--chart:#8f6bff;--text:#16123a;--text-2:#40396b;--text-dim:#645e8c;--line:rgba(50,40,140,.13);--line-2:rgba(50,40,140,.22);--done:#7f79aa;--danger:#c0304a;--danger-soft:rgba(192,48,74,.10);--ok:#0e6e42;--ok-soft:rgba(22,128,79,.11);--shadow:0 16px 36px -18px rgba(60,40,160,.36);--hi:rgba(255,255,255,.95);--aura-1:rgba(190,160,255,.55);--aura-2:rgba(255,170,220,.38);--aura-3:rgba(150,190,255,.40);--dust:0;--hole:#150f3a;--shadow-lg:0 30px 70px -28px rgba(60,40,160,.5);--scrim:rgba(30,20,90,.32);--on-danger:#ffffff;--ring-a:#8f6bff;--ring-b:#d63fa0;}}
+:root[data-look="nebula"][data-theme="light"]{color-scheme:light;--bg:#eef0ff;--surface:#f9f9ff;--card:rgba(255,255,255,.62);--card-2:rgba(50,40,140,.07);--raise:rgba(50,40,140,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(248,248,255,.84);--gold:#5b34d6;--gold-2:#3b1fa0;--gold-soft:rgba(110,70,230,.11);--on-gold:#1a0b45;--grad:linear-gradient(135deg,#c3adff 0%,#a583ff 50%,#ff9ccc 100%);--grad-text:linear-gradient(110deg,#5b34d6,#a2278f);--glow:rgba(150,110,255,.38);--chart:#8f6bff;--text:#16123a;--text-2:#40396b;--text-dim:#645e8c;--line:rgba(50,40,140,.13);--line-2:rgba(50,40,140,.22);--done:#7f79aa;--danger:#c0304a;--danger-soft:rgba(192,48,74,.10);--ok:#0e6e42;--ok-soft:rgba(22,128,79,.11);--shadow:0 16px 36px -18px rgba(60,40,160,.36);--hi:rgba(255,255,255,.95);--aura-1:rgba(190,160,255,.55);--aura-2:rgba(255,170,220,.38);--aura-3:rgba(150,190,255,.40);--dust:0;--hole:#150f3a;--shadow-lg:0 30px 70px -28px rgba(60,40,160,.5);--scrim:rgba(30,20,90,.32);--on-danger:#ffffff;--ring-a:#8f6bff;--ring-b:#d63fa0;}
+:root[data-look="ion"]{color-scheme:dark;--font-display:'Lexend',system-ui,sans-serif;--font-num:'Lexend',system-ui,sans-serif;--font-body:'Figtree',system-ui,-apple-system,sans-serif;--mark:conic-gradient(from 200deg,#d9fff7,#34d6c0 24%,#0b5f66 50%,#38b6f5 74%,#d9fff7);--bg:#030b0f;--surface:#0a161c;--card:rgba(255,255,255,.06);--card-2:rgba(255,255,255,.095);--raise:rgba(255,255,255,.15);--glass-1:rgba(255,255,255,.08);--glass-2:rgba(255,255,255,.028);--glass:rgba(8,22,28,.80);--gold:#4fe3cc;--gold-2:#b4f5ea;--gold-soft:rgba(79,227,204,.14);--on-gold:#021a17;--grad:linear-gradient(135deg,#9bf6e6 0%,#34d6c0 48%,#38b6f5 100%);--grad-text:linear-gradient(110deg,#e0fff9 0%,#6df0da 48%,#5ac4ff 100%);--glow:rgba(52,214,192,.36);--chart:#34d6c0;--text:#eefaf8;--text-2:#c2d6d3;--text-dim:#a3bdbb;--line:rgba(255,255,255,.10);--line-2:rgba(255,255,255,.19);--done:#6f8a88;--danger:#ff7f6e;--danger-soft:rgba(255,127,110,.16);--ok:#b6ee5a;--ok-soft:rgba(182,238,90,.14);--shadow:0 18px 40px -14px rgba(0,6,8,.72);--hi:rgba(255,255,255,.14);--aura-1:rgba(40,210,190,.24);--aura-2:rgba(60,130,255,.15);--aura-3:rgba(40,255,160,.09);--dust:.45;--hole:#000000;--shadow-lg:0 30px 70px -26px rgba(0,8,10,.82);--scrim:rgba(2,10,14,.58);--on-danger:#2a0a05;--ring-a:#9bf6e6;--ring-b:#38b6f5;}
+@media (prefers-color-scheme: light){:root[data-look="ion"]:not([data-theme="dark"]){color-scheme:light;--bg:#eaf7f6;--surface:#f7fdfc;--card:rgba(255,255,255,.62);--card-2:rgba(10,90,90,.07);--raise:rgba(10,90,90,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(244,253,252,.84);--gold:#0a7a6f;--gold-2:#065850;--gold-soft:rgba(10,150,135,.12);--on-gold:#03211d;--grad:linear-gradient(135deg,#8be9d8 0%,#37cdb7 50%,#4fb9ef 100%);--grad-text:linear-gradient(110deg,#0a7a6f,#1273a8);--glow:rgba(40,190,170,.36);--chart:#168f81;--text:#08201e;--text-2:#294644;--text-dim:#4f6d6a;--line:rgba(10,90,90,.14);--line-2:rgba(10,90,90,.24);--done:#6f8b88;--danger:#c0301c;--danger-soft:rgba(192,48,28,.10);--ok:#3f7a08;--ok-soft:rgba(63,122,8,.11);--shadow:0 16px 36px -18px rgba(10,90,90,.34);--hi:rgba(255,255,255,.95);--aura-1:rgba(110,225,205,.55);--aura-2:rgba(130,190,255,.42);--aura-3:rgba(190,240,170,.35);--dust:0;--hole:#08282a;--shadow-lg:0 30px 70px -28px rgba(10,90,90,.46);--scrim:rgba(8,50,56,.30);--on-danger:#ffffff;--ring-a:#16988a;--ring-b:#1273a8;}}
+:root[data-look="ion"][data-theme="light"]{color-scheme:light;--bg:#eaf7f6;--surface:#f7fdfc;--card:rgba(255,255,255,.62);--card-2:rgba(10,90,90,.07);--raise:rgba(10,90,90,.12);--glass-1:rgba(255,255,255,.90);--glass-2:rgba(255,255,255,.60);--glass:rgba(244,253,252,.84);--gold:#0a7a6f;--gold-2:#065850;--gold-soft:rgba(10,150,135,.12);--on-gold:#03211d;--grad:linear-gradient(135deg,#8be9d8 0%,#37cdb7 50%,#4fb9ef 100%);--grad-text:linear-gradient(110deg,#0a7a6f,#1273a8);--glow:rgba(40,190,170,.36);--chart:#168f81;--text:#08201e;--text-2:#294644;--text-dim:#4f6d6a;--line:rgba(10,90,90,.14);--line-2:rgba(10,90,90,.24);--done:#6f8b88;--danger:#c0301c;--danger-soft:rgba(192,48,28,.10);--ok:#3f7a08;--ok-soft:rgba(63,122,8,.11);--shadow:0 16px 36px -18px rgba(10,90,90,.34);--hi:rgba(255,255,255,.95);--aura-1:rgba(110,225,205,.55);--aura-2:rgba(130,190,255,.42);--aura-3:rgba(190,240,170,.35);--dust:0;--hole:#08282a;--shadow-lg:0 30px 70px -28px rgba(10,90,90,.46);--scrim:rgba(8,50,56,.30);--on-danger:#ffffff;--ring-a:#16988a;--ring-b:#1273a8;}
+/* ===== Event Horizon shell shared by index.html and voice.html. Components read tokens only. ===== */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);-webkit-font-smoothing:antialiased;line-height:1.5}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(62% 44% at 10% -4%,var(--aura-1),transparent 72%),radial-gradient(56% 42% at 104% 40%,var(--aura-2),transparent 72%),radial-gradient(74% 46% at 28% 106%,var(--aura-3),transparent 72%)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Ccircle cx='145' cy='59' r='0.5' fill='%23ffe9c4' fill-opacity='0.2'/%3E%3Ccircle cx='89' cy='244' r='0.4' fill='%23ffe9c4' fill-opacity='0.2'/%3E%3Ccircle cx='308' cy='312' r='0.7' fill='%23ffffff' fill-opacity='0.3'/%3E%3Ccircle cx='345' cy='91' r='0.8' fill='%23ffffff' fill-opacity='0.3'/%3E%3Ccircle cx='272' cy='202' r='0.8' fill='%23ffffff' fill-opacity='0.3'/%3E%3Ccircle cx='311' cy='340' r='0.8' fill='%23ffe9c4' fill-opacity='0.55'/%3E%3Ccircle cx='350' cy='327' r='0.4' fill='%23ffffff' fill-opacity='0.2'/%3E%3Ccircle cx='95' cy='313' r='0.4' fill='%23cfe0ff' fill-opacity='0.2'/%3E%3Ccircle cx='183' cy='111' r='0.7' fill='%23ffffff' fill-opacity='0.8'/%3E%3Ccircle cx='28' cy='289' r='0.7' fill='%23ffffff' fill-opacity='0.2'/%3E%3Ccircle cx='337' cy='262' r='0.8' fill='%23ffffff' fill-opacity='0.2'/%3E%3Ccircle cx='299' cy='341' r='0.6' fill='%23ffe9c4' fill-opacity='0.3'/%3E%3Ccircle cx='218' cy='333' r='1.0' fill='%23cfe0ff' fill-opacity='0.2'/%3E%3Ccircle cx='210' cy='352' r='0.4' fill='%23ffffff' fill-opacity='0.3'/%3E%3Ccircle cx='243' cy='160' r='0.7' fill='%23ffe9c4' fill-opacity='0.8'/%3E%3Ccircle cx='53' cy='76' r='0.5' fill='%23cfe0ff' fill-opacity='0.3'/%3E%3Ccircle cx='113' cy='119' r='0.5' fill='%23cfe0ff' fill-opacity='0.3'/%3E%3Ccircle cx='230' cy='49' r='0.8' fill='%23ffe9c4' fill-opacity='0.55'/%3E%3Ccircle cx='69' cy='317' r='0.8' fill='%23ffe9c4' fill-opacity='0.3'/%3E%3Ccircle cx='152' cy='319' r='0.5' fill='%23ffe9c4' fill-opacity='0.3'/%3E%3Ccircle cx='147' cy='188' r='0.8' fill='%23ffffff' fill-opacity='0.4'/%3E%3Ccircle cx='103' cy='152' r='0.5' fill='%23ffffff' fill-opacity='0.8'/%3E%3Ccircle cx='341' cy='336' r='0.8' fill='%23ffe9c4' fill-opacity='0.55'/%3E%3Ccircle cx='107' cy='249' r='1.0' fill='%23ffffff' fill-opacity='0.4'/%3E%3Ccircle cx='312' cy='148' r='0.7' fill='%23ffffff' fill-opacity='0.8'/%3E%3Ccircle cx='43' cy='42' r='0.4' fill='%23ffffff' fill-opacity='0.4'/%3E%3Ccircle cx='196' cy='352' r='0.6' fill='%23ffffff' fill-opacity='0.2'/%3E%3Ccircle cx='60' cy='217' r='1.0' fill='%23ffe9c4' fill-opacity='0.8'/%3E%3Ccircle cx='51' cy='308' r='0.7' fill='%23cfe0ff' fill-opacity='0.55'/%3E%3Ccircle cx='344' cy='129' r='1.0' fill='%23ffffff' fill-opacity='0.4'/%3E%3Ccircle cx='208' cy='57' r='0.8' fill='%23ffffff' fill-opacity='0.4'/%3E%3Ccircle cx='3' cy='166' r='0.8' fill='%23cfe0ff' fill-opacity='0.3'/%3E%3Ccircle cx='54' cy='260' r='1.0' fill='%23ffffff' fill-opacity='0.8'/%3E%3Ccircle cx='349' cy='212' r='0.6' fill='%23ffe9c4' fill-opacity='0.3'/%3E%3Ccircle cx='69' cy='317' r='0.7' fill='%23ffffff' fill-opacity='0.3'/%3E%3Ccircle cx='354' cy='197' r='0.7' fill='%23ffffff' fill-opacity='0.2'/%3E%3Ccircle cx='335' cy='112' r='1.0' fill='%23ffffff' fill-opacity='0.55'/%3E%3Ccircle cx='119' cy='77' r='0.5' fill='%23ffffff' fill-opacity='0.2'/%3E%3C/svg%3E");background-size:360px 360px;opacity:var(--dust)}
+button,input,textarea{font-family:inherit}
+button{color:inherit}
+a{color:var(--gold)}
+[hidden]{display:none!important}
+::selection{background:var(--gold-soft)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:14px}
+.wrap{position:relative;z-index:1;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(36px + env(safe-area-inset-bottom))}
 
-  header{ display:flex; align-items:center; justify-content:space-between; }
-  .brand{ font-family:'Sora',system-ui,sans-serif; font-weight:800; font-size:1.1rem; letter-spacing:0.2px; display:flex; align-items:center; gap:10px; }
-  .brand img{ width:30px; height:30px; border-radius:9px; }
-  .brand .dot{ color:var(--gold); }
-  .date{ font-size:0.78rem; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+/* header: a floating glass capsule */
+.cap{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:6px 8px 6px 16px;border-radius:32px;background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--line);box-shadow:var(--shadow),inset 0 1px 0 var(--hi)}
+.brand{display:flex;align-items:center;min-width:0;font-family:var(--font-display);font-weight:800;font-size:1.12rem;letter-spacing:.01em;text-decoration:none;color:var(--text);white-space:nowrap}
+.brand-mark{width:26px;height:26px;margin-right:10px;border-radius:50%;flex:none;background:radial-gradient(circle,var(--hole) 0 36%,transparent 38%),var(--mark);box-shadow:0 0 16px -2px var(--glow),inset 0 0 0 1px rgba(255,255,255,.2)}
+.brand .dot{color:var(--gold)}
+.brand-sub{font-weight:600;color:var(--text-dim);font-size:.8rem;margin-left:7px}
+.pill{flex:none;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--text-2);font-size:.8rem;font-weight:700;cursor:pointer;transition:transform .15s var(--ease),background .2s}
+.pill:active{transform:scale(.95)}
+@media (hover:hover){.pill:hover{background:var(--card-2);color:var(--text)}}
 
-  /* the hero is the day itself: a clock line that reads like the app's morning brief */
-  .hero{ position:relative; padding-top:18px; }
-  .hero::before{ content:""; position:absolute; inset:-40px -60px auto auto; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, var(--glow), transparent 70%); pointer-events:none; }
-  .kicker{ font-size:0.72rem; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--gold); }
-  h1{ font-family:'Sora',system-ui,sans-serif; font-weight:800; font-size:clamp(2.1rem, 9vw, 3.1rem); line-height:1.02; letter-spacing:-1.2px; margin:10px 0 14px; text-wrap:balance; }
-  h1 em{ font-style:normal; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .lede{ font-size:1rem; color:var(--text-2); margin:0; max-width:34em; }
+/* glass surfaces */
+.card{background:linear-gradient(160deg,var(--glass-1),var(--glass-2));border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow),inset 0 1px 0 var(--hi)}
+.card.pad{padding:18px}
+.label{display:flex;align-items:center;justify-content:space-between;font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin:0 0 10px}
 
-  .primary{ display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none; background:var(--grad); color:var(--on-gold);
-    border-radius:18px; padding:18px 20px; box-shadow:0 14px 34px var(--glow); font-weight:800; font-size:1.05rem; }
-  .primary small{ display:block; font-weight:600; font-size:0.78rem; opacity:0.78; margin-top:2px; }
-  .primary .arrow{ font-size:1.4rem; }
-  .primary:active{ transform:scale(0.99); }
-  .ways{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
-  .way{ text-decoration:none; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:4px; }
-  .way b{ font-size:0.92rem; }
-  .way span{ font-size:0.76rem; color:var(--text-dim); }
-  .way .ic{ width:22px; height:22px; stroke:var(--gold); fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; margin-bottom:4px; }
-  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
-  .way.static{ padding:12px 10px; border-radius:14px; }
-  .way.static b{ font-size:0.78rem; }
-  .way.static span{ font-size:0.68rem; }
-  .way.static .ic{ width:18px; height:18px; }
-  @media (max-width:380px){ .grid3{ grid-template-columns:1fr 1fr; } }
-  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; }
-  .card.pad{ padding:16px 18px; }
-  .live-greet{ font-family:'Sora',system-ui,sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:6px; }
-  .live-stats{ display:flex; gap:16px; margin-top:10px; font-size:0.82rem; color:var(--text-2); }
-  .live-stats b{ display:block; font-family:'Sora',system-ui,sans-serif; font-size:1.15rem; color:var(--gold); }
+/* buttons */
+.btn{flex:1;min-width:110px;padding:14px 18px;border-radius:999px;border:none;background:var(--grad);color:var(--on-gold);font-weight:700;font-size:.92rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 10px 24px -10px var(--glow),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .15s var(--ease),filter .2s}
+.btn:active{transform:scale(.97)}
+@media (hover:hover){.btn:hover{filter:brightness(1.06)}}
+.btn.ghost{background:transparent;color:var(--gold);border:1.5px solid color-mix(in srgb,var(--gold) 70%,transparent);box-shadow:none}
+.btn.end{background:var(--danger);color:var(--on-danger);box-shadow:0 10px 24px -10px color-mix(in srgb,var(--danger) 70%,transparent)}
+.btn:disabled{background:var(--card-2);color:var(--text-dim);border:1px solid var(--line);box-shadow:none;cursor:default;filter:none}
 
-  /* the day as the app runs it — a real schedule, so it's a timeline */
-  .label{ font-size:0.7rem; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-dim); margin:0 0 10px; }
-  .day{ list-style:none; margin:0; padding:0; border-left:2px solid var(--line); }
-  .day li{ position:relative; padding:0 0 16px 18px; }
-  .day li:last-child{ padding-bottom:0; }
-  .day li::before{ content:""; position:absolute; left:-6px; top:6px; width:10px; height:10px; border-radius:50%; background:var(--bg); border:2px solid var(--gold); }
-  .day time{ font-family:'Sora',system-ui,sans-serif; font-weight:700; font-size:0.82rem; color:var(--gold); font-variant-numeric:tabular-nums; }
-  .day p{ margin:2px 0 0; font-size:0.9rem; color:var(--text-2); }
+/* fields */
+input,textarea{width:100%;background:var(--card-2);border:1px solid var(--line);color:var(--text);padding:14px 18px;border-radius:20px;font-size:16px}
+input::placeholder,textarea::placeholder{color:var(--text-dim)}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
 
-  details{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
-  summary{ cursor:pointer; font-weight:700; font-size:0.9rem; }
-  details ol{ margin:10px 0 0; padding-left:20px; color:var(--text-2); font-size:0.88rem; }
-  details li + li{ margin-top:4px; }
-  footer{ font-size:0.76rem; color:var(--text-dim); text-align:center; }
-  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ===== landing page ===== */
+.wrap{max-width:600px}
+.cap .date{padding:0 10px 0 0;font-size:.76rem;font-weight:700;color:var(--text-dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.stage{--s:min(38vw,156px);display:flex;flex-direction:column;gap:18px;margin-top:14px}
+.copy{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* the singularity: a black hole with an ember disc, and two small planets on their orbits */
+.sing-box{display:grid;place-items:center;height:calc(var(--s) * 1.7)}
+.sing{position:relative;width:var(--s);height:var(--s)}
+.sing>*{position:absolute;border-radius:50%;display:block}
+.s-glow{inset:-34%;background:radial-gradient(circle closest-side,var(--glow),transparent);opacity:.85;animation:glow 7s ease-in-out infinite alternate}
+.s-disk{inset:3%;background:var(--mark);animation:spin 34s linear infinite;
+  -webkit-mask:radial-gradient(circle closest-side,transparent 0 50%,#000 60% 78%,transparent 100%);
+  mask:radial-gradient(circle closest-side,transparent 0 50%,#000 60% 78%,transparent 100%)}
+.s-hole{inset:26%;background:var(--hole);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--ring-a) 72%,transparent),0 0 26px 4px var(--glow),inset 0 0 20px 3px rgba(0,0,0,.85)}
+.s-orbit{border:1px dashed color-mix(in srgb,var(--text) 24%,transparent);animation:spin 46s linear infinite}
+.s-orbit.o1{inset:-14%}
+.s-orbit.o2{inset:-36%;animation-duration:78s;animation-direction:reverse}
+.s-orbit b{position:absolute;top:0;left:50%;border-radius:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 34% 30%,#fff,var(--ring-a) 52%,var(--ring-b));box-shadow:0 0 16px 1px var(--glow)}
+.o1 b{width:11px;height:11px}
+.o2 b{width:15px;height:15px;background:radial-gradient(circle at 34% 30%,#fff,var(--ring-b) 55%,var(--hole))}
+@keyframes glow{from{opacity:.55;transform:scale(.94)}to{opacity:.95;transform:scale(1.04)}}
+
+.kicker{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-wrap:balance}
+.kicker span{white-space:nowrap}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .kicker{color:var(--gold-2)}}
+:root[data-theme="light"] .kicker{color:var(--gold-2)}
+.kicker span:not(:last-child)::after{content:"·";margin-left:.6em}
+h1{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(2.1rem,9.4vw,3.2rem);line-height:1.05;letter-spacing:-.02em;text-wrap:balance}
+:root[data-look="nebula"] h1{font-size:clamp(1.8rem,7.7vw,2.8rem);letter-spacing:-.01em}
+h1 em{font-style:normal;background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+@supports not ((-webkit-background-clip:text) or (background-clip:text)){h1 em{color:var(--gold)}}
+.lede{margin:0;font-size:1.02rem;color:var(--text-2);max-width:34em}
+
+/* signed in: today's real numbers */
+.live-greet{font-family:var(--font-display);font-weight:700;font-size:1.05rem;line-height:1.3;margin-bottom:12px;overflow-wrap:anywhere}
+.live-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.live-stats div{padding:11px 12px;border-radius:18px;background:var(--card);border:1px solid var(--line);font-size:.74rem;line-height:1.25;color:var(--text-2)}
+.live-stats b{display:block;margin-bottom:3px;font-family:var(--font-num);font-size:1.55rem;line-height:1.05;color:var(--gold);font-variant-numeric:tabular-nums}
+.live-stats b.warn{color:var(--danger)}
+
+/* the way in */
+.primary{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;color:var(--on-gold);background:var(--grad);border-radius:999px;padding:11px 11px 11px 26px;
+  font-family:var(--font-display);font-weight:800;font-size:1.08rem;box-shadow:0 16px 34px -12px var(--glow),inset 0 1px 0 rgba(255,255,255,.38);transition:transform .15s var(--ease),filter .2s}
+.primary small{display:block;margin-top:1px;font-family:var(--font-body);font-weight:600;font-size:.78rem;opacity:.82}
+.primary:active{transform:scale(.985)}
+@media (hover:hover){.primary:hover{filter:brightness(1.06)}}
+.primary .arrow{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--hole);color:var(--ring-a);font-family:var(--font-body);font-size:1.35rem;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--ring-a) 55%,transparent),inset 0 0 12px 2px rgba(0,0,0,.7)}
+.ways{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.way{display:flex;flex-direction:column;gap:2px;min-width:0;padding:14px 16px;border-radius:24px;text-decoration:none;color:var(--text);
+  background:linear-gradient(160deg,var(--glass-1),var(--glass-2));border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi);transition:transform .15s var(--ease),background .2s}
+.way:active{transform:scale(.97)}
+.way b{font-family:var(--font-display);font-size:.96rem}
+.way span{font-size:.78rem;color:var(--text-dim)}
+.ic{display:grid;place-items:center;width:38px;height:38px;margin-bottom:8px;border-radius:50%;background:var(--gold-soft)}
+.ic svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* what it does */
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.tile{display:flex;flex-direction:column;gap:2px;min-width:0;padding:16px;border-radius:24px;background:linear-gradient(160deg,var(--glass-1),var(--glass-2));border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi)}
+.tile b{font-family:var(--font-display);font-size:.95rem}
+.tile span{font-size:.78rem;color:var(--text-dim)}
+
+.lower{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.day{position:relative;list-style:none;margin:0;padding:0 0 0 26px}
+.day::before{content:"";position:absolute;left:6px;top:8px;bottom:12px;width:2px;border-radius:2px;background:linear-gradient(var(--gold),transparent)}
+.day li{position:relative;padding:0 0 18px}
+.day li:last-child{padding-bottom:0}
+.day li::before{content:"";position:absolute;left:-26px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--hole);box-shadow:0 0 0 2px var(--gold),0 0 12px var(--glow)}
+.day time{font-family:var(--font-num);font-weight:700;font-size:.86rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.day p{margin:2px 0 0;font-size:.92rem;color:var(--text-2)}
+
+details{padding:0;border-radius:24px;background:linear-gradient(160deg,var(--glass-1),var(--glass-2));border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi)}
+summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;cursor:pointer;font-weight:700;font-size:.92rem;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";flex:none;width:9px;height:9px;margin-right:4px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);border-radius:1px;transform:translateY(-2px) rotate(45deg);transition:transform .2s var(--ease)}
+details[open] summary::after{transform:translateY(2px) rotate(-135deg)}
+details ol{margin:0;padding:0 18px 16px 38px;color:var(--text-2);font-size:.9rem}
+details li+li{margin-top:5px}
+footer{margin-top:26px;text-align:center;font-size:.76rem;color:var(--text-2)}
+
+@media (max-width:359px){.stage{--s:min(34vw,128px)}.way,.tile{padding:13px}}
+
+@media (min-width:920px){
+  .wrap{max-width:1080px;padding-top:calc(20px + env(safe-area-inset-top))}
+  .stage{--s:268px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);column-gap:56px;align-items:center;margin-top:44px}
+  .sing-box{order:2}
+  .copy{gap:18px}
+  h1{font-size:clamp(3rem,4.6vw,4.2rem)}
+  .lede{font-size:1.12rem}
+  .ways{max-width:520px}
+  .feat{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:56px}
+  .lower{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;align-items:start;margin-top:18px}
+}
+
 </style>
+<script>
+(function(){
+  var d = document.documentElement, KNOWN = ["horizon", "nebula", "ion"], OLD = { gold:"horizon", clean:"ion", bold:"nebula" };
+  function get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function syncThemeColor(){
+    var m = document.querySelector('meta[name="theme-color"]'), bg = getComputedStyle(d).getPropertyValue("--bg").trim();
+    if(m && bg) m.setAttribute("content", bg);
+  }
+  var look = get("jkb_v2_look");
+  look = KNOWN.indexOf(look) > -1 ? look : (OLD[look] || "horizon");
+  if(look !== "horizon") d.dataset.look = look;
+  var mode = get("jkb_checklist_theme");
+  if(mode === "light" || mode === "dark") d.dataset.theme = mode;
+  syncThemeColor();
+  if(window.matchMedia){ var mq = matchMedia("(prefers-color-scheme: light)"); if(mq.addEventListener) mq.addEventListener("change", syncThemeColor); }
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="brand"><img src="icons/icon.svg" alt=""><span>JKB<span class="dot">.</span> Ops</span></div>
+  <header class="cap">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>JKB<span class="dot">.</span> <span class="brand-sub">Ops</span></div>
     <div class="date" id="today"></div>
   </header>
 
-  <section class="hero">
-    <div class="kicker">JKB Global · SafeGate · CVG · every client project</div>
-    <h1>You run the business. <em>Atlas runs everything else.</em></h1>
-    <p class="lede">Not just a checklist — Atlas plans your day, reads your inbox, books your calendar, and checks in on you morning and night, all from one conversation.</p>
-  </section>
-
-  <section id="liveHero" hidden>
-    <div class="card pad" id="liveCard"></div>
-  </section>
-
-  <section>
-    <a class="primary" href="app.html" id="primaryCta">
-      <span>Open my checklist<small>Today · Atlas · Tasks · Progress</small></span><span class="arrow" aria-hidden="true">→</span>
-    </a>
-    <div class="grid3">
-      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><b>Calendar &amp; Gmail</b><span>Atlas reads and books for you</span></div>
-      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><b>Daily briefing</b><span>Real push, morning &amp; evening</span></div>
-      <div class="way static"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg><b>Every project</b><span>Tags &amp; sections per client</span></div>
+  <section class="stage">
+    <div class="sing-box" aria-hidden="true">
+      <div class="sing">
+        <span class="s-glow"></span>
+        <span class="s-orbit o2"><b></b></span>
+        <span class="s-orbit o1"><b></b></span>
+        <span class="s-disk"></span>
+        <span class="s-hole"></span>
+      </div>
     </div>
-    <div class="ways">
-      <a class="way" href="voice.html">
-        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12v1a2 2 0 0 0 2 2h1V10H5a2 2 0 0 0-2 2zM21 12v1a2 2 0 0 1-2 2h-1V10h1a2 2 0 0 1 2 2z"/><path d="M6 10a6 6 0 0 1 12 0M18 15v1a4 4 0 0 1-4 4h-2"/></svg>
-        <b>Talk to Atlas</b><span>Live voice call</span>
+
+    <div class="copy">
+      <div class="kicker"><span>JKB Global</span> <span>SafeGate</span> <span>CVG</span> <span>Every client project</span></div>
+      <h1>You run the business. <em>Atlas runs everything else.</em></h1>
+      <p class="lede">Not just a checklist — Atlas plans your day, reads your inbox, books your calendar, and checks in on you morning and night, all from one conversation.</p>
+
+      <section id="liveHero" hidden>
+        <div class="card pad" id="liveCard"></div>
+      </section>
+
+      <a class="primary" href="app.html" id="primaryCta">
+        <span>Open my checklist<small>Today · Atlas · Tasks · Progress</small></span><span class="arrow" aria-hidden="true">→</span>
       </a>
-      <a class="way" href="voice.html#dictate">
-        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-        <b>Dictate tasks</b><span>Ramble, then paste</span>
-      </a>
+      <div class="ways">
+        <a class="way" href="voice.html">
+          <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12v1a2 2 0 0 0 2 2h1V10H5a2 2 0 0 0-2 2zM21 12v1a2 2 0 0 1-2 2h-1V10h1a2 2 0 0 1 2 2z"/><path d="M6 10a6 6 0 0 1 12 0M18 15v1a4 4 0 0 1-4 4h-2"/></svg></span>
+          <b>Talk to Atlas</b><span>Live voice call</span>
+        </a>
+        <a class="way" href="voice.html#dictate">
+          <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+          <b>Dictate tasks</b><span>Ramble, then paste</span>
+        </a>
+      </div>
     </div>
   </section>
 
-  <section>
-    <h2 class="label">How your day runs</h2>
-    <ol class="day">
-      <li><time>8:00 AM</time><p>Atlas plans your focus, checks your calendar and inbox, and pings your phone.</p></li>
-      <li><time>All day</time><p>Tell Atlas what you finished, ask it to book something or check an email, or run a focus timer.</p></li>
-      <li><time>8:00 PM</time><p>Evening review: your score, one win, and the thing you dodged.</p></li>
-    </ol>
+  <section class="feat">
+    <div class="tile"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><b>Calendar &amp; Gmail</b><span>Atlas reads and books for you</span></div>
+    <div class="tile"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><b>Daily briefing</b><span>Real push, morning &amp; evening</span></div>
+    <div class="tile"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg></span><b>Every project</b><span>Tags &amp; sections per client</span></div>
+    <div class="tile"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><b>Knows you</b><span>Your profile, edited by you</span></div>
   </section>
 
-  <details>
-    <summary>Put it on your home screen</summary>
-    <ol>
-      <li><b>iPhone (Safari):</b> tap Share, then <i>Add to Home Screen</i>.</li>
-      <li><b>Android (Chrome):</b> tap ⋮, then <i>Add to Home screen</i> or <i>Install app</i>.</li>
-      <li>Open it from the icon and tap <b>Open my checklist</b>.</li>
-    </ol>
-  </details>
+  <div class="lower">
+    <section class="card pad">
+      <h2 class="label">How your day runs</h2>
+      <ol class="day">
+        <li><time>8:00 AM</time><p>Atlas plans your focus, checks your calendar and inbox, and pings your phone.</p></li>
+        <li><time>All day</time><p>Tell Atlas what you finished, ask it to book something or check an email, or run a focus timer.</p></li>
+        <li><time>8:00 PM</time><p>Evening review: your score, one win, and the thing you dodged.</p></li>
+      </ol>
+    </section>
+
+    <details>
+      <summary>Put it on your home screen</summary>
+      <ol>
+        <li><b>iPhone (Safari):</b> tap Share, then <i>Add to Home Screen</i>.</li>
+        <li><b>Android (Chrome):</b> tap ⋮, then <i>Add to Home screen</i> or <i>Install app</i>.</li>
+        <li>Open it from the icon and tap <b>Open my checklist</b>.</li>
+      </ol>
+    </details>
+  </div>
 
   <footer>Your tasks, calendar and inbox stay in your own accounts — this page and Atlas just work across them.</footer>
 </div>
@@ -187,12 +290,14 @@
       const doneToday = all.filter(t => t.doneAt && dayStr(new Date(t.doneAt)) === today).length;
 
       document.getElementById("liveCard").innerHTML = `
-        <div class="live-greet">Welcome back — here's where things stand</div>
+        <div class="live-greet" id="liveGreet">Welcome back — here's where things stand</div>
         <div class="live-stats">
           <div><b>${focusLeft || focusIds.length}</b>today's focus left</div>
           <div><b>${doneToday}</b>done today</div>
-          <div><b style="${overdue ? "color:var(--gold-2)" : ""}">${overdue}</b>overdue</div>
+          <div><b class="${overdue ? "warn" : ""}">${overdue}</b>overdue</div>
         </div>`;
+      const nm = state.profile && typeof state.profile.name === "string" ? state.profile.name.trim().slice(0, 40) : "";
+      if(nm) document.getElementById("liveGreet").textContent = "Welcome back, " + nm + " — here's where things stand";
       document.getElementById("liveHero").hidden = false;
       const cta = document.getElementById("primaryCta");
       cta.querySelector("span").innerHTML = "Continue to my checklist<small>Signed in — pick up where you left off</small>";
