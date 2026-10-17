@@ -535,6 +535,18 @@ a.btn{text-decoration:none}
 .hue:active{transform:scale(.94)}
 .hue.on{transform:scale(1.1);outline:2px solid hsl(var(--h) 90% 66%);outline-offset:3px;box-shadow:inset 0 0 0 1px hsl(var(--h) 90% 82% / .3),0 0 20px -2px hsl(var(--h) 85% 58% / .75)}
 .hue:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.qc{display:flex;gap:8px;align-items:center;margin:2px 0 12px;padding:6px 6px 6px 16px;border-radius:30px;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.qc input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:.92rem}
+.qc button{width:38px;height:38px;border-radius:50%;border:0;cursor:pointer;background:var(--card-2);color:var(--text);font-size:1rem}
+.qc .qc-go{background:var(--grad);color:var(--on-gold);font-weight:800}
+.wk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin-top:6px}.wk-row b{display:block;font-family:var(--font-num);font-size:1.15rem}.wk-row span{font-size:.7rem;opacity:.7}
+.wk-row i{font-style:normal;font-size:.65rem}.wk-row i.up{color:#6fd39a}.wk-row i.dn{color:#f08a7a}.wk.hot{box-shadow:0 0 0 1px var(--glow),0 12px 32px -12px var(--glow)}
+.sites{padding:6px 14px 10px}.site{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:.9rem}.site span{flex:1}.site em{font-style:normal;opacity:.65;font-size:.78rem}
+.site i{width:10px;height:10px;border-radius:50%;background:#888}.site i.up{background:#5fd18f;box-shadow:0 0 10px #5fd18f}.site i.dn{background:#f06a5a;box-shadow:0 0 10px #f06a5a}.site i.chk{animation:pulse 1s infinite alternate}
+.deal.late{box-shadow:inset 3px 0 0 #f06a5a}.dn-t{color:#f08a7a}.deal .adv{font-size:1.05rem}
+.fl{display:block;font-size:.78rem;opacity:.9;margin:10px 0 0}.fl input,.fl select{display:block;width:100%;margin-top:4px;padding:11px 14px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats-row .tile .v{font-size:1rem}
+@keyframes pulse{to{opacity:.3}}
 </style>
 </head>
 <body>
@@ -767,6 +779,7 @@ function normalize(){
   if(!Array.isArray(state.checkins)) state.checkins = [];
   if(!Array.isArray(state.sessions)) state.sessions = [];
   state.profile = cleanProfile(state.profile);
+  if(!Array.isArray(state.deals)) state.deals = [];
 }
 
 function loadLocal(){
@@ -1254,7 +1267,7 @@ function ringSvg(frac, size = 96, stroke = 8){
 }
 
 // ---------- Today ----------
-function renderToday(){
+function renderToday0(){
   const today = dayStr();
   const focus = todayFocus();
   const fDone = focus.filter(x => x.t.done).length;
@@ -1636,7 +1649,7 @@ function renderCoach(){
     <div class="chat" id="chat">${intro}${msgs}${think}${off}</div></div>`;
 }
 
-const TABS = [["today", "Today"], ["coach", "Atlas"], ["tasks", "Tasks"], ["stats", "Progress"], ["me", "Me"]];
+const TABS = [["today", "Today"], ["coach", "Atlas"], ["tasks", "Tasks"], ["deals", "Deals"], ["stats", "Progress"], ["me", "Me"]];
 // The bar is built once so its glow bubble can slide between tabs (--i) instead of being re-created every render.
 function renderTabbar(){
   const bar = $("#tabbar");
@@ -1651,12 +1664,163 @@ function renderTabbar(){
 }
 
 let lastViewKey = "";
+/* ===== Extras: quick capture, Deals pipeline, site health, week review, reminders ===== */
+const STAGES = [["lead","Lead"],["quoted","Quoted"],["deposit","Deposit"],["building","Building"],["delivered","Delivered"],["paid","Paid"]];
+const ngn = n => "₦" + Math.round(n || 0).toLocaleString();
+ICONS.deals = '<rect x="3.5" y="7" width="17" height="12" rx="3"/><path d="M8.5 7V5.5a2 2 0 012-2h3a2 2 0 012 2V7M3.5 12.5h17"/>';
+function dealsList(){ if(!Array.isArray(state.deals)) state.deals = []; return state.deals; }
+
+/* quick capture */
+function parseCapture(raw){
+  let text = raw, due = null, priority = "normal"; const tags = [];
+  const days = ["sun","mon","tue","wed","thu","fri","sat"];
+  text = text.replace(/(^|\s)#([\w-]+)/g, (m, a, t) => { tags.push(t.toLowerCase()); return a; });
+  if(/(^|\s)!(high)?(\s|$)/i.test(text)){ priority = "high"; text = text.replace(/(^|\s)!(high)?(?=\s|$)/gi, " "); }
+  const m = text.match(/\b(today|tonight|tomorrow|tmrw|(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)\b/i);
+  if(m){
+    const w = m[1].toLowerCase();
+    if(w === "today" || w === "tonight") due = dayStr();
+    else if(w === "tomorrow" || w === "tmrw") due = addDays(dayStr(), 1);
+    else { const t = days.indexOf(w.slice(0, 3)); let n = (t - new Date().getDay() + 7) % 7; if(!n) n = 7; due = addDays(dayStr(), n); }
+    text = text.replace(m[0], " ");
+  }
+  text = text.replace(/\s+/g, " ").trim().replace(/^(remind me to|remember to|to)\s+/i, "");
+  return { text: text.charAt(0).toUpperCase() + text.slice(1), due, priority, tags };
+}
+function quickCapture(raw){
+  const c = parseCapture(raw); if(!c.text) return false;
+  let p = state.projects.find(q => q.title === "Inbox");
+  if(!p){ p = { id: newId("p"), emoji: "📥", title: "Inbox", sections: [{ id: newId("s"), name: "Captured", tasks: [] }] }; state.projects.unshift(p); }
+  p.sections[0].tasks.unshift({ id: newId("t"), text: c.text, done:false, doneAt:null, priority:c.priority, due:c.due, createdAt:Date.now(), tags:c.tags, minutes:0 });
+  save(); render(); toast("Captured" + (c.due ? " for " + fmtDue(c.due).toLowerCase() : "") + " ✓");
+  return true;
+}
+const captureHtml = () => `<div class="qc"><input id="qcInput" type="text" placeholder="Capture: call client tomorrow !" autocomplete="off" enterkeyhint="send"><button class="qc-mic" data-act="qcMic" aria-label="Speak">🎙</button><button class="qc-go" data-act="qcGo" aria-label="Add">↵</button></div>`;
+
+/* weekly review */
+function weekStats(){
+  const now = Date.now(), W = 7 * 864e5, all = allTasks();
+  const doneIn = (a, b) => all.filter(x => x.t.done && x.t.doneAt && x.t.doneAt > now - b && x.t.doneAt <= now - a).length;
+  const mins = (a, b) => state.sessions.filter(s => s.end > now - b && s.end <= now - a).reduce((n, s) => n + (s.min || 0), 0);
+  const today = dayStr();
+  return { done: doneIn(0, W), prev: doneIn(W, 2 * W), mins: mins(0, W), overdue: all.filter(x => !x.t.done && x.t.due && x.t.due < today).length,
+    paid: dealsList().filter(d => d.paidAt && d.paidAt > now - W).reduce((n, d) => n + (d.amount || 0), 0) };
+}
+function reviewHtml(){
+  const s = weekStats(), d = s.done - s.prev, dow = new Date().getDay(), hot = dow === 0 || dow === 1;
+  return `<div class="card pad wk${hot ? " hot" : ""}"><div class="coach-tag">${hot ? "Weekly review" : "Last 7 days"}</div>
+    <div class="wk-row"><div><b>${s.done}</b><span>done ${d ? `<i class="${d > 0 ? "up" : "dn"}">${d > 0 ? "▲" : "▼"}${Math.abs(d)}</i>` : ""}</span></div><div><b>${fmtMin(s.mins)}</b><span>focused</span></div><div><b>${s.overdue}</b><span>overdue</span></div><div><b>${ngn(s.paid)}</b><span>paid in</span></div></div>
+    <button class="btn soft" style="width:100%;margin-top:10px" data-act="ask" data-q="Review my week. I completed ${s.done} tasks (${s.prev} the week before), focused ${s.mins} min, have ${s.overdue} overdue and received ${ngn(s.paid)}. What went well, what slipped, and what are my 3 priorities for next week?">${SPARK} Ask Atlas for the full review</button></div>`;
+}
+
+/* site health */
+const SITES = [["JKB Global","https://jkbglobal.site/"],["SafeGate","https://safegate.com.ng/"],["Omodelight","https://omodelight.com.ng/"],["JKB Ops","https://checklist.jkbglobal.site/"]];
+let siteRes = {}, siteAt = 0, siteBusy = false;
+try{ const s = JSON.parse(lsGet("jkb_sites") || "{}"); siteRes = s.r || {}; siteAt = s.at || 0; }catch(e){}
+async function checkSites(){
+  if(siteBusy) return; siteBusy = true;
+  await Promise.all(SITES.map(async ([n, u]) => {
+    const t0 = performance.now(), ac = new AbortController(), to = setTimeout(() => ac.abort(), 8000);
+    try{ await fetch(u + "?hc=" + Date.now(), { mode:"no-cors", cache:"no-store", signal: ac.signal }); siteRes[n] = { up:true, ms:Math.round(performance.now() - t0) }; }
+    catch(e){ siteRes[n] = { up:false, ms:0 }; }
+    clearTimeout(to);
+  }));
+  siteAt = Date.now(); siteBusy = false;
+  try{ localStorage.setItem("jkb_sites", JSON.stringify({ r:siteRes, at:siteAt })); }catch(e){}
+  const down = SITES.filter(([n]) => siteRes[n] && !siteRes[n].up).map(s => s[0]);
+  if(down.length) notify("Site down", down.join(", ") + " didn't respond", "down-" + dayStr() + down.join());
+  if(ui.tab === "today") render();
+}
+function sitesHtml(){
+  if(Date.now() - siteAt > 3e5) setTimeout(checkSites, 50);
+  const up = SITES.filter(([n]) => siteRes[n] && siteRes[n].up).length, known = SITES.filter(([n]) => siteRes[n]).length;
+  return `<div class="label">Site health <span class="count">${known ? up + "/" + SITES.length + " up" : "…"}</span></div><div class="card sites">
+    ${SITES.map(([n]) => { const r = siteRes[n]; return `<div class="site"><i class="${!r ? "chk" : r.up ? "up" : "dn"}"></i><span>${n}</span><em>${!r ? "checking" : r.up ? r.ms + " ms" : "down"}</em></div>`; }).join("")}
+    <button class="link-btn" data-act="siteCheck">${siteBusy ? "Checking…" : "Check now"}</button></div>`;
+}
+
+/* reminders (local; the app must be open) */
+function notify(title, body, tag){
+  if(!("Notification" in window) || Notification.permission !== "granted") return;
+  const k = "jkb_n_" + tag; if(lsGet(k)) return; try{ localStorage.setItem(k, "1"); }catch(e){}
+  navigator.serviceWorker && navigator.serviceWorker.ready.then(r => r.showNotification(title, { body, icon:"icons/icon-192.png", tag })).catch(() => { try{ new Notification(title, { body }); }catch(e){} });
+}
+function reminderTick(){
+  if(!state) return; const today = dayStr();
+  const due = allTasks().filter(x => !x.t.done && x.t.due === today).length;
+  if(due) notify("Due today", due + " task" + (due > 1 ? "s" : "") + " due today", "due-" + today);
+  const dl = dealsList().filter(d => d.stage !== "paid" && d.due && d.due <= today);
+  if(dl.length) notify("Deals need attention", dl.map(d => d.client).slice(0, 3).join(", ") + " — payment or delivery due", "deal-" + today);
+}
+setInterval(reminderTick, 6e4); setTimeout(reminderTick, 4000);
+function notifHtml(){
+  if(!("Notification" in window) || Notification.permission !== "default") return "";
+  return `<div class="card pad"><div class="small">Get a nudge when tasks or payments are due (works while the app is open or installed).</div><button class="btn soft" style="width:100%;margin-top:8px" data-act="notifOn">Turn on reminders</button></div>`;
+}
+
+/* Deals tab */
+function dealCard(d){
+  const i = STAGES.findIndex(s => s[0] === d.stage), today = dayStr(), late = d.stage !== "paid" && d.due && d.due < today;
+  return `<div class="task deal${late ? " late" : ""}" data-act="dealEdit" data-id="${esc(d.id)}"><div class="t-main"><div class="t-text">${esc(d.client)}${d.title ? " · " + esc(d.title) : ""}</div>
+    <div class="t-meta"><span class="chip">${STAGES[i][1]}</span><span>${ngn(d.amount)}</span>${d.due ? `<span class="${late ? "dn-t" : ""}">${late ? "overdue · " : ""}${esc(fmtDue(d.due))}</span>` : ""}</div></div>
+    ${d.stage !== "paid" ? `<button class="x adv" data-act="dealNext" data-id="${esc(d.id)}" aria-label="Move to ${STAGES[i + 1][1]}">→</button>` : ""}</div>`;
+}
+function renderDeals(){
+  const L = dealsList(), open = L.filter(d => d.stage !== "paid"), pipe = open.reduce((n, d) => n + (d.amount || 0), 0);
+  const owed = L.filter(d => ["delivered"].includes(d.stage)).reduce((n, d) => n + (d.amount || 0), 0);
+  const paid = L.filter(d => d.stage === "paid").reduce((n, d) => n + (d.amount || 0), 0);
+  return `<div class="deals"><div class="stats-row"><div class="tile"><div class="v">${ngn(pipe)}</div><div class="k">in pipeline</div></div><div class="tile"><div class="v">${ngn(owed)}</div><div class="k">awaiting payment</div></div><div class="tile"><div class="v">${ngn(paid)}</div><div class="k">paid</div></div></div>
+  <button class="btn" style="width:100%;margin:10px 0" data-act="dealNew">+ New deal</button>
+  ${STAGES.map(([id, name]) => { const g = L.filter(d => d.stage === id); if(!g.length) return ""; return `<div class="label">${name} <span class="count">${g.length}</span></div>` + (g.length ? `<div class="card">${g.map(dealCard).join("")}</div>` : ""); }).join("")}</div>`;
+}
+function dealSheet(id){
+  const d = id ? dealsList().find(x => x.id === id) : null;
+  openSheet(`<h3>${d ? "Edit deal" : "New deal"}</h3>
+    <label class="fl">Client<input id="dlClient" value="${esc(d ? d.client : "")}"></label>
+    <label class="fl">What for<input id="dlTitle" value="${esc(d ? d.title : "")}" placeholder="Website, app, fix…"></label>
+    <label class="fl">Amount (₦)<input id="dlAmt" type="number" inputmode="numeric" value="${d ? d.amount || "" : ""}"></label>
+    <label class="fl">Due date<input id="dlDue" type="date" value="${d ? d.due || "" : ""}"></label>
+    <label class="fl">Stage<select id="dlStage">${STAGES.map(s => `<option value="${s[0]}"${d && d.stage === s[0] ? " selected" : ""}>${s[1]}</option>`).join("")}</select></label>
+    <div class="btn-row"><button class="btn" data-act="dealSave" data-id="${d ? esc(d.id) : ""}">Save</button>${d ? `<button class="btn ghost" data-act="dealDel" data-id="${esc(d.id)}">Delete</button>` : ""}</div>`);
+}
+function setStage(d, st){ d.stage = st; d.paidAt = st === "paid" ? Date.now() : null; }
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if(!el) return; const a = el.dataset.act, id = el.dataset.id;
+  if(a === "qcGo"){ const i = $("#qcInput"); if(i && quickCapture(i.value)) i.value = ""; }
+  else if(a === "qcMic"){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if(!SR) return toast("Voice isn't supported in this browser");
+    const r = new SR(); r.lang = "en-US"; r.onresult = ev => { const i = $("#qcInput"); if(i){ i.value = ev.results[0][0].transcript; quickCapture(i.value) && (i.value = ""); } }; r.onerror = () => toast("Couldn't hear that"); r.start(); toast("Listening…");
+  }
+  else if(a === "siteCheck"){ checkSites(); render(); }
+  else if(a === "notifOn"){ Notification.requestPermission().then(p => { toast(p === "granted" ? "Reminders on" : "Reminders blocked"); render(); if(p === "granted") reminderTick(); }); }
+  else if(a === "dealNew") dealSheet(null);
+  else if(a === "dealEdit"){ if(e.target.closest(".adv")) return; dealSheet(id); }
+  else if(a === "dealNext"){ const d = dealsList().find(x => x.id === id); if(d){ const i = STAGES.findIndex(s => s[0] === d.stage); setStage(d, STAGES[Math.min(5, i + 1)][0]); save(); render(); toast("Moved to " + STAGES[Math.min(5, i + 1)][1]); if(d.stage === "paid") celebrate(); } }
+  else if(a === "dealSave"){
+    const client = $("#dlClient").value.trim(); if(!client) return toast("Add a client name");
+    let d = id && dealsList().find(x => x.id === id); if(!d){ d = { id:newId("d"), createdAt:Date.now() }; dealsList().push(d); }
+    Object.assign(d, { client, title:$("#dlTitle").value.trim(), amount:Number($("#dlAmt").value) || 0, due:$("#dlDue").value || null });
+    setStage(d, $("#dlStage").value); save(); closeSheet(); render();
+  }
+  else if(a === "dealDel"){ const L = dealsList(); const i = L.findIndex(x => x.id === id); if(i > -1) L.splice(i, 1); save(); closeSheet(); render(); }
+});
+document.addEventListener("keydown", e => { if(e.key === "Enter" && e.target.id === "qcInput"){ e.preventDefault(); if(quickCapture(e.target.value)) e.target.value = ""; } });
+function renderToday(){
+  const h = renderToday0(), at = h.indexOf(">") + 1, end = h.lastIndexOf("</div>");
+  return h.slice(0, at) + captureHtml() + h.slice(at, end) + reviewHtml() + notifHtml() + sitesHtml() + h.slice(end);
+}
+
+(function(){ const q = new URLSearchParams(location.search).get('go'); if(q && ["today","deals","coach","tasks"].includes(q)) window.__go = q; })();
+function focusCapture(){ if(new URLSearchParams(location.search).get('cap') === '1') setTimeout(() => { const i = $("#qcInput"); if(i) i.focus(); }, 700); }
+window.addEventListener('load', focusCapture);
 function render(){
   const v = $("#view");
   const searchFocused = document.activeElement && document.activeElement.id === "searchBox";
   const caret = searchFocused ? document.activeElement.selectionStart : null;
   if(ui.tab === "today") v.innerHTML = renderToday();
   else if(ui.tab === "tasks") v.innerHTML = renderTasks();
+  else if(ui.tab === "deals") v.innerHTML = renderDeals();
   else if(ui.tab === "stats") v.innerHTML = renderStats();
   else if(ui.tab === "me") v.innerHTML = renderMe();
   else v.innerHTML = renderCoach();
@@ -1665,7 +1829,7 @@ function render(){
   if(viewKey !== lastViewKey){ lastViewKey = viewKey; if(v.firstElementChild) v.firstElementChild.classList.add("enter"); }
   const onCoach = ui.tab === "coach";
   $("#composer").hidden = !onCoach;
-  $("#fab").hidden = onCoach || ui.tab === "me";
+  $("#fab").hidden = onCoach || ui.tab === "me" || ui.tab === "deals";
   if(onCoach){
     $("#sendBtn").disabled = thinking;
     requestAnimationFrame(() => window.scrollTo(0, document.body.scrollHeight));
@@ -2851,7 +3015,7 @@ function showAuthGate(msg){
 function hideAuthGate(){ $("#authGate").hidden = true; $("#authErr").textContent = ""; }
 async function enterApp(){
   hideAuthGate();
-  loadLocal();
+  loadLocal(); if(window.__go) ui.tab = window.__go;
   render();
   connectCloud();
   registerServiceWorker();
